@@ -20,22 +20,40 @@ lab-fig-46aprgpa/
     └── index.html          ← dashboard del proyecto (autocontenido, base64)
 ```
 
-## Uso desde un proyecto
+## Uso
+
+`sync.py` tiene dos modos. Ambos generan HTML autocontenido (base64), copian al
+hub bajo `<slug>/index.html`, refrescan el `index.html` raíz, hacen commit + push
+e imprimen la URL pública final.
+
+### Modo figuras (recursivo)
 
 ```bash
 cd /ruta/a/mi-proyecto    # debe tener subcarpeta figures/
 python "C:/Users/jinfa/OneDrive/06_dev/_lab_figures/lab-fig-46aprgpa/_scripts/sync.py"
+# o explícito:
+python sync.py --project /ruta/a/mi-proyecto [--slug nombre]
 ```
 
-El script:
-1. Detecta el proyecto desde el `cwd` (o `--project <ruta>`).
-2. Genera dashboard recursivo de `figures/` (carpetas anidadas → árbol plegable).
-3. Copia el HTML a `lab-fig-46aprgpa/<slug>/index.html`.
-4. Refresca el `index.html` raíz con el listado actualizado.
-5. `git add . && git commit && git push`.
-6. Imprime URL final.
+Escanea `figures/` con cualquier anidación. Carpetas que empiezan por `_` o `.`
+se ignoran (p. ej. `_code`, `.git`).
 
-URL final: `https://jinfama.github.io/lab-fig-46aprgpa/<proyecto-slug>/`
+### Modo PDF
+
+```bash
+python sync.py --pdf /ruta/a/manuscript.pdf [--slug nombre] [--title "Texto"] [--dpi 150]
+```
+
+Renderiza cada página como JPEG a 150 DPI por defecto, las apila en una página
+HTML con scroll continuo y modal de zoom. Bueno para leer manuscritos largos
+desde el móvil.
+
+### Banderas comunes
+
+- `--no-push` — solo genera local, no hace commit/push.
+- `--slug X` — fuerza el nombre de la subcarpeta del hub.
+
+URL final: `https://jinfama.github.io/lab-fig-46aprgpa/<slug>/`
 
 ## Convención de figuras esperada en cada proyecto
 

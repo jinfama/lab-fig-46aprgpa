@@ -1,16 +1,18 @@
-"""Sync a project's figures dashboard to the lab-fig hub.
+"""Sync a project artifact (figures dashboard OR PDF as HTML) to the lab-fig hub.
 
-Workflow:
-  1. From a project folder (cwd or --project), find figures/.
-  2. Generate dashboard.html recursively (via build_dashboard).
-  3. Copy to <hub>/<project-slug>/index.html.
-  4. Refresh hub root index.html listing all projects.
-  5. git add + commit + push from hub.
-  6. Print final public URL.
+Two modes:
+  --project <path>   → recursive figures dashboard from <path>/figures/
+  --pdf <pdf-path>   → render PDF pages as JPEG-embedded HTML
+
+Both modes:
+  - Write to <hub>/<slug>/index.html
+  - Refresh hub root index.html
+  - git add + commit + push
+  - Print public URL
 
 Usage:
-  cd /path/to/my-project
-  python sync.py [--project /path] [--slug name] [--no-push]
+  python sync.py --project /path/to/project [--slug name] [--no-push]
+  python sync.py --pdf /path/to/manuscript.pdf [--slug name] [--dpi 150]
 """
 
 import argparse
@@ -21,9 +23,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Allow importing build_dashboard from same folder
+# Allow importing builders from same folder
 sys.path.insert(0, str(Path(__file__).parent))
 from build_dashboard import build_dashboard  # noqa: E402
+from build_paper_html import build_paper_html  # noqa: E402
 
 HUB_ROOT = Path(__file__).resolve().parent.parent
 GITHUB_USER = "jinfama"
@@ -160,13 +163,65 @@ def sync_project(project_dir: Path, slug: str | None, push: bool) -> None:
     print(f"  Project: {public_url}")
 
 
+def sync_pdf(pdf_path: Path, slug: str | None, push: bool,
+             dpi: int, quality: int, title: str | None) -> None:
+    if not pdf_path.is_file():
+        raise SystemExit(f"PDF not found: {pdf_path}")
+
+    pdf_slug = slug or slugify(pdf_path.stem)
+    pdf_hub_dir = HUB_ROOT / pdf_slug
+    pdf_hub_dir.mkdir(exist_ok=True)
+    out_path = pdf_hub_dir / "index.html"
+
+    pdf_title = title or pdf_path.stem
+    print(f"[sync] rendering PDF {pdf_path} ...")
+    build_paper_html(pdf_path, pdf_title, out_path, dpi=dpi, quality=quality)
+
+    print(f"[sync] refreshing hub root index ...")
+    root_index = HUB_ROOT / "index.html"
+    root_index.write_text(render_root_index(HUB_ROOT), encoding="utf-8")
+
+    if push:
+        print(f"[sync] git add + commit + push ...")
+        run_git(HUB_ROOT, "add", pdf_slug, "index.html")
+        try:
+            run_git(HUB_ROOT, "commit", "-m", f"Update {pdf_slug} (PDF as HTML)")
+        except RuntimeError as e:
+            if "nothing to commit" in str(e).lower():
+                print("[sync] no changes to commit")
+            else:
+                raise
+        else:
+            run_git(HUB_ROOT, "push")
+
+    public_url = f"{PUBLIC_URL_BASE}/{pdf_slug}/"
+    print(f"\n[sync] DONE")
+    print(f"  Hub:     {PUBLIC_URL_BASE}/")
+    print(f"  PDF:     {public_url}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--project", type=Path, default=Path.cwd(),
-                        help="Project folder (default: cwd)")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--project", type=Path, default=None,
+                      help="Project folder containing figures/ (default: cwd if no --pdf)")
+    mode.add_argument("--pdf", type=Path, default=None,
+                      help="Path to a PDF to render as HTML")
     parser.add_argument("--slug", default=None,
-                        help="Override project slug (default: derived from folder name)")
+                        help="Override slug (default: derived from project/PDF name)")
     parser.add_argument("--no-push", action="store_true",
                         help="Skip git commit/push (only update local files)")
+    parser.add_argument("--title", default=None,
+                        help="Override displayed title (PDF mode only)")
+    parser.add_argument("--dpi", type=int, default=150,
+                        help="Render DPI for PDF mode (default 150)")
+    parser.add_argument("--quality", type=int, default=80,
+                        help="JPEG quality for PDF mode (default 80)")
     args = parser.parse_args()
-    sync_project(args.project.resolve(), args.slug, push=not args.no_push)
+
+    if args.pdf:
+        sync_pdf(args.pdf.resolve(), args.slug, push=not args.no_push,
+                 dpi=args.dpi, quality=args.quality, title=args.title)
+    else:
+        project_dir = (args.project or Path.cwd()).resolve()
+        sync_project(project_dir, args.slug, push=not args.no_push)
