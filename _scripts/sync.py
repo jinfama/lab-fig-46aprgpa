@@ -30,6 +30,10 @@ GITHUB_USER = "jinfama"
 HUB_REPO_NAME = HUB_ROOT.name
 PUBLIC_URL_BASE = f"https://{GITHUB_USER}.github.io/{HUB_REPO_NAME}"
 
+# Inline git identity, no persistent config write.
+GIT_USER_NAME = "Juan Infante-Amate"
+GIT_USER_EMAIL = "jinfama@ugr.es"
+
 
 def slugify(s: str) -> str:
     s = re.sub(r"[^\w\s-]", "", s.lower())
@@ -107,9 +111,13 @@ def render_root_index(hub_root: Path) -> str:
 
 
 def run_git(hub_root: Path, *args: str) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=hub_root, capture_output=True, text=True
-    )
+    cmd = [
+        "git",
+        "-c", f"user.name={GIT_USER_NAME}",
+        "-c", f"user.email={GIT_USER_EMAIL}",
+        *args,
+    ]
+    result = subprocess.run(cmd, cwd=hub_root, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed:\n{result.stderr}")
     return result.stdout
