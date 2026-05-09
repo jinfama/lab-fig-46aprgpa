@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Spain MFA — STATUS</title>
+<style>
+:root {
+    --fg: #222;
+    --bg: #fcfaf5;
+    --muted: #666;
+    --red: #E64B35;
+    --teal: #00A087;
+    --blue: #3C5488;
+    --cyan: #4DBBD5;
+    --cream: #F5F0E8;
+    --rule: #e3ddd0;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    line-height: 1.55;
+    font-size: 15px;
+}
+h1, h2, h3, h4 {
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    color: var(--red);
+    line-height: 1.25;
+    margin-top: 2.2rem;
+    margin-bottom: 0.6rem;
+}
+h1 { font-size: 1.9rem; border-bottom: 3px solid var(--red); padding-bottom: .4rem; }
+h2 { font-size: 1.35rem; color: var(--teal); border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { font-size: 1.1rem; color: var(--blue); }
+h4 { font-size: 1.0rem; color: var(--muted); }
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: var(--cream);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+}
+pre {
+    background: var(--cream);
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--teal);
+    overflow-x: auto;
+    border-radius: 3px;
+    font-size: 0.88em;
+}
+pre code { background: transparent; padding: 0; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.93em;
+    background: #fff;
+}
+th, td {
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: var(--cream); color: var(--blue); font-weight: 600; }
+tr:nth-child(even) td { background: #fbf8f2; }
+blockquote {
+    border-left: 3px solid var(--cyan);
+    margin: 1rem 0;
+    padding: 0.2rem 1rem;
+    color: var(--muted);
+    background: var(--cream);
+    font-style: italic;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+ul, ol { margin: 0.4rem 0 0.8rem 0; padding-left: 1.6rem; }
+li { margin: 0.2rem 0; }
+.footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.85em;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<h1 id="status-spain-mfa-dataset">STATUS — Spain MFA Dataset</h1>
+<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure post cross-audit 2026-05-09).</em></p>
+<p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
+<hr />
+<h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
+<p>Reconstrucción de las series anuales nacionales <strong>1860–2024</strong> de flujos
+de materiales de España (Domestic Extraction, Imports, Exports y DMC)
+clasificadas en <strong>38 subcategorías EW-MFA</strong> (Eurostat 2018), agrupadas
+en 4 macrocategorías: MF1 Biomasa, MF2 Metales, MF3 Minerales no
+metálicos, MF4 Combustibles fósiles.</p>
+<p><code>mfa/</code> es un dataset <strong>agregador</strong>: no extrae primarias propias —
+consume <code>data/final/</code> de los datasets upstream (<code>mining/</code>, <code>agriculture/</code>,
+<code>forest/</code>, <code>trade/</code>) y los re-codifica al estándar EW-MFA. Doble
+validación: vs Eurostat env_ac_mfa (1995–2024) y vs MFA legacy v2.0
+(1860–2017).</p>
+<p>Output canónico: <code>data/final/mfa_cahe_schema.csv</code> — 5 365 filas,
+13 columnas CAHE (year, indicator, subindicator, unit, value, province,
+cod_prov, nuts3, source_dataset, source_level, estimation_method,
+confidence, notes).</p>
+<hr />
+<h2 id="2-estructura-general">2. Estructura general</h2>
+<pre><code>mfa/
+├── README.md                    # Descripción general
+├── CHANGELOG.md                 # Historial cronológico (creado 2026-05-09)
+├── STATUS.html                  # Render navegable de docs/STATUS.md
+├── SOURCES.html                 # Render navegable de docs/SOURCES.md
+├── AGENTS.md                    # Contrato multi-agente (agents-protocol)
+├── mfa.Rproj                    # Excepción D3: RStudio
+├── .gitignore
+│
+├── R/                           # Pipeline R (scripts numerados 00–10)
+│   ├── 00_config.R
+│   ├── 01_import_from_mining.R   ┐
+│   ├── 02_import_from_agriculture.R ├ Importadores upstream
+│   ├── 03_import_from_forest.R     │
+│   ├── 04_import_from_trade.R      ┘
+│   ├── 05_load_sources.R         # Consolida en long format
+│   ├── 06_classify_ewmfa.R       # Aplica códigos EW-MFA
+│   ├── 07_integrate.R            # Produce data/final/mfa_*.csv
+│   ├── 08_dmc.R                  # DMC = DE + IMP - EXP
+│   ├── 09_validate.R             # vs Eurostat env_ac_mfa
+│   └── 10_validate_legacy.R      # vs MFA legacy v2.0
+│
+├── data/
+│   ├── raw/                     # Insumos — ver docs/SOURCES.md
+│   │   ├── from_mining/         # 🟡 disputa F02 (snapshots upstream)
+│   │   ├── from_agriculture/    # 🟡 disputa F02
+│   │   ├── from_forest/         # 🟡 disputa F02
+│   │   ├── from_trade/          # 🟡 disputa F02
+│   │   ├── legacy_seriemfa/     # 🟠 fallback temporal
+│   │   └── references/          # 🟢 Eurostat env_ac_mfa
+│   ├── processed/               # 05_sources_long.csv, 06_ewmfa_coded.csv
+│   └── final/
+│       ├── mfa_cahe_schema.csv          (5 365 filas, 13 cols)
+│       ├── mfa_desagregado_completo.csv (schema legacy v2.0)
+│       ├── mfa_detalle_sustancias.csv
+│       ├── mfa_dmc.csv
+│       ├── mfa_validacion_eurostat.csv
+│       └── mfa_validacion_legacy.csv
+│
+├── figures/                     # 9 PNGs /fig-nature + scripts en _code/
+│
+├── docs/
+│   ├── STATUS.md                # (este archivo)
+│   ├── SOURCES.md               # File-level inventory + checksums
+│   ├── MASTER_PLAN.md
+│   ├── architecture.md          # Eje declarado D1 (creado 2026-05-09)
+│   ├── methodology_report.md    # Metodología completa v2.0 (canónica)
+│   ├── methodology/
+│   │   └── OVERVIEW.md          # Índice → methodology_report.md (2026-05-09)
+│   ├── _agents/                 # ACTIVE.md + log.md
+│   ├── agent_debates/           # 2026-05-09_audit_structure.md
+│   └── references/
+│
+├── zenodo/                      # Deposit draft (README + metodología PDF + Excel)
+└── _archive/                    # Outputs legacy del pipeline anterior
+</code></pre>
+<p><strong>Notas estructurales (2026-05-09):</strong></p>
+<ul>
+<li>Eje canónico declarado: por <strong>INDICADOR</strong> (D1). Ver <code>docs/architecture.md</code>.</li>
+<li>Buckets propuestos para <code>code/</code>, <code>figures/</code> y <code>data/processed/</code>:
+  <code>MF1_biomasa/</code>, <code>MF2_metales/</code>, <code>MF3_no_metalicos/</code>, <code>MF4_fosiles/</code>,
+  <code>comparatives/</code> + capa transversal <code>code/load_from_upstream/</code>.</li>
+<li><strong>Migración física aplazada</strong>: <code>R/</code> se mantiene plano hasta IMPLEMENT
+  separado (sub-arbitraje <code>R/</code>→<code>code/</code> Q01 pendiente de ratificación PI).</li>
+<li><code>figures/_code/</code> global aún no reorganizado por bucket — pendiente.</li>
+<li><code>data/raw/from_*</code> queda intacto hasta arbitraje PI sobre <strong>F02</strong>
+  (raw inmutable vs <code>data/processed/upstream/&lt;source&gt;/</code>).</li>
+</ul>
+<hr />
+<h2 id="3-lo-que-hay-ahora-masters-outputs">3. Lo que hay AHORA — masters / outputs</h2>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th style="text-align: right;">Filas</th>
+<th>Columnas clave</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/final/mfa_cahe_schema.csv</code></td>
+<td style="text-align: right;">5 365</td>
+<td>13 cols CAHE estándar</td>
+<td>Para visor cahe.es y Zenodo</td>
+</tr>
+<tr>
+<td><code>data/final/mfa_desagregado_completo.csv</code></td>
+<td style="text-align: right;">5 365</td>
+<td>year, macro, ewmfa_parent, ewmfa_code, ewmfa_label, value_t, value_ths_t, sustancias</td>
+<td>Schema legacy v2.0</td>
+</tr>
+<tr>
+<td><code>data/final/mfa_detalle_sustancias.csv</code></td>
+<td style="text-align: right;">~12 500</td>
+<td>nombre, sector, origen, value_t</td>
+<td>Drill-down por sustancia</td>
+</tr>
+<tr>
+<td><code>data/final/mfa_dmc.csv</code></td>
+<td style="text-align: right;">634</td>
+<td>year, macro, de_ths_t, imp_ths_t, exp_ths_t, dmc_ths_t</td>
+<td>DMC por 4 macrocats</td>
+</tr>
+<tr>
+<td><code>data/final/mfa_validacion_eurostat.csv</code></td>
+<td style="text-align: right;">~215</td>
+<td>year, ewmfa_parent, hist_ths_t, euro_ths_t, diff_pct</td>
+<td>Comparativa Eurostat</td>
+</tr>
+<tr>
+<td><code>data/final/mfa_validacion_legacy.csv</code></td>
+<td style="text-align: right;">—</td>
+<td>—</td>
+<td>Comparativa MFA legacy v2.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Indicadores activos (4 macrocategorías + 38 subcategorías)</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Macro</th>
+<th style="text-align: right;">Subcats</th>
+<th>Cobertura</th>
+<th>Fuente upstream</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF1 Biomasa</td>
+<td style="text-align: right;">15</td>
+<td>1860–2021 (extendiéndose a 2024)</td>
+<td><code>agriculture/</code>, <code>forest/</code>, <code>legacy_seriemfa/</code> (pesca/pastos)</td>
+</tr>
+<tr>
+<td>MF2 Metales</td>
+<td style="text-align: right;">9</td>
+<td>1860–2017</td>
+<td><code>mining/</code></td>
+</tr>
+<tr>
+<td>MF3 Minerales no metálicos</td>
+<td style="text-align: right;">9</td>
+<td>1860–2017</td>
+<td><code>mining/</code></td>
+</tr>
+<tr>
+<td>MF4 Combustibles fósiles</td>
+<td style="text-align: right;">6 + MF4_other</td>
+<td>1860–2017</td>
+<td><code>mining/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Flujos: DE (todas), IMP/EXP (vía <code>trade/</code>), DMC = DE + IMP − EXP.</p>
+<hr />
+<h2 id="4-inventario-de-fuentes-resumen">4. Inventario de fuentes (resumen)</h2>
+<p>Tabla file-level completa con SHA-256 en
+<a href="SOURCES.md"><code>docs/SOURCES.md</code></a>. Resumen por bucket:</p>
+<table>
+<thead>
+<tr>
+<th>Bucket</th>
+<th style="text-align: right;">Archivos</th>
+<th>Status</th>
+<th>Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_agriculture/</code></td>
+<td style="text-align: right;">2</td>
+<td>🟡 disputa F02</td>
+<td>MF11x cultivos</td>
+</tr>
+<tr>
+<td><code>from_forest/</code></td>
+<td style="text-align: right;">1</td>
+<td>🟡 disputa F02</td>
+<td>MF131/MF132 madera+leña</td>
+</tr>
+<tr>
+<td><code>from_mining/</code></td>
+<td style="text-align: right;">3</td>
+<td>🟡 disputa F02</td>
+<td>MF2/MF3/MF4</td>
+</tr>
+<tr>
+<td><code>from_trade/</code></td>
+<td style="text-align: right;">1</td>
+<td>🟡 disputa F02</td>
+<td>IMP/EXP</td>
+</tr>
+<tr>
+<td><code>legacy_seriemfa/</code></td>
+<td style="text-align: right;">2</td>
+<td>🟠 fallback</td>
+<td>MF122 pastos + MF141 pesca + validación legacy</td>
+</tr>
+<tr>
+<td><code>references/</code></td>
+<td style="text-align: right;">5</td>
+<td>🟢 verified-primary</td>
+<td>Eurostat env_ac_mfa (validación)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-cobertura-general">5. Cobertura general</h2>
+<table>
+<thead>
+<tr>
+<th>Macro</th>
+<th>1860</th>
+<th>1900</th>
+<th>1950</th>
+<th>2000</th>
+<th>2017</th>
+<th>2024</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MF1 Biomasa</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>🔴 gap upstream agriculture 2019–2024</td>
+</tr>
+<tr>
+<td>MF2 Metales</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>🔴 mining cap 2017</td>
+</tr>
+<tr>
+<td>MF3 No metálicos</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>🔴 mining cap 2017</td>
+</tr>
+<tr>
+<td>MF4 Fósiles</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>🔴 mining cap 2017</td>
+</tr>
+<tr>
+<td>IMP/EXP (trade)</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐</td>
+<td>⭐ (hasta 2024)</td>
+</tr>
+</tbody>
+</table>
+<p>🔴 = sub-representado / pendiente cierre upstream    ⭐ = bien cubierto</p>
+<hr />
+<h2 id="6-pendientes-priorizados">6. Pendientes priorizados</h2>
+<h3 id="bloqueantes-zenodo-v21">Bloqueantes (Zenodo v2.1)</h3>
+<ul>
+<li><strong>MF2/MF21/MF22 conversión mineral→metal</strong>: divergencia -69% vs Eurostat por bug en <code>mining/</code> upstream. Bloqueado por revisión <code>datasets/mining/</code>.</li>
+<li><strong>MF13/MF14 (madera/pesca)</strong>: divergencia +112% / +143% — pendiente cierre <code>datasets/forest/</code>.</li>
+<li><strong>MF42 (petróleo+gas)</strong>: -29% vs Eurostat — revisar conversiones.</li>
+<li><strong>Cobertura post-2017</strong>: extender <code>mining/</code> 2018–2024 vía MITECO/Eurostat.</li>
+</ul>
+<h3 id="estructural-cross-audit-2026-05-09">Estructural (cross-audit 2026-05-09)</h3>
+<ul>
+<li><strong>F02 arbitraje PI</strong>: decidir si <code>data/raw/from_*</code> son raw inmutables o se mueven a <code>data/processed/upstream/&lt;source&gt;/</code>. Sesión IMPLEMENT separada tras decisión.</li>
+<li><strong>Q01 ratificación</strong>: <code>R/</code> → <code>code/</code> (consenso auditor+auditado). Sesión IMPLEMENT separada.</li>
+<li><strong>F04 figures por D1</strong>: reorganizar <code>figures/_code/</code> global a <code>figures/{MF1..MF4|comparatives}/_code/</code>.</li>
+<li><strong>F05 methodology incremental</strong>: ir partiendo <code>methodology_report.md</code> por módulo a medida que se edite cada parte del pipeline.</li>
+</ul>
+<h3 id="bloqueado-por-usuario">Bloqueado por usuario</h3>
+<ul>
+<li>Plan editorial concreto para paper que use <em>este</em> dataset (<code>MASTER_PLAN.md</code> campo Outputs comprometidos).</li>
+<li>DOI Zenodo target v2.1.</li>
+<li>Decisión MF11 cultivos: <code>production_t</code> directo vs ajuste peso fresco "Eurostat standard".</li>
+<li>Decisión residuos MF12: ¿calcular paja con coeficientes FAO o quedarse sin ellos?</li>
+</ul>
+<hr />
+<h2 id="7-como-usarlo">7. Cómo usarlo</h2>
+<h3 id="leer-el-dataset-r">Leer el dataset (R)</h3>
+<pre><code class="language-r">library(readr)
+mfa &lt;- read_csv(&quot;data/final/mfa_cahe_schema.csv&quot;)
+
+library(dplyr)
+biomasa_macro &lt;- mfa |&gt;
+  filter(indicator == &quot;MF1_biomasa&quot;, subindicator == &quot;total&quot;)
+</code></pre>
+<h3 id="leer-el-dataset-python">Leer el dataset (Python)</h3>
+<pre><code class="language-python">import pandas as pd
+mfa = pd.read_csv(&quot;data/final/mfa_cahe_schema.csv&quot;)
+# Columnas: year, indicator, subindicator, unit, value, province,
+#           cod_prov, nuts3, source_dataset, source_level,
+#           estimation_method, confidence, notes
+</code></pre>
+<h3 id="regenerar-desde-primarias-pipeline-r">Regenerar desde primarias (pipeline R)</h3>
+<pre><code class="language-r">source(&quot;R/00_config.R&quot;)
+source(&quot;R/01_import_from_mining.R&quot;)
+source(&quot;R/02_import_from_agriculture.R&quot;)
+source(&quot;R/03_import_from_forest.R&quot;)
+source(&quot;R/04_import_from_trade.R&quot;)
+source(&quot;R/05_load_sources.R&quot;)
+source(&quot;R/06_classify_ewmfa.R&quot;)
+source(&quot;R/07_integrate.R&quot;)
+source(&quot;R/08_dmc.R&quot;)
+source(&quot;R/09_validate.R&quot;)
+source(&quot;R/10_validate_legacy.R&quot;)
+</code></pre>
+<h3 id="regenerar-figuras">Regenerar figuras</h3>
+<pre><code class="language-bash">python figures/_code/run_all.py
+</code></pre>
+<h3 id="regenerar-checksums-renders">Regenerar checksums + renders</h3>
+<pre><code class="language-bash">python docs/_compute_source_checksums.py --write
+python docs/_render_sources_html.py
+python docs/_render_status_html.py
+</code></pre>
+<hr />
+<h2 id="8-decisiones-del-usuario-vigentes">8. Decisiones del usuario vigentes</h2>
+<ul>
+<li><strong>Cero alucinaciones en citas</strong>: <code>REFERENCE_PENDING_&lt;tag&gt;</code> permitido en intermedios, prohibido en <code>data/final/</code> y <code>zenodo/</code>.</li>
+<li><strong>Clasificación EW-MFA estricta</strong> (Eurostat 2018): los 38 subcódigos en <code>R/00_config.R</code> son la única taxonomía aceptada.</li>
+<li><strong>Doble validación obligatoria</strong> (Eurostat + legacy v2.0). Cualquier divergencia &gt;10% por subcat debe estar documentada.</li>
+<li><strong>Identidad DMC = DE + IMP − EXP estricta</strong> (sin smoothing ni ad-hoc).</li>
+<li><strong>Pesca y pastos</strong> siguen como fallback <code>legacy_seriemfa</code> hasta que upstream los provea (cambio = debate explícito).</li>
+<li><strong>D1 eje por INDICADOR</strong> (PI 2026-05-09): aplicar a <code>code/</code>, <code>figures/</code>, <code>data/processed/</code>. Migración física aplazada hasta IMPLEMENT separado.</li>
+<li><strong>D2 WORK_PLAN.md</strong> → <code>docs/WORK_PLAN.md</code>.</li>
+<li><strong>D3 <code>mfa.Rproj</code></strong> aceptado como excepción RStudio.</li>
+<li><strong>D4 Extractores</strong> futuros → <code>code/extract/&lt;source&gt;/</code> (mfa actualmente no tiene extractores propios).</li>
+</ul>
+<hr />
+<h2 id="9-health-check-actual">9. Health check actual</h2>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Filas CSV final (<code>mfa_cahe_schema.csv</code>)</td>
+<td>5 365</td>
+</tr>
+<tr>
+<td>Macrocategorías activas</td>
+<td>4 / 4</td>
+</tr>
+<tr>
+<td>Subcategorías EW-MFA</td>
+<td>38 / 39</td>
+</tr>
+<tr>
+<td>Cobertura</td>
+<td>1860–2021 (mining hasta 2017; trade hasta 2024)</td>
+</tr>
+<tr>
+<td>DMC vs Eurostat 2000–2015 (mean diff)</td>
+<td>&lt;5% ✅</td>
+</tr>
+<tr>
+<td>MF1 Biomasa vs Eurostat 1995–2021</td>
+<td>+6% ✅</td>
+</tr>
+<tr>
+<td>MF11 Cultivos vs Eurostat</td>
+<td>+0.1% ✅</td>
+</tr>
+<tr>
+<td>MF3 No metálicos vs Eurostat</td>
+<td>+2% ✅</td>
+</tr>
+<tr>
+<td>MF2 Metales vs Eurostat</td>
+<td>-69% 🔴 (bloqueante upstream mining)</td>
+</tr>
+<tr>
+<td>MF13 Madera vs Eurostat</td>
+<td>+112% 🔴 (bloqueante upstream forest)</td>
+</tr>
+<tr>
+<td>Documentos vivos completos</td>
+<td>✅ AGENTS.md, MASTER_PLAN.md, STATUS.md, SOURCES.md, CHANGELOG.md, methodology/OVERVIEW.md, architecture.md, _agents/, agent_debates/</td>
+</tr>
+<tr>
+<td>Archivos en <code>data/raw/</code> con SHA-256</td>
+<td>14 / 14</td>
+</tr>
+<tr>
+<td>F02 arbitraje pendiente PI</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>F03 (<code>R/</code>→<code>code/</code>) sub-arbitraje pendiente PI</td>
+<td>🟡</td>
+</tr>
+</tbody>
+</table>
+<div class="footer">Rendered from <code>docs/STATUS.md</code> via <code>docs/_render_status_html.py</code>.</div>
+</body>
+</html>

@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Spain Trade — SOURCES</title>
+<style>
+:root {
+    --fg: #222;
+    --bg: #fcfaf5;
+    --muted: #666;
+    --red: #E64B35;
+    --teal: #00A087;
+    --blue: #3C5488;
+    --cyan: #4DBBD5;
+    --cream: #F5F0E8;
+    --rule: #e3ddd0;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    line-height: 1.55;
+    font-size: 15px;
+}
+h1, h2, h3, h4 {
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    color: var(--red);
+    line-height: 1.25;
+    margin-top: 2.2rem;
+    margin-bottom: 0.6rem;
+}
+h1 { font-size: 1.9rem; border-bottom: 3px solid var(--red); padding-bottom: .4rem; }
+h2 { font-size: 1.35rem; color: var(--teal); border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { font-size: 1.05rem; color: var(--blue); font-family: "Consolas", "Courier New", monospace; }
+h4 { font-size: 1.0rem; color: var(--muted); }
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: var(--cream);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+    word-break: break-all;
+}
+pre {
+    background: var(--cream);
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--teal);
+    overflow-x: auto;
+    border-radius: 3px;
+    font-size: 0.88em;
+}
+pre code { background: transparent; padding: 0; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.92em;
+    background: #fff;
+}
+th, td {
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: var(--cream); color: var(--blue); font-weight: 600; width: 22%; }
+tr:nth-child(even) td { background: #fbf8f2; }
+blockquote {
+    border-left: 3px solid var(--cyan);
+    margin: 1rem 0;
+    padding: 0.2rem 1rem;
+    color: var(--muted);
+    background: var(--cream);
+    font-style: italic;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+ul, ol { margin: 0.4rem 0 0.8rem 0; padding-left: 1.6rem; }
+li { margin: 0.2rem 0; }
+.footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.85em;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<h1 id="sources-spain-trade-dataset">SOURCES — Spain Trade Dataset</h1>
+<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure)</em></p>
+<p>Inventario file-level de toda la primaria bajo <code>data/raw/</code>. Una entrada
+por archivo atómico con SHA256, citation, status semáforo, used by
+y download script. Render navegable: <code>SOURCES.html</code> en raíz.</p>
+<p>Convenciones:</p>
+<ul>
+<li><strong>Status</strong>: 🟢 verified-by-user / 🟡 agent-verified-cached / 🔴 unverified-or-orphan.</li>
+<li><strong>Provenance</strong>: 1-tier (primaria oficial), 2-tier (compilación
+  publicada), 3-tier (re-compilación secundaria — requiere chain en
+  notas).</li>
+<li><strong>Used by</strong>: scripts del pipeline que consumen el archivo. <code>ORPHAN</code>
+  cuando el path está declarado en <code>00_config.R</code> pero ningún script lo
+  lee.</li>
+<li><strong>Download script</strong>: si la fuente requiere conversión / extracción,
+  enlace al script en <code>code/extract/&lt;source&gt;/</code> (decisión D4 forest).
+  Trade actualmente no tiene extractores live; <code>_archive/</code> contiene
+  helpers OCR históricos no productivos.</li>
+</ul>
+<p>Las semillas de este documento provienen de
+<code>docs/references/inventario_fuentes.md</code> (2026-03-06, v2). Esa fuente
+queda en su ubicación actual hasta que el PI arbitre Q02 (F07
+cross-audit 2026-05-09).</p>
+<p>Re-generar checksums: <code>python docs/_compute_source_checksums.py</code>.
+Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
+<hr />
+<h2 id="bucket-database">bucket <code>database/</code></h2>
+<h3 id="datarawdatabasedatabasexlsx"><code>data/raw/database/DataBASE.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>5.3 MB (5 332 408 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>85f08db97dc99440f9a59420b18c7f4ce526465117e3203393d385a146c87089</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — compilación propia a partir de anuarios estadísticos españoles + series publicadas (Nadal, Barciela, Zambrana) + Comtrade post-1962</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Nadal, J., Barciela, C., Zambrana, J. F. et al. (compilación interna del PI; ver <code>docs/references/metodologia_completa.md</code>)</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1860-2016, 115 productos EnEm, 2 flujos (Imp / Exp wide)</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>Toneladas métricas</td>
+</tr>
+<tr>
+<td>Tipo</td>
+<td>Primaria del pipeline directo histórico</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 agent-verified-cached</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/01_direct_historical.R</code>, paths definidos en <code>R/00_config.R</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a (archivo entregado por el PI)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Hojas usadas: <code>ImpW</code>, <code>ExpW</code>. Otras hojas (ImpLong, ExpLong, MFA, EFA, Energy Emb, Nitrog, SICT) no consumidas en pipeline live. Códigos de estimación Est.1-Est.3 documentados en <code>docs/methodology/01_direct_historical.md</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawdatabasehistphytradxlsx"><code>data/raw/database/HistPhyTrad.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>3.8 MB (3 814 865 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>2cc155d257911692edb5853c9cffbab09bc535f4e073b857846037f8240b4e06</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — companion histórico de DataBASE.xlsx</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Compilación interna del PI</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1860-2016 (Top 15 / Top 50 / Rest tiers) + 1962-2013 (All, Comtrade/FAO)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🔴 ORPHAN-en-pipeline-live</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><strong>ORPHAN</strong> — path <code>f_histphy</code> declarado en <code>R/00_config.R</code> pero ningún script lo <code>read_xlsx()</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Excluido de Git por tamaño (&gt;3 MB OK, pero gitignored junto con la <code>.dta</code>). Hoja <code>Sources</code> documenta los 4 tiers temporales útiles para diagnóstico. Decisión PI pendiente: keep o drop.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawdatabaseseriesxlsx"><code>data/raw/database/series.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>717 KB (717 621 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>27f4bcd8e167a4ef07b9ffd97efa955336de43a3f042cf92e125e3e04e4c4b63</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — desagregaciones manuales de productos complejos</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Compilación interna del PI</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1860-1959/2013 según hoja</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🔴 ORPHAN-en-pipeline-live</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><strong>ORPHAN</strong> — path <code>f_series</code> declarado en <code>R/00_config.R</code>, ningún <code>read_xlsx()</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>9 hojas (excep, mCh, xCh, mPet, mM, xMMet, mMet, af, pruebas) con fórmulas cruzadas. Resultados ya incorporados en DataBASE.xlsx — útil sólo para auditoría manual.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-bilateral">bucket <code>bilateral/</code></h2>
+<h3 id="datarawbilateralbilateralxlsx"><code>data/raw/bilateral/Bilateral.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>165 KB (164 820 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>ecabfd33b17f5b5b43b8096fc0625e7baaae5655bd761a920f379396f55ab33b</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>1-tier — extracción manual de Anuarios de Estadística del Comercio Exterior (PDFs)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Anuarios de Estadística del Comercio Exterior de España (1870, 1890, 1910, 1930, 1951)</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>5 snapshots: 1870, 1890, 1910, 1930, 1951; ~91 productos × ~20 socios + TOTAL</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>Toneladas (con mezcla histórica de kg en algunas hojas)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟢 verified — extracción manual del PI</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/04_bilateral_snapshots.R</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a (extracción manual; los PDFs source viven en <code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/spain_macro/spain_trade/</code>)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>10 hojas datos (5 años × imp/exp) + 1 plantilla. Filas en español → mapeadas a EnEm vía <code>Factors.xlsx</code> (hoja <code>Bilateral_Product</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawbilateralfactorsxlsx"><code>data/raw/bilateral/Factors.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>75 KB (75 419 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>35f16b056a07273692ba6ff5c3bf42a2594e72dad93cb90253719dd187fa6afc</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — concordancias del proyecto Spain_Metabolism del PI</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Compilación interna del PI</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>static</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 agent-verified-cached</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/04_bilateral_snapshots.R</code>; hojas activas <code>Bilateral_Product</code> (343 nombres → 94 EnEm) y <code>Bilateral_Area</code> (20 socios → 8 regiones). Hojas <code>Direct</code>, <code>Codes</code>, <code>Comt_Comm</code>, <code>Comt_Area</code>, <code>Country_Cat</code> no consumidas.</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Crosswalk maestro <code>partner_crosswalk</code> (20 socios pre-1962) reside aquí. Necesario harmonizar con nombres Comtrade post-1962 (English) — ver <code>_AUDIT.md</code> §4.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-concordances">bucket <code>concordances/</code></h2>
+<h3 id="datarawconcordanceshs6_to_enemcsv"><code>data/raw/concordances/hs6_to_enem.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>737 KB (736 696 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>0b789e41dd520abf40d48b15d6b0c4e087a00d23bc8c92e55dd80793932f5709</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — concordancia del PI sobre HS6 (5 022 mapeos)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Compilación interna del PI sobre clasificación HS WCO</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>static (5 022 HS6 → 114 EnEm; <code>fo.ep</code> sin mapear)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟢 verified</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/00_config.R</code> (carga global), <code>R/02_direct_comtrade.R</code>, <code>R/06_bilateral_comtrade.R</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Pieza crítica del pipeline post-1962. Documentado en <code>docs/methodology/02_direct_comtrade.md</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawconcordancesfcl_to_enemcsv"><code>data/raw/concordances/fcl_to_enem.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>25 KB (25 205 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>2c3d2860cbc93401df0146024e85e28838599bb411ee34586f9f46f19ebb6cad</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — concordancia FAOSTAT FCL → EnEm</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Compilación interna del PI</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>static (453 FCL → 55 EnEm)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 ORPHAN-en-pipeline-live (KEEP — reservado para FAOSTAT futuro)</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><strong>ORPHAN</strong> — <code>f_fcl_enem</code> definido en <code>R/00_config.R</code>; reservado para sub-base FAOSTAT mencionada en config</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Mantener: el pipeline FAOSTAT está planificado pero no implementado.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawconcordancessitc1_to_hs0_from_rcsv"><code>data/raw/concordances/sitc1_to_hs0_from_R.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>213 KB (212 989 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>1dd45d28ef918b7835e96ec8b10ab63932f5d88426059c6d26e0b4b61af1f1e8</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — crosswalk SITC1 → HS0 (compilación R)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>UN concordance tables</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>static</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🔴 ORPHAN-en-pipeline-live</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><strong>ORPHAN</strong> — <code>f_sitc_hs</code> declarado en <code>R/00_config.R</code>, nunca leído</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Útil si se incorpora la serie pre-HS Comtrade (1962-1987). Decisión PI pendiente.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-ricardo">bucket <code>ricardo/</code></h2>
+<h3 id="datarawricardoricardo_spain_flowscsv"><code>data/raw/ricardo/ricardo_spain_flows.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>2.4 MB (2 477 909 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>24fe10b1aa42d3fa0ff9cde611938dde29dd4ff0500ac2cf230dbad11b8e8a46</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — extracción Spain del repositorio RICardo (Sciences Po médialab)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>RICardo Project, Sciences Po médialab. https://github.com/medialab/ricardo_data</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1787-1938; 20 528 registros Spain (9 182 reporter + 11 346 partner)</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>Monetario (francs, pounds, piastres…); requiere conversión</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 agent-verified-cached</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/08_monetary_diagnostics.R</code> (diagnóstico, no entra en serie física)</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>clonado desde <code>D:/ricardo_data/</code>; extracción Spain documentada en <code>docs/methodology/08_monetary_diagnostics.md</code></td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>100+ socios (incluyendo puertos individuales: Cádiz, Barcelona, Bilbao, Málaga). Útil para mirror trade y validación cruzada.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-tena">bucket <code>tena/</code></h2>
+<h3 id="datarawtenatena_cuadro87_bilateral_sharescsv"><code>data/raw/tena/tena_cuadro87_bilateral_shares.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>89 KB (89 064 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>812d49ccf2bde80f58c06cd444f3e5170d5d459fd2ef01d0605677bf2d9226ac</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>3-tier — Cuadro 8.7 de Tena Junguito en Carreras y Tafunell (eds.) 2005</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Tena Junguito, A. (2005), Cuadro 8.7. En Carreras, A. y Tafunell, X. (eds.), <em>Estadísticas históricas de España, siglos XIX-XX</em>, Fundación BBVA, pp. 614-625.</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1826-1999, 35 períodos quinquenales, 87 países/regiones</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>Porcentaje (%) — composición geográfica, no cantidades absolutas</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 agent-verified-cached</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/08_monetary_diagnostics.R</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>extracción documentada en <code>docs/methodology/08_monetary_diagnostics.md</code> (helper histórico <code>extract_tena_cuadro87_v2.py</code> en <code>_archive/</code>); PDF source en <code>OneDrive/03_research_resources/.../historical_statistics/</code></td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>2 362 registros formato largo. Detalle mucho mayor que los 20 socios de <code>Bilateral.xlsx</code>. Útil para desagregar cuotas y validar evolución temporal.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="datarawtenatena_cuadro87_widecsv"><code>data/raw/tena/tena_cuadro87_wide.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>19 KB (19 312 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>24c94e168bd7867e260d37ae579427d2932f52d2bd246f47c4a9509d3f5d6bcc</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>3-tier — misma fuente que <code>tena_cuadro87_bilateral_shares.csv</code>, formato wide</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Tena Junguito (2005) en Carreras y Tafunell (eds.), pp. 614-625.</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>idem</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>%</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🟡 agent-verified-cached</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/08_monetary_diagnostics.R</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>idem</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Versión derivada del long; mantener ambas para distintos joins.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-betran_huberman">bucket <code>betran_huberman/</code></h2>
+<h3 id="datarawbetran_hubermansampletradepolicydta"><code>data/raw/betran_huberman/sampletradepolicy.dta</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>84 MB (87 577 428 B)</td>
+</tr>
+<tr>
+<td>SHA256</td>
+<td><code>3e9b263a66c04b7366e71e8988a714f00733d6593f784eb9c38db6cdb3184800</code></td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>2-tier — replication package Bertran &amp; Huberman</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Bertran, F. y Huberman, M. (replication package; verificar referencia exacta antes de Zenodo)</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>1922-1935; 82 países × 263 SITC</td>
+</tr>
+<tr>
+<td>Unit</td>
+<td>Monetario (bilateral)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🔴 unverified — citation completa pendiente</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/08_monetary_diagnostics.R</code> (diagnóstico)</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>84 MB — gitignored. Contribuye sólo a diagnóstico, no a la serie física. Decisión Zenodo: incluir o excluir del deposit por tamaño + uso marginal.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="bucket-faostat">bucket <code>faostat/</code></h2>
+<h3 id="datarawfaostat"><code>data/raw/faostat/</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Size</td>
+<td>0 B (directorio vacío)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>🔴 placeholder — directorio vacío</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td>path declarado en <code>R/00_config.R</code> (<code>D:/data/agriculture/faostat</code>); ningún archivo local</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Reservado para sub-base FAOSTAT futura (Trade_CropsLivestock_E_All_Data, Spain Area Code 203, ~8 GB en <code>D:/faostat/</code>). Decisión PI pendiente: poblar o eliminar el directorio.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="dependencias-externas-no-en-dataraw">Dependencias externas (NO en <code>data/raw/</code>)</h2>
+<p>Documentadas para trazabilidad pero excluidas del repo por tamaño:</p>
+<table>
+<thead>
+<tr>
+<th>Path externo</th>
+<th>Contenido</th>
+<th>Cobertura</th>
+<th>Used by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>D:/data/trade/comtrade/data/final/db1_by_year/*.parquet</code></td>
+<td>UN Comtrade DB1 por año</td>
+<td>1962-2024</td>
+<td><code>R/02_direct_comtrade.R</code>, <code>R/06_bilateral_comtrade.R</code></td>
+</tr>
+<tr>
+<td><code>D:/data/agriculture/faostat/</code></td>
+<td>FAOSTAT bulk download</td>
+<td>1961-2023</td>
+<td>reservado (no live)</td>
+</tr>
+<tr>
+<td><code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/spain_macro/spain_trade/</code></td>
+<td>96 PDFs anuarios comercio exterior 1792-1962 (~15 GB)</td>
+<td>1792-1962</td>
+<td>extracción manual de los 5 snapshots; OCR helpers en <code>_archive/</code></td>
+</tr>
+<tr>
+<td><code>D:/ricardo_data/</code></td>
+<td>Repositorio RICardo clonado</td>
+<td>1787-1938</td>
+<td>fuente de <code>ricardo_spain_flows.csv</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="pendientes-q01-q02-cross-audit-2026-05-09">Pendientes Q01 / Q02 (cross-audit 2026-05-09)</h2>
+<ul>
+<li><strong>Q01 / F03</strong> — eje INDICADOR aprobado (D1 forest 2026-05-09);
+  buckets concretos en <code>R/</code>, <code>figures/</code>, <code>data/processed/</code> PENDIENTES
+  de arbitraje del PI. Ver <code>docs/architecture.md</code>.</li>
+<li><strong>Q02 / F07</strong> — los 4 markdown en <code>docs/references/</code> (incluyendo
+  <code>inventario_fuentes.md</code> que sirvió de semilla para este SOURCES.md)
+  esperan decisión: archivar / migrar parcial / mantener como
+  documentación complementaria. Esta sesión no los toca.</li>
+</ul>
+<div class="footer">Rendered from <code>docs/SOURCES.md</code> via <code>docs/_render_sources_html.py</code>. Checksums in <code>docs/_source_checksums.tsv</code>.</div>
+</body>
+</html>

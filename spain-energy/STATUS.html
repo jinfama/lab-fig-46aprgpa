@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Spain Energy — STATUS</title>
+<style>
+:root {
+    --fg: #222;
+    --bg: #fcfaf5;
+    --muted: #666;
+    --red: #E64B35;
+    --teal: #00A087;
+    --blue: #3C5488;
+    --cyan: #4DBBD5;
+    --cream: #F5F0E8;
+    --rule: #e3ddd0;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    line-height: 1.55;
+    font-size: 15px;
+}
+h1, h2, h3, h4 {
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    color: var(--red);
+    line-height: 1.25;
+    margin-top: 2.2rem;
+    margin-bottom: 0.6rem;
+}
+h1 { font-size: 1.9rem; border-bottom: 3px solid var(--red); padding-bottom: .4rem; }
+h2 { font-size: 1.35rem; color: var(--teal); border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { font-size: 1.1rem; color: var(--blue); }
+h4 { font-size: 1.0rem; color: var(--muted); }
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: var(--cream);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+}
+pre {
+    background: var(--cream);
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--teal);
+    overflow-x: auto;
+    border-radius: 3px;
+    font-size: 0.88em;
+}
+pre code { background: transparent; padding: 0; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.93em;
+    background: #fff;
+}
+th, td {
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: var(--cream); color: var(--blue); font-weight: 600; }
+tr:nth-child(even) td { background: #fbf8f2; }
+blockquote {
+    border-left: 3px solid var(--cyan);
+    margin: 1rem 0;
+    padding: 0.2rem 1rem;
+    color: var(--muted);
+    background: var(--cream);
+    font-style: italic;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+ul, ol { margin: 0.4rem 0 0.8rem 0; padding-left: 1.6rem; }
+li { margin: 0.2rem 0; }
+.footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.85em;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<h1 id="status-spain-energy">STATUS — Spain Energy</h1>
+<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure)</em></p>
+<p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
+<p>Fecha del snapshot técnico: <strong>2026-04-14</strong> (renombrado y migrado desde
+<code>STATE.md</code> raíz a <code>docs/STATUS.md</code> el 2026-05-09 en la aplicación de
+los findings F02/F05 del cross-audit estructura — ver
+<code>docs/agent_debates/2026-05-09_audit_structure.md</code> y <code>CHANGELOG.md</code>).</p>
+<p>Auditoría completa del proyecto, estado actual y ruta a Zenodo + visor CAHE.</p>
+<blockquote>
+<p><strong>TODO: completar inventario y cobertura.</strong> Tras la migración a
+<code>docs/STATUS.md</code> falta sincronizar este documento con las secciones
+canónicas que pide <code>project-organize</code>: (a) inventario de fuentes
+(resumen aquí, detalle en <code>docs/SOURCES.md</code>), (b) cobertura por
+indicador (ya parcial en §2.2 y §2.3), (c) "cómo usar este dataset".
+Mientras tanto el contenido vigente sigue siendo válido como
+snapshot operativo.</p>
+</blockquote>
+<hr />
+<h2 id="1-auditoria-realizada">1. Auditoría realizada</h2>
+<h3 id="11-limpieza-ejecutada">1.1 Limpieza ejecutada</h3>
+<table>
+<thead>
+<tr>
+<th>Cambio</th>
+<th>Motivo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>R/</code> pasa de 15 a <strong>9 scripts activos</strong></td>
+<td>Los 6 restantes tenían paths rotos o eran versiones antiguas superseded</td>
+</tr>
+<tr>
+<td>6 scripts movidos a <code>_archive/R_deprecated/</code></td>
+<td>Scripts <code>01_fossil_original_sources</code>, <code>02_electricity_original</code>, <code>03_biomass_kander</code>, <code>04_miteco_modern</code>, <code>05_integrate</code>, <code>06_validate</code></td>
+</tr>
+<tr>
+<td>12 CSVs movidos a <code>_archive/processed_deprecated/</code></td>
+<td>Outputs de los scripts archivados, no consumidos por 07</td>
+</tr>
+<tr>
+<td>Eliminadas 4 subcarpetas vacías en <code>data/raw/</code></td>
+<td><code>estadisticas_historicas</code>, <code>european_comparison</code>, <code>mfa</code>, <code>mining_fuels</code></td>
+</tr>
+<tr>
+<td>Todas las figuras ggplot obsoletas → <code>figures/_archive_R_ggplot/</code></td>
+<td>Sustituidas por pipeline Python fig-nature</td>
+</tr>
+<tr>
+<td>Header code-protocol añadido a los 9 scripts activos</td>
+<td>Cumple <code>/code-protocol</code> (autor, fechas, purpose, sources, outputs)</td>
+</tr>
+<tr>
+<td><code>data/raw/README.md</code> creado</td>
+<td>Catálogo exhaustivo de fuentes con rutas exactas</td>
+</tr>
+<tr>
+<td><code>README.md</code> reescrito</td>
+<td>Refleja la estructura real y el pipeline activo</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-bugs-detectados-y-corregidos">1.2 Bugs detectados y corregidos</h3>
+<table>
+<thead>
+<tr>
+<th>Bug</th>
+<th>Solución</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>IEA <code>consumption_pj</code> es final consumption, no primary</strong> — coal 1985 salía 188 PJ vs 802 PJ real</td>
+<td><code>04_fossil_coal.R</code> + <code>05_fossil_oil_gas.R</code> usan ahora <code>flow == "supply_pj"</code> (TPES). Coal 1985 → 817 PJ ✓</td>
+</tr>
+<tr>
+<td><strong><code>zz_unified</code> sumaba múltiples fuentes (bp + ehp + un_post50)</strong> → oil 1985 salía 3315 PJ vs 1670 PJ real</td>
+<td>Cambio de <code>sum()</code> a <code>median()</code> dentro de zz_unified. Oil 1985 → 1628 PJ ✓</td>
+</tr>
+<tr>
+<td><strong>Oil en IEA se leía solo como <code>oil</code></strong> (producto que no existe en el CSV)</td>
+<td>Ahora se suma <code>oil_crude</code> + <code>oil_products</code> (crude + refining net)</td>
+</tr>
+<tr>
+<td>Pico artificial 1952 en traditional organic (fodder = 956 PJ vs ~100 PJ esperado)</td>
+<td><code>cap_outliers()</code> en <code>02_biomass_fodder.R</code> + exclusión de <code>aea_provincial_sum</code></td>
+</tr>
+<tr>
+<td>Pico artificial 1973 (alfalfa = 204,9 Mt vs 11-15 Mt normal)</td>
+<td>Cap outliers — valor ahora en mediana local (~14 Mt)</td>
+</tr>
+<tr>
+<td>Duplicación post-2008: ALFALFA (cultidata, ~2 Mt) + CULTIVOS FORRAJEROS-LEGUMINOSAS-ALFALFA (excel, ~10 Mt) elegía siempre el mayor con <code>max()</code></td>
+<td>Filtro <code>!startsWith("CULTIVOS FORRAJEROS-")</code> antes de agregar</td>
+</tr>
+<tr>
+<td><code>00_config.R</code>: <code>path_agriculture</code> apuntaba a archivo vacío</td>
+<td>Fallback automático a <code>_archive/pipeline_v2/</code> si <code>data/final/</code> está vacío</td>
+</tr>
+<tr>
+<td>Figuras empezaban en 1850 aunque solo coal + hydro_wind están cubiertos</td>
+<td><code>YEAR_START = 1860</code> en <code>fig_00_setup.py</code> (las 8 fuentes completas empiezan en 1860)</td>
+</tr>
+<tr>
+<td><code>05_integrate.R</code> y <code>07_integrate.R</code> coexistían escribiendo el mismo <code>energy_spain_national.csv</code></td>
+<td><code>05_integrate.R</code> archivado</td>
+</tr>
+<tr>
+<td>Figuras ggplot (<code>06_*.png</code>, <code>08_*.png</code>) desalineadas con el estilo del proyecto</td>
+<td>Pipeline Python fig-nature con 15 figuras (PNG 300 dpi, Trebuchet MS, paleta Nature)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-estado-del-pipeline">2. Estado del pipeline</h2>
+<h3 id="21-pipeline-activo-9-scripts-r-16-scripts-python">2.1 Pipeline activo (9 scripts R + 16 scripts Python)</h3>
+<pre><code>R/00_config.R
+  ↓
+R/01_biomass_food.R      ← ../agriculture
+R/02_biomass_fodder.R    ← ../agriculture
+R/03_biomass_fuelwood.R  ← ../forest
+R/04_fossil_coal.R       ← ../mining + ../trade + MITECO + IEA + zz_unified
+R/05_fossil_oil_gas.R    ← ../trade + MITECO + IEA + zz_unified
+R/06_electricity.R       ← Eurostat + IEA + EHP
+  ↓
+R/07_integrate.R         → data/final/energy_spain_national.csv
+  ↓
+R/08_validate.R          → reporte CSV vs Rubio-Varas
+  ↓
+figures/_code/run_all.py → 15 PNG fig-nature
+</code></pre>
+<h3 id="22-series-producidas-1860-2024-pj">2.2 Series producidas (1860-2024, PJ)</h3>
+<table>
+<thead>
+<tr>
+<th>Fuente</th>
+<th>Años cubiertos</th>
+<th>Confidence</th>
+<th>Fuente primaria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>food</code></td>
+<td>1860-2024</td>
+<td>medium</td>
+<td><code>datasets/agriculture</code></td>
+</tr>
+<tr>
+<td><code>fodder</code></td>
+<td>1860-2024</td>
+<td>medium</td>
+<td><code>datasets/agriculture</code> + cap outliers</td>
+</tr>
+<tr>
+<td><code>fuelwood</code></td>
+<td>1860-2010</td>
+<td>high</td>
+<td><code>datasets/forest</code></td>
+</tr>
+<tr>
+<td><code>coal</code></td>
+<td>1850-2024</td>
+<td>medium</td>
+<td>MITECO / IEA / zz_unified / mining+trade</td>
+</tr>
+<tr>
+<td><code>oil</code></td>
+<td>1862-2024</td>
+<td>high</td>
+<td>Eurostat / IEA / trade</td>
+</tr>
+<tr>
+<td><code>gas</code></td>
+<td>1968-2024</td>
+<td>high</td>
+<td>Eurostat / IEA</td>
+</tr>
+<tr>
+<td><code>hydro_wind</code></td>
+<td>1850-2024</td>
+<td>high</td>
+<td>EHP / IEA / Eurostat</td>
+</tr>
+<tr>
+<td><code>electricity_other</code></td>
+<td>1900-2024</td>
+<td>high</td>
+<td>IEA / EHP / Eurostat</td>
+</tr>
+</tbody>
+</table>
+<p>Output canónico: <strong><code>data/final/energy_spain_national.csv</code></strong> (1819 filas, formato CAHE long con indicator/subindicator/unit/value/source_*).</p>
+<h3 id="23-estado-de-validacion-vs-rubio-varas-2024">2.3 Estado de validación (vs Rubio-Varas 2024)</h3>
+<p>Tras el fix de fósiles (supply_pj en IEA + median en zz_unified, 2026-04-14):</p>
+<table>
+<thead>
+<tr>
+<th>Fuente</th>
+<th style="text-align: right;">n años</th>
+<th style="text-align: right;">mean Δ%</th>
+<th style="text-align: right;">median Δ%</th>
+<th style="text-align: right;">correlación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>coal</code></td>
+<td style="text-align: right;">155</td>
+<td style="text-align: right;"><strong>−0,9</strong></td>
+<td style="text-align: right;"><strong>0,0</strong></td>
+<td style="text-align: right;">0,997</td>
+</tr>
+<tr>
+<td><code>oil</code></td>
+<td style="text-align: right;">134</td>
+<td style="text-align: right;"><strong>+3,7</strong></td>
+<td style="text-align: right;"><strong>0,0</strong></td>
+<td style="text-align: right;">0,999</td>
+</tr>
+<tr>
+<td><code>gas</code></td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;"><strong>−3,7</strong></td>
+<td style="text-align: right;">+1,7</td>
+<td style="text-align: right;">0,999</td>
+</tr>
+<tr>
+<td><code>food</code></td>
+<td style="text-align: right;">145</td>
+<td style="text-align: right;">−1,7</td>
+<td style="text-align: right;">−1,7</td>
+<td style="text-align: right;">0,961</td>
+</tr>
+<tr>
+<td><code>fodder</code></td>
+<td style="text-align: right;">145</td>
+<td style="text-align: right;">+119,3</td>
+<td style="text-align: right;">+8,2</td>
+<td style="text-align: right;">−0,814</td>
+</tr>
+<tr>
+<td><code>fuelwood</code></td>
+<td style="text-align: right;">145</td>
+<td style="text-align: right;">+38,6</td>
+<td style="text-align: right;">+69,2</td>
+<td style="text-align: right;">−0,421</td>
+</tr>
+<tr>
+<td><code>hydro_wind</code></td>
+<td style="text-align: right;">123</td>
+<td style="text-align: right;">+142,0</td>
+<td style="text-align: right;">0,0</td>
+<td style="text-align: right;">−0,264</td>
+</tr>
+<tr>
+<td><code>electricity_other</code></td>
+<td style="text-align: right;">104</td>
+<td style="text-align: right;">+51,2</td>
+<td style="text-align: right;">0,0</td>
+<td style="text-align: right;">0,982</td>
+</tr>
+</tbody>
+</table>
+<p>Total primario: <strong>mean Δ = +12,9 %  ·  median = +20,6 %  ·  max |Δ| = 96 %</strong> (antes del fix: +35,6 / +35,2 / 171,3).</p>
+<p><strong>Interpretación por fuente</strong>:</p>
+<ul>
+<li><strong>Fósiles</strong> (coal, oil, gas): <strong>coinciden con Rubio</strong> — el fix resolvió el problema sistemático de que IEA reportaba <em>final consumption</em> en vez de <em>primary supply</em> y de que <code>zz_unified</code> sumaba fuentes duplicadas.</li>
+<li><strong>Food</strong>: nuestra reconstrucción basada en <code>datasets/agriculture</code> + factores FAO difiere &lt;2 % de Rubio — validación implícita.</li>
+<li><strong>Fodder / fuelwood / hydro_wind / electricity_other</strong>: nuestra reconstrucción es <strong>sistemáticamente más alta que Rubio</strong>. Tres explicaciones posibles, por orden de probabilidad:
+  1. <strong>Rubio aplica conversiones más conservadoras</strong> (especialmente fuelwood, donde él ajusta por eficiencia de combustión tradicional).
+  2. <strong>Unidades verde vs materia seca</strong> en fodder — sigue pendiente de resolver (§3.1).
+  3. <strong>Mejor cobertura</strong> — nuestra serie de <code>forest</code> (Infante-Amate &amp; Iriarte-Goñi) incluye leña no registrada en estadísticas oficiales; Rubio depende solo de estimaciones EHP.</li>
+</ul>
+<hr />
+<h2 id="3-pasos-pendientes">3. Pasos pendientes</h2>
+<h3 id="31-bloqueantes-para-zenodo">3.1 Bloqueantes para Zenodo</h3>
+<ul>
+<li>[ ] <strong>Unidades de forraje (verde vs MS)</strong>. <code>fodder</code> sigue alto en 1984-2000 porque el anuario reporta en peso verde pero aplicamos factores de MS. Solución: añadir columna <code>moisture_content</code> en <code>fodder_factors</code> y convertir fresh→DM antes de multiplicar por GJ/t DM.</li>
+<li>[ ] <strong>Validación fuente-a-fuente vs Rubio-Varas</strong>. Calcular diff_pct por cada fuente (no sólo total) e identificar qué fuente contribuye más al +35 %. Ya está la estructura en <code>R/08_validate.R</code> y <code>figures/_code/fig_04_comparison_rubio.py</code>, falta el análisis explícito.</li>
+<li>[ ] <strong>Subset local de fuentes externas</strong>. Las rutas <code>D:/data/zz_sources/...</code> no son reproducibles. Extraer el subset España de cada panel (IEA, EHP, zz_unified) y versionarlo en <code>data/raw/harmonized/</code>.</li>
+<li>[ ] <strong>Gas &lt;1968</strong>. Actualmente empieza en 1968; Rubio tiene datos desde 1950s. Revisar si zz_unified o trade aportan la serie previa.</li>
+<li>[ ] <strong>Re-ejecutar el pipeline en R</strong> (cuando haya R disponible) para confirmar que produce exactamente lo mismo que el helper Python <code>rebuild_fodder_and_integrate.py</code>. El código está corregido pero no lo he podido ejecutar desde aquí.</li>
+</ul>
+<h3 id="32-documentacion-metodologica">3.2 Documentación metodológica</h3>
+<ul>
+<li>[ ] Actualizar <code>docs/METODOLOGIA.md</code> para reflejar el pipeline activo (eliminar referencias a scripts archivados).</li>
+<li>[ ] Sincronizar <code>docs/FUENTES_DATOS.md</code> con <code>data/raw/README.md</code>.</li>
+<li>[ ] <code>docs/methodology/</code> tiene un MD por script antiguo (00-06); añadir uno por cada script actual y retirar los obsoletos.</li>
+</ul>
+<h3 id="33-paquete-zenodo">3.3 Paquete Zenodo</h3>
+<ul>
+<li>[ ] Usar la skill <code>/zenodo</code> — estructura, metodología PDF (LaTeX), datos Excel/CSV, metadata API.</li>
+<li>[ ] Incluir en el depósito: <code>data/final/energy_spain_national.csv</code>, <code>data/processed/07_*.csv</code> y <code>08_*.csv</code>, todos los scripts R, <code>figures/*.png</code> (o <code>fig_01..05</code> selección), README.md, STATE.md, metodología PDF.</li>
+<li>[ ] NO incluir: <code>_archive/</code>, <code>data/raw/modern_idae/*.json</code> (son caches), archivos OneDrive sync.</li>
+<li>[ ] DOI sugerido: <code>10.5281/zenodo.XXXXXX</code> (reservar al subir).</li>
+</ul>
+<h3 id="34-conexion-con-visor-cahe">3.4 Conexión con visor CAHE</h3>
+<ul>
+<li>[ ] Asegurar que <code>energy_spain_national.csv</code> cumple el schema del visor (ya está en long-format CAHE: <code>year, indicator, subindicator, unit, value, province, …</code>).</li>
+<li>[ ] Referenciar desde <code>all_indicators/</code> o bien generar export a la API del visor cuando esté definida.</li>
+<li>[ ] Coordinar con el pipeline R de <code>all_indicators/</code> para que consuma esta serie como input del indicador "energía".</li>
+</ul>
+<hr />
+<h2 id="4-convenciones-aplicadas">4. Convenciones aplicadas</h2>
+<ul>
+<li><strong>Código R</strong> sigue <code>/code-protocol</code> (tidyverse, pipe <code>|&gt;</code>, snake_case, header con credits / purpose / steps / sources / outputs).</li>
+<li><strong>Figuras</strong> siguen <code>/fig-nature</code> (Trebuchet MS, paleta Nature, <code>style()</code>, <code>tight_axes()</code>, PNG 300 dpi, fondo blanco).</li>
+<li><strong>Datos</strong> en long-format CAHE, unidades explícitas, prefijo de script en cada CSV intermedio.</li>
+</ul>
+<hr />
+<h2 id="5-resumen-de-un-vistazo">5. Resumen de un vistazo</h2>
+<ul>
+<li>✅ Pipeline limpio (9 scripts R + 16 Python).</li>
+<li>✅ Outliers documentados y corregidos (fodder 1952, 1973; agri <code>aea_provincial_sum</code>).</li>
+<li>✅ Figuras fig-nature (15 PNG, 1860-2024).</li>
+<li>✅ Fuentes catalogadas en <code>data/raw/README.md</code>.</li>
+<li>⚠ Desviación sistemática +35 % vs Rubio-Varas → investigar antes de Zenodo.</li>
+<li>⚠ Fuentes externas en <code>D:/</code> → hace falta subset local para reproducibilidad.</li>
+<li>⏳ Zenodo + visor: tras resolver los dos bloqueantes de arriba.</li>
+</ul>
+<div class="footer">Rendered from <code>docs/STATUS.md</code> via <code>docs/_render_status_html.py</code>.</div>
+</body>
+</html>

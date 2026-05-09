@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Spain Energy — SOURCES</title>
+<style>
+:root {
+    --fg: #222;
+    --bg: #fcfaf5;
+    --muted: #666;
+    --red: #E64B35;
+    --teal: #00A087;
+    --blue: #3C5488;
+    --cyan: #4DBBD5;
+    --cream: #F5F0E8;
+    --rule: #e3ddd0;
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Trebuchet MS", "Lucida Sans Unicode", Verdana, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    line-height: 1.55;
+    font-size: 15px;
+}
+h1, h2, h3, h4 {
+    font-family: "Trebuchet MS", Verdana, sans-serif;
+    color: var(--red);
+    line-height: 1.25;
+    margin-top: 2.2rem;
+    margin-bottom: 0.6rem;
+}
+h1 { font-size: 1.9rem; border-bottom: 3px solid var(--red); padding-bottom: .4rem; }
+h2 { font-size: 1.35rem; color: var(--teal); border-bottom: 1px solid var(--rule); padding-bottom: .25rem; }
+h3 { font-size: 1.1rem; color: var(--blue); }
+h4 { font-size: 1.0rem; color: var(--muted); }
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: var(--cream);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.92em;
+}
+pre {
+    background: var(--cream);
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--teal);
+    overflow-x: auto;
+    border-radius: 3px;
+    font-size: 0.88em;
+}
+pre code { background: transparent; padding: 0; }
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.93em;
+    background: #fff;
+}
+th, td {
+    border: 1px solid var(--rule);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+th { background: var(--cream); color: var(--blue); font-weight: 600; }
+tr:nth-child(even) td { background: #fbf8f2; }
+blockquote {
+    border-left: 3px solid var(--cyan);
+    margin: 1rem 0;
+    padding: 0.2rem 1rem;
+    color: var(--muted);
+    background: var(--cream);
+    font-style: italic;
+}
+a { color: var(--teal); text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+ul, ol { margin: 0.4rem 0 0.8rem 0; padding-left: 1.6rem; }
+li { margin: 0.2rem 0; }
+.footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--muted);
+    font-size: 0.85em;
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<h1 id="sources-spain-energy">SOURCES — Spain Energy</h1>
+<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure)</em>
+<em>Origen: finding F01 del cross-audit estructura (<code>agent_debates/2026-05-09_audit_structure.md</code>).</em>
+<em>Esquema canónico: <code>project-organize/SKILL.md:421-486</code>.</em></p>
+<p>Inventario <strong>file-level</strong> de cada fichero en <code>data/raw/</code>. Una fila por
+archivo con: ruta, institución, URL, fecha de acceso, método de
+descarga, script de descarga, checksum SHA256, cita, estado de
+provenance (🟢 / 🟡 / 🔴), buckets que lo consumen y notas.</p>
+<blockquote>
+<p>Anexo histórico (compilaciones secundarias + sección "no se usa"):
+ver <a href="FUENTES_DATOS.md"><code>docs/FUENTES_DATOS.md</code></a>.</p>
+<p>Catálogo en lenguaje natural por fuente con jerarquía de prioridad:
+ver <a href="../data/raw/README.md"><code>data/raw/README.md</code></a>.</p>
+</blockquote>
+<p>Estados de provenance:</p>
+<ul>
+<li>🟢 = institución, URL, fecha y método verificados; checksum estable.</li>
+<li>🟡 = institución y URL conocidos; fecha de acceso o método de descarga incompletos.</li>
+<li>🔴 = no documentado / requiere intervención del usuario.</li>
+</ul>
+<p>Las celdas marcadas como <code>&lt;pendiente — el usuario debe rellenar&gt;</code> no se
+pueden inferir desde el filesystem y necesitan que el PI las complete.</p>
+<hr />
+<h2 id="1-datarawmodern_idae-balance-energetico-oficial-1990-2024">1. <code>data/raw/modern_idae/</code> — Balance energético oficial (1990-2024)</h2>
+<h3 id="11-datarawmodern_idaemiteco_spain_gic_ktepcsv">1.1 <code>data/raw/modern_idae/miteco_spain_gic_ktep.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>https://www.miteco.gob.es/content/dam/miteco/es/energia/files-1/balances/Publicaciones/Documents/balance_2024_2/Balance%20Energetico%20España%201990_2024_v3.ods</td>
+</tr>
+<tr>
+<td>Landing page</td>
+<td>https://www.miteco.gob.es/es/energia/estrategia-normativa/balances/balances.html</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>Conversión manual desde el ODS oficial a CSV (ktep)</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>MITECO (2024). <em>Balance Energético de España 1990-2024</em>. Ministerio para la Transición Ecológica y el Reto Demográfico, Madrid.</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code>, <code>R/06_electricity.R</code> (buckets <code>fossil/</code>, <code>electricity/</code>)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Gross Inland Consumption por combustible, en ktep (kilotep). Fuente prioritaria 1 para fósiles 1990+.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12-datarawmodern_idaeeurostat_spain_gic_ktoecsv">1.2 <code>data/raw/modern_idae/eurostat_spain_gic_ktoe.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Eurostat</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>https://ec.europa.eu/eurostat/databrowser/view/nrg_bal_c/default/table?lang=en</td>
+</tr>
+<tr>
+<td>API endpoint</td>
+<td>https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_c?geo=ES&amp;format=JSON</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>API JSON → conversión a CSV</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Eurostat (2024). <em>Complete energy balances [nrg_bal_c]</em>. European Commission.</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code>, <code>R/06_electricity.R</code></td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Gross Inland Consumption por SIEC, en ktoe. Fuente prioritaria 2 (estandarizada UE).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-datarawmodern_idaeeurostat_spain_cleancsv">1.3 <code>data/raw/modern_idae/eurostat_spain_clean.csv</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Eurostat (derivado de 1.2)</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>(derivado, no descarga directa)</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>Limpieza manual de <code>eurostat_spain_gic_ktoe.csv</code></td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>(igual que 1.2)</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🔴</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td>(ninguno en pipeline activo — orphan según <code>_AUDIT.md</code> §1.1)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td><strong>Candidato a eliminación</strong>: duplica 1.2 y no es leído por ningún script activo. Decisión final pendiente del PI.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-datarawmodern_idaeeurostat_gic_by_fueljson">1.4 <code>data/raw/modern_idae/eurostat_gic_by_fuel.json</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Eurostat</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_c?geo=ES&amp;format=JSON</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>API JSON snapshot</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>(igual que 1.2)</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td>(cache; no leído por scripts activos)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Snapshot JSON de la query Eurostat. Conservar como traza histórica.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-datarawmodern_idaeeurostat_nrg_bal_c_spainjson">1.5 <code>data/raw/modern_idae/eurostat_nrg_bal_c_spain.json</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Eurostat</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/nrg_bal_c?geo=ES&amp;format=JSON</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>API JSON snapshot</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>(igual que 1.2)</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td>(cache; no leído por scripts activos)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Segundo snapshot JSON, redundante con 1.4. Conservar como traza.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="16-datarawmodern_idaebalance_energetico_espana_1990_2024ods">1.6 <code>data/raw/modern_idae/Balance_Energetico_Espana_1990_2024.ods</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>MITECO</td>
+</tr>
+<tr>
+<td>URL</td>
+<td>https://www.miteco.gob.es/content/dam/miteco/es/energia/files-1/balances/Publicaciones/Documents/balance_2024_2/Balance%20Energetico%20España%201990_2024_v3.ods</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>Descarga manual del enlace MITECO</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>MITECO (2024). <em>Balance Energético de España 1990-2024</em>. Ministerio para la Transición Ecológica y el Reto Demográfico, Madrid.</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟢</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td>(provenance only — no leído por scripts activos; el CSV derivado 1.1 es el que entra al pipeline)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td>Archivo original ODS, 69 productos × 128 flujos. Conservar para traceability.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-datarawrubio_varas-benchmark-de-validacion">2. <code>data/raw/rubio_varas/</code> — Benchmark de validación</h2>
+<h3 id="21-datarawrubio_varasenergy_data_spainxlsx">2.1 <code>data/raw/rubio_varas/Energy_Data_SPAIN.xlsx</code></h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source institution</td>
+<td>Mariano Rubio-Varas (Universidad Pública de Navarra) y co-autores</td>
+</tr>
+<tr>
+<td>URL</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code> (publicación Muñoz-Delgado &amp; Rubio-Varas 2024; copia interna desde <code>D:/archive/Research/R/Github/Spain_Metabolism/GHG/input/</code>)</td>
+</tr>
+<tr>
+<td>Access date</td>
+<td><code>&lt;pendiente — el usuario debe rellenar&gt;</code></td>
+</tr>
+<tr>
+<td>Download method</td>
+<td>Copia local desde repo privado del PI</td>
+</tr>
+<tr>
+<td>Download script</td>
+<td><code>&lt;NOT PRESERVED&gt;</code></td>
+</tr>
+<tr>
+<td>Checksum (SHA256)</td>
+<td>(lo rellena <code>docs/_compute_source_checksums.py</code>)</td>
+</tr>
+<tr>
+<td>Citation</td>
+<td>Muñoz-Delgado, B., Rubio-Varas, M. (2024). <em>Transiciones energéticas en España (1860-2020)</em>.</td>
+</tr>
+<tr>
+<td>Provenance status</td>
+<td>🟡</td>
+</tr>
+<tr>
+<td>Used by</td>
+<td><code>R/08_validate.R</code> (bucket <code>validation/</code>)</td>
+</tr>
+<tr>
+<td>Notes</td>
+<td><strong>Solo validación, nunca primaria.</strong> Hoja "Final"; columnas Year + Total_e + 8 fuentes Kander en Mtep. Periodo 1860-~2021.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-catalogo-auto-rellenado-por-docs_compute_source_checksumspy">3. Catálogo (auto-rellenado por <code>docs/_compute_source_checksums.py</code>)</h2>
+<p>La sección de checksums por archivo se actualiza automáticamente al
+ejecutar:</p>
+<pre><code class="language-bash">python docs/_compute_source_checksums.py
+</code></pre>
+<p>El script recorre <code>data/raw/</code> recursivamente, calcula SHA256 de cada
+archivo, y rellena las celdas <code>Checksum (SHA256)</code> arriba. Si el
+archivo no existe en SOURCES.md aún, lo lista en una sección "Pendientes
+de incorporar".</p>
+<!-- BEGIN AUTO CHECKSUMS -->
+
+<p><em>Auto-generated by <code>docs/_compute_source_checksums.py</code>. Do not edit by hand.</em></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th style="text-align: right;">Bytes</th>
+<th>SHA256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>data/raw/modern_idae/Balance_Energetico_Espana_1990_2024.ods</code></td>
+<td style="text-align: right;">2,034,835</td>
+<td><code>dbc3699f51f7cd675ad4067b8dfc0f5cc1646a0062f9c22c927fea2d959bc75f</code></td>
+</tr>
+<tr>
+<td><code>data/raw/modern_idae/eurostat_gic_by_fuel.json</code></td>
+<td style="text-align: right;">42,123</td>
+<td><code>8e29d0733211f030a37f099e631560066eea1f890e76996826238029e936029d</code></td>
+</tr>
+<tr>
+<td><code>data/raw/modern_idae/eurostat_nrg_bal_c_spain.json</code></td>
+<td style="text-align: right;">165</td>
+<td><code>535124b6dea085531b597a35fca286e5f78b58976a3d38e5b1a80cd4f344acf0</code></td>
+</tr>
+<tr>
+<td><code>data/raw/modern_idae/eurostat_spain_clean.csv</code></td>
+<td style="text-align: right;">19,404</td>
+<td><code>faff80339987cc1b5d0c679451e7439428e7bfe5f54a468560b8ece388035527</code></td>
+</tr>
+<tr>
+<td><code>data/raw/modern_idae/eurostat_spain_gic_ktoe.csv</code></td>
+<td style="text-align: right;">97,733</td>
+<td><code>fceacf2bce2d951a65698cdab354f6108c730a2de68202de8accb767a0183023</code></td>
+</tr>
+<tr>
+<td><code>data/raw/modern_idae/miteco_spain_gic_ktep.csv</code></td>
+<td style="text-align: right;">280,445</td>
+<td><code>919237649d05fa9f4a2a6d7d1b3f4a353b7a05d57e301ea5aaaaf41a2a059d7f</code></td>
+</tr>
+<tr>
+<td><code>data/raw/README.md</code></td>
+<td style="text-align: right;">4,857</td>
+<td><code>c80390bb02c72377da727169363c13069018f6cbbab34addd54f2d9fa928bc8d</code></td>
+</tr>
+<tr>
+<td><code>data/raw/rubio_varas/Energy_Data_SPAIN.xlsx</code></td>
+<td style="text-align: right;">22,816</td>
+<td><code>c34a6a33cd5fb057a9c7092f44a19f0bf78de9491e743653922de5b0d5783b15</code></td>
+</tr>
+</tbody>
+</table>
+<!-- END AUTO CHECKSUMS -->
+
+<hr />
+<h2 id="4-fuentes-externas-referenciadas-no-copiadas-a-dataraw">4. Fuentes externas referenciadas (no copiadas a <code>data/raw/</code>)</h2>
+<p>Estas fuentes viven en <code>D:/data/zz_sources/</code> o equivalentes y se
+consumen por referencia. <strong>No portables fuera de la máquina del PI.</strong>
+Bloqueador conocido para Zenodo (ver <code>docs/_reports/_AUDIT_2026-04-14.md</code>
+§5.1 punto 3).</p>
+<table>
+<thead>
+<tr>
+<th>Ruta</th>
+<th>Institución</th>
+<th>Periodo</th>
+<th>Used by</th>
+<th>Provenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>D:/data/zz_sources/international_macro/fossil_fuels/zz_unified/output/02_fossil_harmonized_pj.csv</code></td>
+<td>Compilado interno (BP + Darmstadter + EHP + EIA + Malanima + UN pre/post-50)</td>
+<td>1820-2024</td>
+<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code></td>
+<td>🔴 (no portable)</td>
+</tr>
+<tr>
+<td><code>D:/data/zz_sources/international_macro/fossil_fuels/iea/iea_data.csv</code></td>
+<td>International Energy Agency</td>
+<td>1971-2024</td>
+<td><code>R/04</code>, <code>R/05</code>, <code>R/06</code></td>
+<td>🔴 (licencia + no portable)</td>
+</tr>
+<tr>
+<td><code>D:/data/zz_sources/international_macro/fossil_fuels/energy_history_project/energy_history_project_data.csv</code></td>
+<td>Energy History Project — <em>Power to the People</em> (Kander, Gales, Rubio, Malanima)</td>
+<td>1850-2021</td>
+<td><code>R/06_electricity.R</code></td>
+<td>🔴 (no portable)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Acción pendiente</strong> (Zenodo blocker): extraer subset España de cada
+panel a <code>data/raw/harmonized/</code> y versionarlo con su propia entrada en
+SOURCES.md.</p>
+<hr />
+<h2 id="5-cross-project-sources-otros-datasets-en-spaindatasets">5. Cross-project sources (otros datasets en <code>spain/datasets/</code>)</h2>
+<p>Datos reconstruidos por otros pipelines del workspace. Se referencian
+por ruta relativa, no se duplican.</p>
+<table>
+<thead>
+<tr>
+<th>Ruta</th>
+<th>Pipeline origen</th>
+<th>Used by</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>../agriculture/data/final/spain_agriculture_national.csv</code> (fallback <code>_archive/pipeline_v2/final/</code>)</td>
+<td><code>spain/datasets/agriculture</code></td>
+<td><code>R/01_biomass_food.R</code>, <code>R/02_biomass_fodder.R</code></td>
+<td>Periodo 1860-2024. Actualmente fallback v2; v3 no repopulado.</td>
+</tr>
+<tr>
+<td><code>../forest/data/final/forest_series.csv</code></td>
+<td><code>spain/datasets/forest</code></td>
+<td><code>R/03_biomass_fuelwood.R</code></td>
+<td>Periodo 1860-2010.</td>
+</tr>
+<tr>
+<td><code>../mining/data/final/mining_spain_national.csv</code></td>
+<td><code>spain/datasets/mining</code></td>
+<td><code>R/04_fossil_coal.R</code></td>
+<td>Periodo 1861-2017.</td>
+</tr>
+<tr>
+<td><code>../trade/data/processed/01_historical_trade_long.csv</code></td>
+<td><code>spain/datasets/trade</code></td>
+<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code></td>
+<td>Cobertura XIX-XXI.</td>
+</tr>
+</tbody>
+</table>
+<p>Estas rutas no son fuentes primarias del proyecto energy: son outputs
+canónicos de otros datasets. La provenance se hereda de su propio
+SOURCES.md.</p>
+<hr />
+<h2 id="6-todo-pendientes-para-el-pi">6. TODO / pendientes para el PI</h2>
+<ol>
+<li>Rellenar <code>Access date</code> en cada bloque arriba (8 archivos en
+   <code>data/raw/</code>, 3 fuentes externas, 4 cross-project).</li>
+<li>Decidir destino de 1.3 (<code>eurostat_spain_clean.csv</code>): mantener,
+   archivar o eliminar. Recomendación de <code>_AUDIT.md</code> §1.4: eliminar.</li>
+<li>Completar URL de 2.1 (Rubio-Varas Energy_Data_SPAIN.xlsx) si está
+   publicado en algún repositorio; si no, dejar <code>&lt;no público&gt;</code>.</li>
+<li>Decidir si 1.4 y 1.5 (caches Eurostat JSON) van a <code>_archive/</code> por
+   ser snapshots no consumidos.</li>
+<li>Plan para extraer subsets España de IEA/EHP/zz_unified a
+   <code>data/raw/harmonized/</code> con SOURCES.md propio (Zenodo blocker).</li>
+</ol>
+<div class="footer">Rendered from <code>docs/SOURCES.md</code> via <code>docs/_render_sources_html.py</code>.</div>
+</body>
+</html>
