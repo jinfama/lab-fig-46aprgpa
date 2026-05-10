@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>WHEP — STATUS</title>
+<style>
+:root {
+  --nature-red: #E64B35;
+  --nature-teal: #00A087;
+  --nature-cyan: #4DBBD5;
+  --nature-blue: #3C5488;
+  --gray: #333333;
+  --light: #f6f3ee;
+  --bg: #fffaf3;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--gray);
+  background: var(--bg);
+  margin: 0;
+  padding: 2.5em 6vw;
+  max-width: 1100px;
+}
+h1 { color: var(--nature-red); font-size: 2.1em; border-bottom: 3px solid var(--nature-red); padding-bottom: 0.2em; }
+h2 { color: var(--nature-teal); font-size: 1.5em; margin-top: 1.8em; border-bottom: 1px solid var(--light); padding-bottom: 0.15em; }
+h3 { color: var(--nature-blue); font-size: 1.18em; margin-top: 1.4em; }
+h4 { color: var(--gray); font-size: 1.05em; margin-top: 1em; }
+a { color: var(--nature-cyan); text-decoration: none; }
+a:hover { text-decoration: underline; }
+table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.93em;
+  background: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+th, td { padding: 0.4em 0.7em; border: 1px solid #d8d2c7; text-align: left; }
+th { background: var(--light); color: var(--gray); font-weight: 600; }
+code {
+  background: var(--light);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.92em;
+  color: var(--nature-red);
+}
+pre {
+  background: #f1ece4;
+  padding: 0.9em 1.1em;
+  border-left: 3px solid var(--nature-red);
+  overflow-x: auto;
+  font-size: 0.88em;
+  line-height: 1.4;
+}
+pre code { background: transparent; color: var(--gray); padding: 0; }
+blockquote {
+  border-left: 4px solid var(--nature-teal);
+  margin: 1em 0;
+  padding: 0.4em 1em;
+  background: var(--light);
+  color: var(--gray);
+  font-style: italic;
+}
+hr { border: none; border-top: 1px solid #d8d2c7; margin: 2em 0; }
+ul, ol { margin: 0.4em 0 1em 0; padding-left: 1.6em; }
+li { margin: 0.2em 0; }
+.footer { color: #999; font-size: 0.85em; margin-top: 4em; border-top: 1px solid #ddd; padding-top: 0.8em; }
+</style>
+</head>
+<body>
+<h1 id="whep-estado-del-proyecto">WHEP — Estado del proyecto</h1>
+<p><strong>Última actualización</strong>: 2026-05-07.
+<strong>Renderizado</strong>: <code>STATUS.html</code> en la raíz (re-render con
+<code>docs/_render_status_html.py</code>).</p>
+<blockquote>
+<p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
+<p><strong>Alcance estratégico</strong> del proyecto (objetivos vivos, componentes
+futuros y decisiones POR DECIDIR del PI): ver
+<a href="MASTER_PLAN.md"><code>docs/MASTER_PLAN.md</code></a>. Este <code>STATUS</code> describe <strong>qué
+hay AHORA</strong>; el <code>MASTER_PLAN</code> describe <strong>qué se quiere conseguir</strong>.</p>
+</blockquote>
+<h2 id="1-que-es-whep">1. Qué es WHEP</h2>
+<p>Base de datos histórica mundial que integra fuentes del siglo XIX al XXI en
+un panel armonizado país × año × indicador para cultivos (área, producción,
+rendimientos) y comercio (bilateral, directo). Pensada para alimentar un
+<strong>Scientific Data data descriptor</strong> y depósito Zenodo. Autor: Juan
+Infante-Amate (Universidad de Granada).</p>
+<h2 id="2-estructura-general">2. Estructura general</h2>
+<pre><code>whep/
+├── README.md, CLAUDE.md, CHANGELOG.md, STATUS.html, .gitignore
+├── code/         pipeline de datos en Python (44 scripts en 7 submódulos)
+├── data/raw/     fuentes crudas intocables (3.6 GB)
+├── data/processed/  intermedios regenerables (2.5 GB)
+├── data/final/   paneles publicables (2.5 GB)
+├── figures/      figuras de revisión por indicador (vacío hasta regenerar)
+├── papers/       whep_data_descriptor (paper) + whep_reports (informes vivos)
+├── docs/         architecture, STATUS, SOURCES, methodology, agent_debates
+└── _archive/     legacy, scratch, duplicados, snapshots
+</code></pre>
+<p>Para detalles, ver <code>docs/architecture.md</code>.</p>
+<h2 id="3-outputs-consolidados-a-fecha-datafinal">3. Outputs consolidados a fecha (data/final/)</h2>
+<h3 id="crops">crops/</h3>
+<p>Snapshot tras regeneración 2026-05-07 (turno 17c + recompute split yields):</p>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Filas</th>
+<th>Tamaño</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>whep_crops_level1_panel.csv</code></td>
+<td>667 370</td>
+<td>78.5 MB</td>
+<td>Panel nivel 1: solo observaciones directas</td>
+</tr>
+<tr>
+<td><code>whep_crops_level2_panel.csv</code></td>
+<td>5 112 120</td>
+<td>475.8 MB</td>
+<td>Panel nivel 2: con gap-filling jerárquico</td>
+</tr>
+<tr>
+<td><code>whep_crops_balanced_panel.csv</code></td>
+<td>3 981 990</td>
+<td>361.1 MB</td>
+<td>Panel balanceado país × cultivo × año 1850-2023</td>
+</tr>
+<tr>
+<td><code>whep_crops_modern_countries.csv</code></td>
+<td>1 878 189</td>
+<td>187.9 MB</td>
+<td>Países en fronteras modernas; yield = P/A coherente fila a fila tras recompute</td>
+</tr>
+<tr>
+<td><code>whep_crops_historical_entities.csv</code></td>
+<td>1 775 417</td>
+<td>159.8 MB</td>
+<td>Entidades históricas (imperios, colonias)</td>
+</tr>
+<tr>
+<td><code>whep_crops_level1_historical.csv</code></td>
+<td>667 370</td>
+<td>78.5 MB</td>
+<td>Nivel 1, fronteras históricas</td>
+</tr>
+<tr>
+<td><code>whep_crops_level1_modern.csv</code></td>
+<td>667 370</td>
+<td>83.9 MB</td>
+<td>Nivel 1, fronteras modernas</td>
+</tr>
+<tr>
+<td><code>whep_crops_with_yields.csv</code></td>
+<td>1 779 331</td>
+<td>138.7 MB</td>
+<td>Con yields derivados</td>
+</tr>
+<tr>
+<td><code>gap_filling_log.csv</code></td>
+<td>134 335</td>
+<td>7.7 MB</td>
+<td>Log de gap-filling por celda</td>
+</tr>
+<tr>
+<td><code>series_diagnostics.csv</code></td>
+<td>8 940</td>
+<td>0.8 MB</td>
+<td>Diagnósticos por serie</td>
+</tr>
+<tr>
+<td><code>yield_benchmarks.csv</code></td>
+<td>—</td>
+<td>12.5 KB</td>
+<td>Benchmarks de rendimiento</td>
+</tr>
+<tr>
+<td><code>yield_flags.csv</code></td>
+<td>—</td>
+<td>416 KB</td>
+<td>Flags de calidad de yields</td>
+</tr>
+<tr>
+<td><code>cross_validation_results.csv</code></td>
+<td>—</td>
+<td>696 B</td>
+<td>Resumen cross-validation</td>
+</tr>
+<tr>
+<td><code>estimation_summary.csv</code></td>
+<td>—</td>
+<td>602 B</td>
+<td>Resumen de métodos de estimación</td>
+</tr>
+<tr>
+<td><code>YIELD_ANALYSIS.txt</code></td>
+<td>—</td>
+<td>44 KB</td>
+<td>Análisis cualitativo de yields</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trade_direct">trade_direct/</h3>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Tamaño</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>whep_trade_historical_entities.csv</code></td>
+<td>644 MB</td>
+<td>Trade directo, entidades históricas</td>
+</tr>
+<tr>
+<td><code>whep_trade_modern_countries.csv</code></td>
+<td>511 MB</td>
+<td>Trade directo, fronteras modernas</td>
+</tr>
+<tr>
+<td><code>tradehist_country_totals.csv</code></td>
+<td>169 KB</td>
+<td>Totales nacionales</td>
+</tr>
+<tr>
+<td><code>tradehist_global_summary.csv</code></td>
+<td>2 KB</td>
+<td>Resumen global</td>
+</tr>
+<tr>
+<td><code>deduplication_log.csv</code></td>
+<td>13.5 MB</td>
+<td>Log de deduplicación</td>
+</tr>
+</tbody>
+</table>
+<h3 id="trade_bilateral">trade_bilateral/</h3>
+<ul>
+<li><code>whep_bilateral_modern_countries.csv</code> (V1, <strong>518 220 filas, 1840-1960</strong>, 6 reporters: BEL/ESP/GBR/ITA/JPN/USA, 153 partners únicos, ~200 items canonical FAO, 4.91 B tonnes total).</li>
+<li><code>whep_bilateral_reporter_observations.csv</code> (audit completo, 937 152 filas con columnas raw preservadas).</li>
+<li>Generado por pipeline 6-etapas: extract inventory → crosswalk FAOSTAT → físicos (Belgium/Italy/USA con conversión documentada) → monetario (UK/Spain/Japan con shares × anchor <code>trade_direct</code>) → consolidación → diagnósticos.</li>
+<li>Method-family exposure: <code>observed_direct_physical</code> 158k filas (BEL+ITA+USA), <code>hybrid_share_x_national_total</code> 357k (GBR+ESP+JPN), <code>interpolated_share</code> 2k (GBR+JPN, huecos ≤5y).</li>
+<li>Backbone canónico: 627 items FAOSTAT compartidos con <code>trade_direct</code> (alcance agrario amplio: crops + animals + animal products + forestal).</li>
+<li>Documentación canónica: <code>docs/methodology/trade_bilateral_pipeline.md</code>.</li>
+</ul>
+<h2 id="4-inventario-de-fuentes-dataraw">4. Inventario de fuentes (data/raw/)</h2>
+<p>Listado breve agrupado por bucket — la entrada canónica con autor, URL,
+cita y status verificado vive en <code>docs/SOURCES.md</code>. <strong>Todas las fuentes
+están actualmente marcadas <code>unverified</code> (🔴) hasta verificación con el
+PI</strong>.</p>
+<h3 id="crop-fuentes-de-cultivos">crop/ — fuentes de cultivos</h3>
+<ul>
+<li><code>broadberry_uk/</code> — series UK históricas.</li>
+<li><code>europe/</code> — fuentes europeas múltiples.</li>
+<li><code>fao_yearbooks/{1949,1952,1953,1955,1958,1961}/</code> — anuarios FAO de
+  cultivos digitalizados.</li>
+<li><code>fao_yearbooks/{land,trade,yearbooks_no_procesado}/</code> — anuarios FAO
+  adicionales (algunos sin procesar todavía).</li>
+<li><code>iia_fao/</code> — datos IIA-FAO precursores.</li>
+<li><code>india_harvard/</code> — dataset Harvard de India.</li>
+<li><code>latin_america/</code> — fuentes Latinoamérica histórica.</li>
+<li><code>mitchell/</code> — Mitchell <em>International Historical Statistics</em>.</li>
+<li><code>owid/</code> — Our World in Data históricos.</li>
+<li><code>south_africa/</code> — fuentes Sudáfrica.</li>
+<li><code>specialized/</code> — cultivos específicos:</li>
+<li><code>brazil_ibge/</code>, <code>coffee/</code> (Mulhall, Samper), <code>cotton/</code> (Ellison,
+    USDA), <code>general/</code> (Mulhall), <code>sugar/</code> (Mulhall), <code>tea/</code> (Ukers
+    1935 vol. 1+2 + table p.329), <code>wine/</code> (Anderson-Pinilla).</li>
+</ul>
+<h3 id="subnational">subnational/</h3>
+<ul>
+<li><code>british_colonies/</code>, <code>japan_prefectural/CropProduction_JP_1883-2022/</code>,
+  <code>usa_nass/qs.crops.txt.gz</code> (1 GB).</li>
+</ul>
+<h3 id="trade_bilateral_1">trade_bilateral/</h3>
+<ul>
+<li><code>belgium_exp_imp/</code>, <code>italy_exp_imp/</code>, <code>japan_exp/</code>,
+  <code>spain_betran_huberman/</code>, <code>uk/</code>, <code>usa/</code>.</li>
+</ul>
+<h3 id="trade_direct_1">trade_direct/</h3>
+<ul>
+<li><code>UK Statistical Abstract of Foreign Countries/</code>.</li>
+</ul>
+<p><strong>Acción crítica pendiente</strong>: completar <code>docs/SOURCES.md</code> con autor, URL,
+cita y verificación de cada una de estas fuentes. Sin esto, cero deposit
+Zenodo y cero citas en manuscrito.</p>
+<h2 id="5-cobertura-general">5. Cobertura general</h2>
+<p>(Pendiente de cuantificar en este turno. Las tablas anteriores en
+reports/general/WHEP_GENERAL_REPORT_180326.pdf son de 2026-03-18 y están
+archivadas. Próxima sesión: regenerar tabla de cobertura por
+indicador × país × período.)</p>
+<h2 id="6-pendientes-priorizados">6. Pendientes priorizados</h2>
+<h3 id="alta-prioridad">Alta prioridad</h3>
+<ul>
+<li>🔴 <strong><code>docs/SOURCES.md</code> — verificar las 30+ fuentes raw</strong>: completar autor,
+  URL, cita, año, <code>provenance_status</code>. Bloqueante para Zenodo y manuscrito.</li>
+<li>🔴 <strong>Regenerar figuras de revisión</strong> con <code>/fig-nature</code> para cada
+  indicador: production, area, yield, trade_exports, trade_imports,
+  trade_bilateral, coverage. Cada una con múltiples paneles (overview,
+  by_country, by_region, facets, timeseries, comparativos externos).</li>
+<li>🟡 <strong>Construir <code>data/final/trade_bilateral/</code></strong>: integrar las 6 fuentes
+  bilaterales en panel armonizado.</li>
+<li>🟡 <strong>Refrescar reports</strong> en <code>papers/whep_reports/{crops,trade,bilateral}/</code>
+  con datos actualizados (los actuales son de marzo 2026).</li>
+</ul>
+<h3 id="media-prioridad">Media prioridad</h3>
+<ul>
+<li>Decidir y añadir el <strong>próximo indicador</strong> anunciado por el PI.</li>
+<li>Crear <code>figures/{indicador}/README.md</code> con índice de paneles esperados
+  (catálogo cerrado de figuras).</li>
+<li>Re-validar <code>data/processed/validation_flags.csv</code> (1.16 GB) tras correr
+  pipeline limpio post-reorg para confirmar que no rompió nada.</li>
+</ul>
+<h3 id="baja-prioridad">Baja prioridad</h3>
+<ul>
+<li>Renderizar <code>STATUS.html</code> y <code>SOURCES.html</code> con script propio (<code>docs/_render_*.py</code>).</li>
+<li>Generar <code>figures/README.md</code> (índice de la carpeta).</li>
+<li>Re-renderizar <code>papers/whep_reports/{crops,trade}/report.pdf</code> desde
+  <code>_build/report.tex</code> para validar que compilan limpios.</li>
+</ul>
+<h2 id="7-como-usarlo">7. Cómo usarlo</h2>
+<h3 id="cargar-un-panel">Cargar un panel</h3>
+<pre><code class="language-python">import sys; sys.path.insert(0, &quot;D:/data/whep&quot;)
+from code import setup as S
+import pandas as pd
+
+df = pd.read_csv(S.FINAL / &quot;crops&quot; / &quot;whep_crops_balanced_panel.csv&quot;)
+</code></pre>
+<h3 id="regenerar-el-pipeline-desde-cero">Regenerar el pipeline desde cero</h3>
+<pre><code class="language-bash">cd D:/data/whep
+python code/parsing/parse_mitchell_extras.py   # ejemplo
+python code/integration/integrate_crops.py
+python code/panels/build_level2_panel.py
+python code/validation/validate_series.py
+python code/publishing/publish_final.py
+</code></pre>
+<h3 id="compilar-el-paper">Compilar el paper</h3>
+<pre><code class="language-bash">cd papers/whep_data_descriptor/_build
+pdflatex paper.tex &amp;&amp; pdflatex paper.tex
+mv paper.pdf ../manuscript.pdf
+</code></pre>
+<h2 id="8-como-anadir-cosas-nuevas">8. Cómo añadir cosas nuevas</h2>
+<h3 id="una-fuente-nueva">Una fuente nueva</h3>
+<ol>
+<li>Carpeta <code>data/raw/{bucket}/{nombre_fuente}/</code> con archivo(s) original(es)
+   exactos como vinieron.</li>
+<li>Entrada en <code>docs/SOURCES.md</code> con autor, URL, año, cita, checksum
+   SHA256 (vía <code>docs/_compute_source_checksums.py</code>), <code>provenance_status</code>.</li>
+<li><code>code/parsing/parse_{nombre_fuente}.py</code> que produce
+   <code>data/processed/cleaned_by_source/{nombre_fuente}_clean.csv</code>.</li>
+<li><code>code/integration/integrate_*.py</code> que la incorpora al panel.</li>
+<li>Entrada en <code>docs/methodology/DECISIONS.md</code> si la incorporación implica
+   decisiones metodológicas no triviales.</li>
+<li>Línea en <code>CHANGELOG.md</code>.</li>
+</ol>
+<h3 id="un-indicador-nuevo">Un indicador nuevo</h3>
+<ol>
+<li>Decidir si requiere un módulo de pipeline propio o reutiliza el
+   existente.</li>
+<li>Crear <code>figures/{indicador}/_code/</code> con scripts numerados estilo
+   <code>/fig-nature</code>.</li>
+<li>Añadir columna en los paneles finales correspondientes.</li>
+<li>Documentar en <code>docs/architecture.md</code> (lista de indicadores) y en
+   <code>README.md</code>.</li>
+</ol>
+<h2 id="9-decisiones-del-usuario-vigentes">9. Decisiones del usuario vigentes</h2>
+<ul>
+<li><strong>Compartimentación por indicador</strong>, no por tema. No invertir.</li>
+<li><strong>Lenguaje</strong>: Python (excepción al default R del PI). Mantener.</li>
+<li><strong>Estilo de figuras</strong>: <code>/fig-nature</code> siempre. Sin excepciones.</li>
+<li><strong><code>data/raw/</code> intocable</strong>. Las correcciones viven en <code>code/cleaning/</code>.</li>
+<li><strong>Cero alucinación en fuentes</strong>. Bloquear publicación de todo lo
+  marcado <code>unverified</code>.</li>
+<li><strong>Versiones viejas a <code>_archive/</code></strong>, nunca borrar.</li>
+</ul>
+<h2 id="10-health-check-actual-post-reorg-2026-05-01">10. Health check actual (post-reorg 2026-05-01)</h2>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tamaño total</td>
+<td>~9 GB</td>
+</tr>
+<tr>
+<td>Scripts pipeline en <code>code/</code></td>
+<td>44</td>
+</tr>
+<tr>
+<td>Scripts archivados (legacy/one-off)</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Fuentes raw catalogadas</td>
+<td>30+ (todas <code>unverified</code>)</td>
+</tr>
+<tr>
+<td>Indicadores activos</td>
+<td>6 (production, area, yield, trade_exports, trade_imports, trade_bilateral) + 1 cross (coverage)</td>
+</tr>
+<tr>
+<td>Paneles finales (crops)</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Paneles finales (trade)</td>
+<td>2 (trade_direct) + 0 (trade_bilateral pendiente)</td>
+</tr>
+<tr>
+<td>Figuras activas</td>
+<td>0 (pendiente regenerar con <code>/fig-nature</code>)</td>
+</tr>
+<tr>
+<td>Papers en <code>papers/</code></td>
+<td>1 descriptor + 3 informes vivos</td>
+</tr>
+<tr>
+<td>Documentos canónicos</td>
+<td>README, CLAUDE, CHANGELOG, .gitignore, architecture, STATUS, SOURCES esqueleto</td>
+</tr>
+<tr>
+<td>Pendientes 🔴</td>
+<td>2 (SOURCES verification + figuras regenerar)</td>
+</tr>
+</tbody>
+</table>
+<div class="footer">Renderizado automáticamente desde <code>docs/STATUS.md</code> con <code>docs/_render_status_html.py</code>.</div>
+</body>
+</html>
