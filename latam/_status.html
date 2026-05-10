@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STATUS — Cambio Agrario y Ambiental en América Latina</title>
+<style>
+:root {
+  --bg:       #fdf8f3;
+  --fg:       #1a1a1a;
+  --muted:    #6b6b6b;
+  --accent:   #c23b22;   /* rojo Nature */
+  --teal:     #2a7a7a;
+  --cream:    #f1e6d4;
+  --border:   #d9cfbd;
+  --code-bg:  #f5ede0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 40px 32px 60px 32px;
+}
+
+h1 {
+  color: var(--accent);
+  font-size: 1.9em;
+  margin-top: 0;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 8px;
+}
+
+h2 {
+  color: var(--teal);
+  font-size: 1.35em;
+  margin-top: 2.2em;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+h3 {
+  color: var(--accent);
+  font-size: 1.1em;
+  margin-top: 1.6em;
+}
+
+h4 {
+  color: var(--teal);
+  font-size: 1.0em;
+  margin-top: 1.2em;
+}
+
+p, li {
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent);
+}
+a:hover {
+  border-bottom-style: solid;
+}
+
+code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+pre {
+  background: var(--code-bg);
+  border-left: 3px solid var(--teal);
+  padding: 12px 16px;
+  overflow-x: auto;
+  border-radius: 3px;
+}
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+blockquote {
+  border-left: 3px solid var(--teal);
+  background: var(--cream);
+  margin: 1em 0;
+  padding: 8px 16px;
+  color: var(--muted);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 0.92em;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: var(--cream);
+  color: var(--teal);
+  font-weight: 600;
+}
+tr:nth-child(even) td {
+  background: rgba(241, 230, 212, 0.3);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2em 0;
+}
+
+em {
+  color: var(--muted);
+}
+
+ul, ol {
+  padding-left: 24px;
+}
+
+footer {
+  margin-top: 40px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85em;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+<main>
+<h1 id="status-cambio-agrario-y-ambiental-en-america-latina">STATUS — Cambio Agrario y Ambiental en América Latina</h1>
+<p><strong>Última actualización:</strong> 2026-05-05 (Ronda 31)</p>
+<p>Punto de entrada vivo al proyecto. Si vuelves después de tiempo y solo lees una cosa, lee esta.</p>
+<h2 id="cambios-mas-recientes-2026-05-05-subnacional-rondas-25-31-cierre-completo">⚡ Cambios más recientes (2026-05-05) — Subnacional Rondas 25-31 cierre completo</h2>
+<p>Sesión Claude Opus 4.7 (1M) en dominio B (subnational). 7 rondas continuas de auditoría + fix + refactor:</p>
+<h3 id="rondas-25-26-pipeline-r-harmonizado-reorganizacion-figuras">Rondas 25-26 — Pipeline R harmonizado + reorganización figuras</h3>
+<ul>
+<li>Bug latente <code>extrapolate=TRUE</code> en ARG/BRA/MEX (no en CHL/COL/BOL): años pre-1ª-ancla etiquetados <code>interpolated_scaled</code> desde 1900. Fix: <code>extrapolate=FALSE</code> + post-filter por <code>[first_scaled, last_scaled]</code> per item.</li>
+<li>Bug latente Ronda 8 (2026-05-02): <code>is_yield_imputed</code> flag dropeado por <code>select()</code> en <code>11_consolidate.R</code>. Fix: añadir columna al select. Resultado: 66,573 filas correctamente flagged (antes 0).</li>
+<li>Reorganización: <code>cropland_comparison_*.png</code> movidas de <code>figures/subnational/</code> a <code>figures/land_use/</code> (validación, no panel cultivos).</li>
+<li>Nueva figura <a href="../figures/subnational/_code/03_land_use_panels.py">03_land_use_panels.py</a> — 12 PNGs <code>land_use_&lt;ISO&gt;_*.png</code> con stacked area de 5 categorías.</li>
+</ul>
+<h3 id="rondas-27-30-land-use-con-ambas-identidades">Rondas 27-30 — Land use con ambas identidades</h3>
+<p>PI reafirmó principio canónico: <strong>Σ_subnacional = nacional siempre</strong>. Tras 4 iteraciones convergentes:
+- Algoritmo <strong>redistribución intra-país</strong> que preserva simultáneamente Σ_categorías = total_land per región (geográfica) Y Σ_regiones = nacional FAO (agregada).
+- Patrón canónico restaurado: <code>pasture_region = pasture_FAO_nat × LUH2_share_pasture</code>. Espeja la metodología nacional <code>agriculture_macro/09_land_use.R</code>.
+- Cuando <code>cropland + urban + pasture + forest &gt; total_land</code> per región: reduce pasture+forest a fitear, redistribuye exceso a regiones del mismo país con headroom.
+- 3 cross-domain bugs CHL nacional registrados con tag <code>cross_domain_bug</code> para el otro agente: forest 1965-1985 splice plano, urban 2023=0, pasture 2005-2020 -35%.</p>
+<h3 id="ronda-31-crops-production-identity-00">Ronda 31 — Crops production identity 0/0</h3>
+<ul>
+<li>Bug detectado: 387 pares ARG (Sugar beet 1911-1920 + cultivos menores) con producción NaN aunque area_harvested&gt;0. Fill rule legacy solo cubría <code>fallback*</code>.</li>
+<li>Fix <a href="../scripts/subnational/11_consolidate.R#L176-L205">11_consolidate.R:176-205</a>: extender a TODOS los casos area&gt;0 + production NaN + yield_national disponible. 16,567 filas con tag <code>derived_from_area_x_yield_nat</code>.</li>
+</ul>
+<h3 id="ronda-29-protocolo-multi-agente-formalizado">Ronda 29 — Protocolo multi-agente formalizado</h3>
+<p><a href="../AGENTS.md">AGENTS.md</a> actualizado con <strong>Module ownership matrix</strong> (5 dominios A-E + 7 reglas anti-colisión). Distinción clave: CÓDIGO (ownership exclusiva) vs OUTPUTS (regenerables). Protocolo cuando se detecta conflicto de edición concurrente.</p>
+<h3 id="validacion-final-dominio-b-subnacional">Validación final dominio B (subnacional)</h3>
+<table>
+<thead>
+<tr>
+<th>Identidad</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Σ_subnacional crops area = FAO nacional</td>
+<td>✅ <strong>0/76,503</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional crops production = FAO nacional</td>
+<td>✅ <strong>0/76,503</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional livestock heads = nacional</td>
+<td>✅ <strong>0/3,678</strong></td>
+</tr>
+<tr>
+<td>Σ_categorías = total_land per región</td>
+<td>✅ <strong>0/15,143</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional pasture = FAO nacional</td>
+<td>✅ <strong>0/615</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional forest = FAO nacional</td>
+<td>✅ <strong>0/615</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional urban = nacional</td>
+<td>✅ <strong>0/615</strong></td>
+</tr>
+<tr>
+<td>Σ_subnacional cropland = FAO nacional</td>
+<td>⚠️ 8/615 (cap geográfico Misiones/Tlaxcala — flagged)</td>
+</tr>
+<tr>
+<td>Σ_subnacional total_land = nacional total</td>
+<td>⚠️ 246/615 (LUH2 vs FAO mismatch upstream)</td>
+</tr>
+<tr>
+<td>Filas duplicadas</td>
+<td>✅ 0</td>
+</tr>
+<tr>
+<td>NA admin_name</td>
+<td>✅ 0</td>
+</tr>
+<tr>
+<td>Yield &gt; 200 t/ha en regiones</td>
+<td>✅ 1 caso (CHL Maule Sugar beet, edge plausible)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pendientes-que-no-son-del-dominio-b">Pendientes que NO son del dominio B</h3>
+<p>🟡 <strong>Cross-domain bugs agriculture_macro</strong> (otro agente): CHL forest 1965-1985 splice, CHL urban 2023=0, CHL pasture 2005-2020.</p>
+<p>🟡 <strong>Livestock P2</strong> (otro agente, en curso 2026-05-07): F04 (PI ya arbitró factor=1.0), F06 cattle_total/chickens_total, F08 triage 33 saltos pre-1961, F12 COL livestock subnacional.</p>
+<p>🟢 <strong>Datos faltantes</strong> (requieren acción humana): MEX 1970 anuales × cultivo (32 estados V Censo INEGI ~$15 USD Textract), MEX 1960 IV Censo, CHL Vid pre-1990, livestock COL DANE ENA.</p>
+<p>🟢 <strong>Heredados</strong>: paper 01 path roto (<code>OneDrive/projects/latam</code> sin <code>05_projects/</code>), AWS keys rotation en commit bdb62f4.</p>
+<hr>
+<h2 id="cambios-anteriores-2026-05-02-tarde-cierre-subnacional-pre-zenodo">⚡ Cambios anteriores (2026-05-02 tarde) — Cierre subnacional Pre-Zenodo</h2>
+<p>Tras debate inter-agente Claude Code + ChatGPT/Copilot mediado por Juan
+(<a href="agent_debates/2026-05-02_subnational_yields_anomalies.md">14 rondas</a>),
+módulo subnacional listo para Zenodo v1:</p>
+<ul>
+<li><strong>P11 yield-band re-imputation</strong> en <code>11_consolidate.R</code>: yields fuera
+  de <code>[Y_nat/3, Y_nat × 3]</code> → <code>production = area × yield_national</code>,
+  identidad nacional restaurada por step de redistribución existente.
+  Outliers reducidos <strong>70,489 → 4,620 (93%)</strong>.</li>
+<li><strong>7 flags Phase-1</strong> en <code>crop_panel_subnational.rds</code>:
+  <code>is_direct_crop_share</code>, <code>is_category_fallback</code>, <code>is_agri_share_proxy</code>,
+  <code>is_residual_bucket</code>, <code>is_wild_collected</code>, <code>is_yield_imputed</code>,
+  <code>confidence_yield ∈ {high, medium, low, not_for_yield}</code>.</li>
+<li><strong>Sensitivity refactor</strong>: 7 ventanas anuales reales (BRA excluido por
+  falta de verdad anual). Una figura combinada con 5/10/20-yr + R²
+  por panel.</li>
+<li><strong>Identidades preservadas (auditadas independientemente Copilot)</strong>:
+  ΣA_provincias=A_nacional ✓, ΣP_provincias=P_nacional ✓,
+  yield=P/A en 0/824,808 violaciones.</li>
+<li><strong>Tabla curada</strong> <code>data/external/fao/wild_collected_items.csv</code>.</li>
+<li><strong>Documentación</strong>: nueva
+  <a href="methodology/16_subnational_quality_flags.md"><code>docs/methodology/16_subnational_quality_flags.md</code></a>
+  con contrato del módulo + caveat ⚠️ "P11 es ex-post, no la solución
+  metodológica final".</li>
+</ul>
+<p><strong>Roadmap post-Zenodo</strong>: split <code>crop_panel_subnational_observed.rds</code> /
+<code>_balanced.rds</code>, refactor estructural escalado A + factor local yield
+normalizado, validación externa LUH2 + Monfreda 2008.</p>
+<h2 id="cambios-recientes-2026-05-0102-refactor-cadena-areaproduccionrendimientos-v1-v14">⚡ Cambios recientes (2026-05-01/02) — Refactor cadena área/producción/rendimientos (V1-V14)</h2>
+<p>Tras un debate multi-agente registrado en <a href="agent_debates/2026-05-01_area_yield_chain_strategy.md"><code>docs/agent_debates/2026-05-01_area_yield_chain_strategy.md</code></a>, el módulo <code>agriculture_macro/</code> se refactorizó por completo:</p>
+<ul>
+<li><strong>Cadena invertida P→A→Y</strong> para series con anchors pre-1961 (Caso 1 / Tier A/B/C, 422 series). Área es ahora variable de estado suave; yield = P/A residual.</li>
+<li><strong>Cadena legacy P→Y→A</strong> para series sin anchors (Caso 3 / Tier D, 2238 series), marcadas <code>quality_yield = "low_confidence"</code>.</li>
+<li><strong>V8 back-extrapolación log-lineal</strong> anclada al primer anchor con <code>f</code> por categoría adaptativo a year_X (V12).</li>
+<li><strong>V9 tier classification (A/B/C/D) + Check D anchor-level</strong> → <code>iia_corrections_anchor_candidates.csv</code> (modo SUAVE, requiere revisión PI).</li>
+<li><strong>V10 yield cap</strong> sobre cells V8 + <strong>V14 era_cap</strong> como segundo techo agronómico pre-Green-Revolution.</li>
+<li><strong>V13 auto-degradado</strong> de originales con ratio extremo (&gt;5 o &lt;0.2) → <code>iia_corrections_auto_degraded.csv</code> (audit trail; PI puede revertir vía <code>iia_corrections.csv</code> con <code>correction_type = "v13_revert"</code>).</li>
+<li><strong>03c v2 mediana móvil 5-yr</strong> sobre cells derivadas (reemplaza envelope log-lineal previo).</li>
+<li><strong><code>quality_yield</code> ahora 5-niveles</strong>: trustworthy / backfilled / spike / implausible / <strong>low_confidence</strong> (NUEVO para Tier D pre-1961).</li>
+<li><strong>Umbral observado/estimado en figuras agregadas LATAM</strong>: ahora 70% por volumen (era 50%). Un dot LATAM se pinta observado sólo cuando ≥70% del área/producción del año viene de cells originales.</li>
+<li><strong>Snapshot defensivo</strong> en <code>_archive/2026-05-01_pre_chain_redesign/</code>.</li>
+</ul>
+<p>Detalles canónicos: <a href="methodology/GAP_FILLING_CANONICAL.md"><code>docs/methodology/GAP_FILLING_CANONICAL.md</code></a> §0 (V1-V14).</p>
+<p><strong>Pendiente</strong>: <code>papers/00_zenodo/_build/methodology.Rmd</code> necesita rewrite v1.4 reflejando V1-V14.</p>
+<hr>
+<h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
+<p>Base de datos histórica y conjunto de análisis sobre el cambio agrario y ambiental en América Latina (21 países objetivo (19 con datos completos, ausentes HTI/PRI), 1900–2024 en panel nacional consolidado; fuentes IIA cubren 1821-1960 pero se integran desde 1900). Combina datos nacionales de FAOSTAT y la base IIA (Felipe) con datos subnacionales por censos y anuarios para 6 países, más datos de tenencia de tierra, comercio bilateral, deforestación, silvicultura y pesca. Soporta 7 papers en preparación.</p>
+<h2 id="2-estructura-general">2. Estructura general</h2>
+<pre><code>latam/
+├── README.md               Descripción breve
+├── CHANGELOG.md            Historial cronológico append-only
+├── STATUS.html             Este documento (renderizado)
+├── .gitignore
+├── _archive/               Legacy y snapshots (no versionado)
+│
+├── data/
+│   ├── raw/                Originales — NO modificar
+│   ├── processed/          Intermedios regenerables por scripts/
+│   ├── final/              Panels finales (crop_panel.rds, trade_final.rds, ...)
+│   └── corrections/        Logs de auditoría de correcciones
+│
+├── scripts/                Pipeline activo (convención: `scripts/`, no `code/`)
+│   ├── agriculture_macro/       Indicadores macro 21 países
+│   ├── subnational/             ARG/BRA/MEX/BOL/CHL/COL (6 países)
+│   ├── bilateral_trade/         Comercio bilateral histórico + FAOSTAT
+│   ├── deforestation_embodied/  Deforestación incorporada en comercio
+│   ├── forestry/                Silvicultura FAO + Comtrade
+│   ├── fisheries/               Pesca FishStatJ + Comtrade
+│   ├── land_tenure/             Tenencia de tierra, Gini, reforma agraria
+│   └── labour_embodied/         Trabajo incorporado en comercio
+│
+├── figures/                Figuras de validación/exploración por módulo
+│   ├── agriculture_macro/, bilateral/, country_cards/
+│   ├── deforestation/, labour/, land_use/, sensitivity/, subnational/
+│   └── zenodo/
+│
+├── papers/                 7 papers + Zenodo — autónomos
+│   ├── 00_zenodo
+│   ├── 01_land_use_subnational
+│   ├── 02_chapter_espinilla
+│   ├── 03_agrarian_change
+│   ├── 04_land_embodied
+│   ├── 05_deforestation_embodied
+│   ├── 06_essd_data_paper
+│   └── 07_labour_embodied
+│
+└── docs/
+    ├── STATUS.md           Fuente de este documento
+    ├── DATA_SOURCES.md     Registro completo de fuentes
+    ├── PIPELINE.md         Orden de ejecución
+    ├── methodology/        Metodología y decisiones sobre los datos (.md)
+    └── literature/
+        └── audits/         Auditorías de procedencia bibliográfica
+</code></pre>
+<blockquote>
+<p><strong>Regla de ubicación 2026-04-27.</strong> La raíz <code>latam/</code> contiene solo datos,
+scripts, figuras y <strong>metodología-de-los-datos</strong> (decisiones sobre cómo se
+construyen los datos consumibles vía Zenodo). Todo lo específico de un paper
+(drafts, planning, revisiones de literatura del paper, supplementary, builds)
+vive en <code>papers/NN_xxx/</code> con su propia estructura interna:</p>
+<ul>
+<li><code>papers/NN_xxx/code/</code> — scripts que generan figuras y tablas del paper</li>
+<li><code>papers/NN_xxx/figures/</code> — figuras finales del paper</li>
+<li><code>papers/NN_xxx/supplementary/</code> — SI específico del paper</li>
+<li><code>papers/NN_xxx/literature/</code> — revisiones de literatura del paper</li>
+<li><code>papers/NN_xxx/_drafts/</code> — drafts de manuscrito (editables, no canónicos)</li>
+<li><code>papers/NN_xxx/_planning/</code> — work plans, roadmaps, bug lists del paper</li>
+<li><code>papers/NN_xxx/_build/</code> — manuscrito canónico compilado</li>
+<li><code>papers/NN_xxx/_archive/</code> — versiones obsoletas del propio paper</li>
+</ul>
+<p><code>docs/literature/audits/</code> se mantiene como carpeta de auditorías de procedencia
+(no son revisiones, son verificaciones del propio protocolo <code>/lit-review</code>).</p>
+<p><strong>Regla scripts ↔ figuras (2026-04-27, estricta).</strong> Los scripts en
+<code>scripts/</code> raíz producen sólo <strong>datos</strong> (RDS/CSV consumibles vía Zenodo).
+Los scripts que producen <strong>figuras o tablas de un paper</strong> viven en
+<code>papers/NN_xxx/code/</code> y escriben a <code>papers/NN_xxx/figures/</code>.
+Excepciones legítimas en <code>scripts/</code>: validation/diagnostic del pipeline
+(<code>*_validation.R</code>, <code>*_diagnostic.R</code>, <code>country_cards/</code>, <code>*_sensitivity_benchmark.R</code>),
+porque sus figuras son <strong>validación de los datos</strong>, no de manuscrito.</p>
+<p><strong>Regla figuras/ raíz (2026-04-27, estricta).</strong> La carpeta <code>figures/</code>
+contiene <strong>solo validación, exploración y diagnóstico cross-paper</strong> del
+proyecto. <strong>NUNCA</strong> debe haber subcarpetas tipo <code>&lt;paper&gt;/</code>, <code>&lt;paper_*&gt;/</code>,
+<code>zenodo/</code>, <code>essd/</code>, <code>nature/</code>, <code>pnas/</code> o similar que sugieran contenido
+de un manuscrito específico. Las figuras de cada paper viven SIEMPRE en
+<code>papers/NN_xxx/figures/</code>. Si un script productor está en
+<code>papers/NN_xxx/{code,_build/code}/</code> y escribe a <code>figures/</code> raíz, es bug
+y debe corregirse a <code>papers/NN_xxx/figures/</code>. Auditoría disponible en
+<a href="../figures/README.md"><code>figures/README.md</code></a>.</p>
+</blockquote>
+<h2 id="3-outputs-maestros-disponibles">3. Outputs maestros disponibles</h2>
+<h3 id="datafinal"><code>data/final/</code></h3>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Contenido</th>
+<th>Cobertura</th>
+<th>Consumido por</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>crop_panel.rds</code> + <code>.csv</code></td>
+<td>Panel de cultivos por país × año × ítem FAO (area, producción, yield, <code>quality_yield</code>, <code>cap_candidate</code>)</td>
+<td>19 países, 1900-2024, 162 ítems FAO</td>
+<td>todos los análisis</td>
+</tr>
+<tr>
+<td><code>crop_panel_regional.rds</code></td>
+<td>Panel agregado por región LATAM</td>
+<td>5 regiones</td>
+<td>paper 03</td>
+</tr>
+<tr>
+<td><code>crop_panel_by_category.rds</code></td>
+<td>Panel agregado por categoría FAO</td>
+<td>21 países, 11 categorías</td>
+<td>paper 03</td>
+</tr>
+<tr>
+<td><code>crop_panel_energy.rds</code></td>
+<td>Panel con conversión a kcal</td>
+<td>21 países</td>
+<td>paper 04</td>
+</tr>
+<tr>
+<td><code>trade_final.rds</code></td>
+<td>Panel de comercio agrícola</td>
+<td>21 países, 1821-2024</td>
+<td>paper 04, 05</td>
+</tr>
+<tr>
+<td><code>trade_final_energy.rds</code> + <code>.csv</code></td>
+<td>Comercio en equivalentes energéticos</td>
+<td>21 países</td>
+<td>paper 04</td>
+</tr>
+<tr>
+<td><code>production_final.rds</code></td>
+<td>Producción coherente post-validación</td>
+<td>21 países</td>
+<td>pipeline</td>
+</tr>
+<tr>
+<td><code>area_final.rds</code></td>
+<td>Area coherente post-validación</td>
+<td>21 países</td>
+<td>pipeline</td>
+</tr>
+<tr>
+<td><code>yields_final.rds</code></td>
+<td>Yields derivados</td>
+<td>21 países</td>
+<td>pipeline</td>
+</tr>
+<tr>
+<td><code>land_use_national.rds</code> + <code>.csv</code></td>
+<td>Usos del suelo agregados</td>
+<td>21 países, LUH2</td>
+<td>paper 01, 04</td>
+</tr>
+<tr>
+<td><code>land_use_subnational.csv</code></td>
+<td>Panel reconciliado subnacional (cropland nuestro vs LUH2)</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>land_use_luh2_subnational.csv</code></td>
+<td>LUH2 por unidad administrativa</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>cropland_subnational.csv</code></td>
+<td>Comparación cropland nuestro vs LUH2</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>cropland_subnational_detailed.csv</code></td>
+<td>Cropland detallado por admin × año</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>crop_panel_subnational_energy.csv</code></td>
+<td>Panel subnacional con kcal (1.48M filas)</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>production_subnational_detailed.csv</code></td>
+<td>Producción detallada por admin × ítem × año</td>
+<td>6 países</td>
+<td>paper 01</td>
+</tr>
+<tr>
+<td><code>sensitivity_results.rds</code></td>
+<td>Análisis de sensibilidad</td>
+<td>—</td>
+<td>paper 06</td>
+</tr>
+</tbody>
+</table>
+<h3 id="componente-socioeconomico-tenencia-e-inequidad">Componente socioeconómico (tenencia e inequidad)</h3>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Contenido</th>
+<th>Cobertura</th>
+<th>Ubicación actual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>land_tenure_panel.csv</code></td>
+<td>Panel auxiliar de tenencia, Gini de tierra, reformas agrarias, V-Dem, SWIID, Land Matrix (27 variables, 10 fuentes integradas)</td>
+<td>20 países, 1900-2025, 2 520 filas</td>
+<td><code>data/processed/land_tenure/</code> — <strong>aún no promovido</strong> a <code>data/final/</code> (pendiente cierre ESSD-ready)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Tratado como output canónico aunque viva en <code>processed/</code>. Distribuido
+en Zenodo desde v1.3 (2026-04-25) y descrito en paper 06
+Sec.~2.7 "Land tenure, inequality, and agrarian reform".</p>
+</blockquote>
+<h3 id="dataprocessedsubnational"><code>data/processed/subnational/</code></h3>
+<table>
+<thead>
+<tr>
+<th>Archivo</th>
+<th>Contenido</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>crop_panel_subnational.rds</code></td>
+<td>Panel 19 países × admin units × ítem × año (incluye ARG/BRA/MEX/BOL/CHL/COL subnacionales + 13 nacionales) — 1.8M filas</td>
+</tr>
+<tr>
+<td><code>livestock_subnational.rds</code></td>
+<td>Ganadería 19 países × admin — 172k filas</td>
+</tr>
+<tr>
+<td><code>{country}_crops_scaled.rds</code></td>
+<td>Por país (6 países subnacionales)</td>
+</tr>
+<tr>
+<td><code>luh2_land_use.rds</code></td>
+<td>LUH2 extraído por admin unit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-inventario-de-fuentes">4. Inventario de fuentes</h2>
+<blockquote>
+<p><strong>Migración en curso (2026-04-28)</strong>: registro canónico es ahora <a href="SOURCES.md">SOURCES.md</a> bajo el
+protocolo de provenance (skill <code>/project-organize</code> actualizada 2026-04-28). Añade checksums
+SHA256, semáforo verified/user-provided/agent-verified/verified-cached/unverified, verificación
+obligatoria de URLs, y bloqueo Zenodo para fuentes 🔴 unverified. <a href="DATA_SOURCES.md">DATA_SOURCES.md</a>
+queda como legacy hasta completar migración.</p>
+<p><strong>Hallazgos críticos auditoría 2026-04-28</strong>:
+- <strong>México</strong>: SIAP estatal sumado coincide al kilogramo con FAOSTAT nacional en 6 cultivos (validación independiente). Trazabilidad confirmada. Eliminados 13 archivos <code>mexico_agricola_nacional_*.csv</code> duplicados de <code>siap_historical/</code>. Métodos detallados en <code>docs/methodology/mexico_panel_methodology.md</code> (texto literal del colaborador).
+- <strong>Colombia</strong>: panel del colaborador documentado en <code>docs/methodology/colombia_panel_methodology.md</code> (texto literal).
+- 🔴 <strong>ALUCINACIÓN CONFIRMADA — BLOQUEANTE para Zenodo/manuscrito</strong>: 4 archivos contienen valores hardcoded por agente que <strong>NO corresponden a las fuentes citadas</strong>. Detalle completo en <code>docs/methodology/HALLUCINATION_AUDIT_2026-04-28.md</code>.
+  - <code>frankema_land_gini_latam.csv</code>: 13/13 cotejos vs PDF Tabla A.1 fallan (México 1960 CSV=0.952 vs PDF=0.607).
+  - <code>deininger_land_gini_latam.csv</code>: fuente declarada (E&amp;V Tabla 1) NO contiene los valores citados.
+  - <code>vanhanen_family_farms_latam.csv</code>: correlación con QoG van_index = 0.056 (esperado ≥ 0.4 si fuera Vanhanen real).
+  - <code>area_mitchell.csv</code> + <code>production_mitchell.csv</code>: transcripción manual sin spot-check documentado.
+- <strong>Alternativa robusta para Gini de tierra</strong>: <code>wcad_gini_computed.csv</code> (FAOSTAT-derived, 🟢 verified, script reproducible).</p>
+</blockquote>
+<p>Resumen por bucket (sigue válido pero la trazabilidad fina vive en SOURCES.md):</p>
+<table>
+<thead>
+<tr>
+<th>Bucket</th>
+<th>Fuentes principales</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Core histórico</strong></td>
+<td>FAOLatinoamerica.xlsx (IIA/Felipe), ArgentinaProvinces, BrazilStates</td>
+<td>21 países, 1821-1960</td>
+</tr>
+<tr>
+<td><strong>FAOSTAT</strong></td>
+<td>Production QCL, Trade TCL/TM, LandUse RL, WCAD, Forestry, FishStatJ</td>
+<td>21 países, 1961-present</td>
+</tr>
+<tr>
+<td><strong>Históricos</strong></td>
+<td>Samper coffee, Anderson-Pinilla wine, Mitchell, USDA cotton, ICAC</td>
+<td>Variable</td>
+</tr>
+<tr>
+<td><strong>Bilateral</strong></td>
+<td>Comtrade, direct country sources (ARG/BRA/CHL), USA/UK/BEL/IT/ES imports, TRADHIST</td>
+<td>19 países, 1840-2024</td>
+</tr>
+<tr>
+<td><strong>Subnacional</strong></td>
+<td>Mexico SIAP+censos, Argentina anuarios, Brazil IBGE, Bolivia INE, Chile ODEPA, <strong>Colombia censos 1915-1960</strong></td>
+<td>6 países</td>
+</tr>
+<tr>
+<td><strong>Tenencia</strong></td>
+<td>Frankema (2010), Deininger-Squire, FAO WCAD, Vanhanen, V-Dem v15, Albertus (2015), SWIID v9, Land Matrix, Clio-Infra, Erickson-Vollrath (10 fuentes integradas)</td>
+<td>20 países, 1900-2025</td>
+</tr>
+<tr>
+<td><strong>Land use</strong></td>
+<td>LUH2, MapBiomas (Brasil)</td>
+<td>Global + Brasil</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-cobertura-general">5. Cobertura general</h2>
+<h3 id="paises-con-datos-subnacionales">Países con datos subnacionales</h3>
+<table>
+<thead>
+<tr>
+<th>País</th>
+<th>Unidades</th>
+<th>Período</th>
+<th>Ítems FAO</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Argentina</td>
+<td>24 provincias</td>
+<td>1870-2024</td>
+<td>162</td>
+<td>⭐ Completo</td>
+</tr>
+<tr>
+<td>Brasil</td>
+<td>27 estados</td>
+<td>1920-2024</td>
+<td>162</td>
+<td>⭐ Completo</td>
+</tr>
+<tr>
+<td>México</td>
+<td>32 estados</td>
+<td>1930-2023</td>
+<td>109</td>
+<td>⭐ Completo (censos + SIAP)</td>
+</tr>
+<tr>
+<td>Bolivia</td>
+<td>9 departamentos</td>
+<td>1983-2023</td>
+<td>51</td>
+<td>⭐ Completo</td>
+</tr>
+<tr>
+<td>Chile</td>
+<td>9 regiones</td>
+<td>1979-2024</td>
+<td>21</td>
+<td>🟡 Cobertura limitada de ítems</td>
+</tr>
+<tr>
+<td>Colombia</td>
+<td>25 departamentos</td>
+<td>1915-1960 (benchmarks + extrap.)</td>
+<td>50</td>
+<td>🟡 Solo benchmarks pre-1960, extrapolado post-1961</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Años indican primer benchmark con datos de campo; el panel está extendido a 1900 con NA para compatibilidad entre países.</p>
+</blockquote>
+<h3 id="paises-sin-datos-subnacionales-solo-nacional-fao">Países sin datos subnacionales (solo nacional FAO)</h3>
+<p>🔴 <strong>Sub-representados</strong>: Perú, Ecuador, Paraguay, Uruguay, Venezuela (potencial censos agropecuarios por OCR).</p>
+<p>🔴 <strong>Ausentes</strong>: Haití (HTI), Puerto Rico (PRI) — sin datos FAO consistentes.</p>
+<h2 id="6-pendientes-priorizados">6. Pendientes priorizados</h2>
+<h3 id="alta-prioridad">Alta prioridad</h3>
+<ul>
+<li><strong>Revisiones de literatura con procedencia verificable</strong>: rehacer o auditar las revisiones marcadas el 2026-04-27 para que cada claim usado en manuscritos provenga de Zotero/PDF/biblioteca real. Ver <code>docs/literature/audits/provenance_audit_2026-04-27.md</code> y el nuevo tema <code>04_research_resources/biblioteca/latin_america/</code>.</li>
+<li><strong>Perú y Ecuador</strong> como 7º y 8º países subnacionales (censos identificados, sin integrar — ver <code>docs/methodology/07_subnational_data_sources.md</code>).</li>
+<li><strong>Censo DANE 2014 (Colombia)</strong> para extender la serie subnacional de Colombia a época contemporánea (actualmente extrapolada desde 1960).</li>
+<li><strong>Ganadería subnacional Colombia</strong> — no integrada, Colombia cae en rama nacional.</li>
+</ul>
+<h3 id="media-prioridad">Media prioridad</h3>
+<ul>
+<li>Refactor de rutas absolutas <code>C:/Users/jinfa/OneDrive/research_resources/...</code> en <code>scripts/agriculture_macro/</code> y <code>labour_embodied/run_all.R</code> a abstracción vía variable de entorno.</li>
+<li>Snapshot STATUS.html en los 7 papers (autonomía por paper).</li>
+</ul>
+<h3 id="baja-prioridad-deuda-tecnica">Baja prioridad (deuda técnica)</h3>
+<ul>
+<li>Renombrar <code>scripts/</code> → <code>code/</code> (convención estándar de <code>/project-organize</code>). Decisión actual: <strong>no hacer</strong> — rompe ~50 <code>here::here("scripts", ...)</code>; se documenta como excepción.</li>
+</ul>
+<h3 id="bloqueos-del-usuario">Bloqueos del usuario</h3>
+<ul>
+<li>Ninguno pendiente.</li>
+</ul>
+<h2 id="7-como-usar-el-proyecto">7. Cómo usar el proyecto</h2>
+<h3 id="regenerar-panel-principal-21-paises">Regenerar panel principal (21 países)</h3>
+<pre><code class="language-r"># En R, desde el root del proyecto
+source(here::here(&quot;scripts&quot;, &quot;agriculture_macro&quot;, &quot;00_setup.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;agriculture_macro&quot;, &quot;01_trade.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;agriculture_macro&quot;, &quot;02_production.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;agriculture_macro&quot;, &quot;05_coherence.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;agriculture_macro&quot;, &quot;06_finalize.R&quot;))
+</code></pre>
+<h3 id="regenerar-panel-subnacional-6-paises">Regenerar panel subnacional (6 países)</h3>
+<pre><code class="language-r">source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;00_setup_subnational.R&quot;))
+# Procesar cada país (pueden correrse en paralelo)
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;01_argentina.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;02_brazil.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;03_mexico.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;04_bolivia.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;05_chile.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;05b_colombia.R&quot;))
+# Consolidar
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;06_clean_validate.R&quot;))
+source(here::here(&quot;scripts&quot;, &quot;subnational&quot;, &quot;11_consolidate.R&quot;))
+</code></pre>
+<h3 id="verificar-validacion-subnacional">Verificar validación subnacional</h3>
+<pre><code class="language-r">readRDS(&quot;data/processed/subnational/crop_panel_subnational.rds&quot;) |&gt;
+  dplyr::count(iso3)
+</code></pre>
+<h3 id="exportar-para-paper">Exportar para paper</h3>
+<pre><code class="language-r"># Ejemplo: paper 03 usa crop_panel_by_category.csv
+readr::read_csv(&quot;data/final/crop_panel_by_category.csv&quot;)
+</code></pre>
+<h2 id="8-como-anadir-cosas-nuevas">8. Cómo añadir cosas nuevas</h2>
+<h3 id="anadir-un-nuevo-pais-subnacional">Añadir un nuevo país subnacional</h3>
+<ol>
+<li>Colocar raw data en <code>data/raw/subnational/{country}/</code>.</li>
+<li>Crear <code>scripts/subnational/0N_{country}.R</code> siguiendo el patrón de México/Colombia.</li>
+<li>Actualizar <code>scripts/subnational/00_setup_subnational.R</code> con admin units.</li>
+<li>Añadir a <code>sub_countries</code> / <code>sub_iso3</code> en <code>11_consolidate.R</code>.</li>
+<li>Actualizar <code>06_clean_validate.R</code>, <code>07_visual_validation.R</code>, <code>13_figures_subnational.R</code>.</li>
+<li>Documentar en <code>docs/DATA_SOURCES.md</code> sección 4 y <code>docs/methodology/08_subnational_methodology.md</code>.</li>
+<li>Añadir entrada al <code>CHANGELOG.md</code>.</li>
+</ol>
+<h3 id="anadir-una-fuente-nueva">Añadir una fuente nueva</h3>
+<ol>
+<li>Raw data → <code>data/raw/{source_family}/</code>.</li>
+<li>Script de descarga/limpieza en el módulo apropiado de <code>scripts/</code>.</li>
+<li>Fila nueva en <code>docs/DATA_SOURCES.md</code> con citación.</li>
+<li>Si es una dimensión nueva (no contemplada), considerar nuevo módulo en <code>scripts/</code>.</li>
+</ol>
+<h3 id="anadir-un-paper-nuevo">Añadir un paper nuevo</h3>
+<ol>
+<li>Carpeta nueva <code>papers/NN_{slug}/</code> siguiendo estructura de los existentes.</li>
+<li>Usar skill <code>/paper-organize</code> para setup.</li>
+<li>Los datos del paper leen de <code>data/final/</code> o <code>data/processed/</code> vía <code>here::here()</code>.</li>
+</ol>
+<h2 id="9-decisiones-vigentes-del-usuario">9. Decisiones vigentes del usuario</h2>
+<p>(De <code>C:/Users/jinfa/OneDrive/CLAUDE.md</code> y convención del proyecto)</p>
+<ul>
+<li><strong>Python global</strong> — nunca <code>.venv</code> en OneDrive.</li>
+<li><strong>No mover masivamente carpetas</strong> — OneDrive puede causar pérdida por sync.</li>
+<li><strong>No borrar archivos sin confirmación explícita</strong> — en duda → <code>_archive/</code>.</li>
+<li><strong>Convención R</strong>: tidyverse, pipe nativo <code>|&gt;</code>, snake_case, headers obligatorios (ver skill <code>/code-protocol</code>).</li>
+<li><strong>Scripts</strong>: extensión <code>.R</code> (mayúscula) — consistente con el proyecto, aunque <code>/code-protocol</code> sugiere <code>.r</code>.</li>
+<li><strong>Convención <code>scripts/</code></strong>: se mantiene como excepción del estándar <code>/project-organize</code> (que pide <code>code/</code>) para no romper ~50 referencias <code>here::here("scripts", ...)</code>.</li>
+</ul>
+<h2 id="10-health-check-actual">10. Health check actual</h2>
+<p><strong>Fecha:</strong> 2026-04-25</p>
+<table>
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tamaño proyecto</td>
+<td>data 2.4 GB + output 368 MB + papers 305 MB</td>
+</tr>
+<tr>
+<td>Países con datos</td>
+<td>21 objetivo, 19 con datos en panel nacional (ausentes HTI/PRI)</td>
+</tr>
+<tr>
+<td>Países con subnacional</td>
+<td>6 (ARG/BRA/MEX/BOL/CHL/<strong>COL</strong>)</td>
+</tr>
+<tr>
+<td>Admin units totales</td>
+<td>141 (panel subnacional consolidado)</td>
+</tr>
+<tr>
+<td>Cultivos (ítems FAO)</td>
+<td>168 en subnacional / 162 en nacional</td>
+</tr>
+<tr>
+<td>Cobertura temporal</td>
+<td>1900-2024 en panel nacional; fuentes IIA desde 1821</td>
+</tr>
+<tr>
+<td>Papers en preparación</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Scripts R en <code>scripts/</code></td>
+<td>87 archivos, 8 módulos</td>
+</tr>
+<tr>
+<td><code>crop_panel_subnational.rds</code></td>
+<td>1,801,733 filas, 19 países</td>
+</tr>
+<tr>
+<td>Consistencia <code>sum(admin) = FAO</code></td>
+<td>ARG/BRA/MEX/BOL/CHL/COL ratio=1.0000</td>
+</tr>
+<tr>
+<td>Componente socioeconómico (tenencia)</td>
+<td>1 panel consolidado, 20 países × 126 años (2 520 filas × 27 variables), 10 fuentes integradas. Visible en paper 06 sec. 2.7 + Zenodo deposit (v1.3).</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Último cambio relevante:</strong> Op C híbrida sobre <code>05_coherence.R</code> (2026-04-28):
+threshold 1.5×→2.5×, Phase 2 degradada de clip a flag (<code>cap_candidate</code>),
+DOM-sugar 1900-1945 restaurado al IIA original, ARG 1911 68 series
+restauradas, ORCIDs/emails confirmados, Zenodo refreshed v1.3.1 (8 ficheros,
+91.6 MB, manuscript.pdf 58 pp recompilado). Ver <a href="../CHANGELOG.md">CHANGELOG.md</a>
+y <code>_reports/cap_fixes_2026-04-28.md</code>.</p>
+<blockquote>
+<p><strong>Fact-check 2026-04-24</strong>: estas cifras reflejan el estado real del panel consolidado, verificado contra <code>data/final/crop_panel.rds</code>. Ver <code>CHANGELOG.md</code> entrada 2026-04-24 para detalles.</p>
+</blockquote>
+<hr>
+<p><em>Si vuelves al proyecto y solo lees una cosa, lee esta.</em></p>
+<footer>Renderizado desde <code>docs/STATUS.md</code> · regenerar con
+<code>python docs/_render_status_html.py</code></footer>
+</main>
+</body>
+</html>
