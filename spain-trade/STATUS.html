@@ -93,7 +93,7 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <h1 id="status-spain-trade-dataset">STATUS — Spain Trade Dataset</h1>
-<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure post cross-audit)</em></p>
+<p><em>Última actualización: 2026-05-10 (sesión IMPLEMENT structure Tier 3 — buckets aplicados, Q01/Q02 cerrados)</em></p>
 <p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
 <hr />
 <h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
@@ -128,17 +128,12 @@ bilateral por socio comercial.</p>
 ├── trade.Rproj                     # Excepción D3 (RStudio)
 ├── .gitignore
 │
-├── R/                              # Pipeline R (10 scripts: 00 + 01..09)
-│   ├── 00_config.R                 # Paths, concordances, helpers
-│   ├── 01_direct_historical.R
-│   ├── 02_direct_comtrade.R
-│   ├── 03_merge_direct.R
-│   ├── 04_bilateral_snapshots.R
-│   ├── 05_bilateral_scaling.R
-│   ├── 06_bilateral_comtrade.R
-│   ├── 07_bilateral_merge.R
-│   ├── 08_monetary_diagnostics.R   # diagnóstico, no entra en output canónico
-│   └── 09_build_final.R
+├── code/                           # Pipeline R, bucket-organized (D1-trade opt. a, 2026-05-10)
+│   ├── 00_config.R                 # Paths (incl. path_proc_{direct,bilateral,diagnostics})
+│   ├── direct/                     # 01_direct_historical.R, 02_direct_comtrade.R, 03_merge_direct.R
+│   ├── bilateral/                  # 04_bilateral_snapshots.R … 07_bilateral_merge.R
+│   ├── diagnostics/                # 08_monetary_diagnostics.R
+│   └── final/                      # 09_build_final.R
 │
 ├── data/
 │   ├── raw/                        # Primarias intocables (12 archivos)
@@ -149,26 +144,35 @@ bilateral por socio comercial.</p>
 │   │   ├── tena/                   # tena_cuadro87_*.csv
 │   │   ├── betran_huberman/        # sampletradepolicy.dta (84 MB)
 │   │   └── faostat/                # placeholder vacío
-│   ├── processed/                  # Intermedios pipeline
+│   ├── processed/
+│   │   ├── direct/                 # 01..03 intermediate CSVs
+│   │   ├── bilateral/              # 04..07 intermediate CSVs
+│   │   └── diagnostics/            # 08 monetary CSVs
 │   └── final/
 │       ├── trade_direct.csv        # 35 600 filas
 │       └── trade_bilateral.csv     # 857 877 filas
 │
-├── figures/                        # 13 PNG + figures/_code/ (eje pendiente F03)
+├── figures/                        # 13 PNG, bucket-organized (mirror of code/)
+│   ├── _shared/                    # _style.py, _data.py (formerly fig_00_setup.py)
+│   ├── direct/{_code/,*.png}       # fig_02, 03, 05, 10
+│   ├── bilateral/{_code/,*.png}    # fig_06, 07, 08, 11, 12
+│   ├── diagnostics/{_code/,*.png}  # fig_13
+│   ├── final/{_code/,*.png}        # fig_04, 09
+│   └── comparatives/{_code/,*.png} # fig_01
 │
 ├── docs/
 │   ├── STATUS.md                   # (este archivo)
-│   ├── SOURCES.md                  # Inventario file-level data/raw/ (NUEVO 2026-05-09)
-│   ├── architecture.md             # Eje INDICADOR — buckets pendientes Q01
-│   ├── MASTER_PLAN.md              # Plan estratégico vivo (borrador)
+│   ├── SOURCES.md                  # Inventario file-level data/raw/ + material referencia (Q02 c)
+│   ├── architecture.md             # Eje INDICADOR + buckets D1-trade ratificados (2026-05-10)
+│   ├── MASTER_PLAN.md              # Plan estratégico vivo
 │   ├── methodology/                # 9 docs canónicos (01..09 paso a paso)
-│   ├── references/                 # 4 markdown históricos (F07 disputa)
+│   ├── references/                 # Vacío; reservado D5 para PDFs de papers consultados
 │   ├── agent_debates/              # cross-audits y debates
 │   ├── _agents/                    # ACTIVE.md + log.md
 │   └── _reports/                   # _AUDIT.md (movido 2026-05-09)
 │
-├── zenodo/                         # Deposit draft (stub)
-└── _archive/                       # original_trade/ (~1.2 GB, no GitHub)
+├── zenodo/                         # Deposit draft (stub) — D5 excepción &quot;datasets/&lt;x&gt;/zenodo/&quot;
+└── _archive/                       # original_trade/ + old_docs_references/ (no GitHub)
 </code></pre>
 <hr />
 <h2 id="3-lo-que-hay-ahora-masters-outputs">3. Lo que hay AHORA — masters / outputs</h2>
@@ -344,12 +348,10 @@ crosswalk shipped).</p>
 <h2 id="6-pendientes-priorizados">6. Pendientes priorizados</h2>
 <h3 id="alta-bloqueantes-para-roll-out-estructural">ALTA — bloqueantes para roll-out estructural</h3>
 <ul>
-<li><strong>Arbitraje PI Q01 / F03</strong> — buckets canónicos para aplicar D1 en
-  <code>R/</code>, <code>figures/</code> y <code>data/processed/</code>. Opciones: (a) bloque pipeline
-  <code>direct/bilateral/diagnostics/final/</code>; (b) por indicador CAHE
-  <code>trade_import/...</code>; (c) por tema. Ver <code>docs/architecture.md</code>.</li>
-<li><strong>Arbitraje PI Q02 / F07</strong> — clasificación de los 4 markdown en
-  <code>docs/references/</code> (archivar / migrar parcial / semilla SOURCES).</li>
+<li><strong>(CERRADO 2026-05-10)</strong> Q01/F03 ratificado opción (a) bloque pipeline
+  <code>direct/bilateral/diagnostics/final/</code> aplicado en <code>code/</code>, <code>figures/</code>
+  y <code>data/processed/</code>. Q02/F07 ratificado opción (c): inventario
+  como semilla SOURCES, otros 3 markdown a <code>_archive/</code>.</li>
 </ul>
 <h3 id="alta-zenodo-blockers-heredado-_auditmd-5">ALTA — Zenodo blockers (heredado <code>_AUDIT.md</code> §5)</h3>
 <ul>
@@ -399,11 +401,16 @@ bilateral = pd.read_csv(&quot;data/final/trade_bilateral.csv&quot;)
 bilateral = bilateral.rename(columns={&quot;province&quot;: &quot;partner&quot;})
 </code></pre>
 <h3 id="regenerar-desde-primarias">Regenerar desde primarias</h3>
-<pre><code class="language-r">source(here::here(&quot;R&quot;, &quot;00_config.R&quot;))
-source(here::here(&quot;R&quot;, &quot;01_direct_historical.R&quot;))
-# ... 02..07
-source(here::here(&quot;R&quot;, &quot;08_monetary_diagnostics.R&quot;))   # diagnóstico
-source(here::here(&quot;R&quot;, &quot;09_build_final.R&quot;))
+<pre><code class="language-r">source(here::here(&quot;code&quot;, &quot;00_config.R&quot;))
+source(here::here(&quot;code&quot;, &quot;direct&quot;, &quot;01_direct_historical.R&quot;))
+source(here::here(&quot;code&quot;, &quot;direct&quot;, &quot;02_direct_comtrade.R&quot;))
+source(here::here(&quot;code&quot;, &quot;direct&quot;, &quot;03_merge_direct.R&quot;))
+source(here::here(&quot;code&quot;, &quot;bilateral&quot;, &quot;04_bilateral_snapshots.R&quot;))
+source(here::here(&quot;code&quot;, &quot;bilateral&quot;, &quot;05_bilateral_scaling.R&quot;))
+source(here::here(&quot;code&quot;, &quot;bilateral&quot;, &quot;06_bilateral_comtrade.R&quot;))
+source(here::here(&quot;code&quot;, &quot;bilateral&quot;, &quot;07_bilateral_merge.R&quot;))
+source(here::here(&quot;code&quot;, &quot;diagnostics&quot;, &quot;08_monetary_diagnostics.R&quot;))   # diagnóstico
+source(here::here(&quot;code&quot;, &quot;final&quot;, &quot;09_build_final.R&quot;))
 </code></pre>
 <p>Requiere acceso a <code>D:/data/trade/comtrade/data/final/db1_by_year/</code>.</p>
 <hr />
@@ -416,7 +423,7 @@ source(here::here(&quot;R&quot;, &quot;09_build_final.R&quot;))
    by, download script (D4: <code>code/extract/&lt;source&gt;/</code>).</li>
 <li>Recalcular checksums: <code>python docs/_compute_source_checksums.py</code>.</li>
 <li>Re-render: <code>python docs/_render_sources_html.py</code>.</li>
-<li>Parser específico en script numerado en <code>R/</code>.</li>
+<li>Parser específico en script numerado en <code>code/&lt;bucket&gt;/</code>.</li>
 <li>Línea en <code>CHANGELOG.md</code> y bitácora <code>docs/_agents/log.md</code>.</li>
 </ol>
 <h3 id="nuevo-indicador">Nuevo indicador</h3>
@@ -426,7 +433,7 @@ source(here::here(&quot;R&quot;, &quot;09_build_final.R&quot;))
 <h2 id="9-decisiones-del-usuario-vigentes">9. Decisiones del usuario vigentes</h2>
 <ul>
 <li><strong>D1 (forest 2026-05-09, heredado)</strong>: eje canónico = INDICADOR (<code>code/</code>
-  o <code>R/</code>, <code>figures/</code>, <code>data/processed/</code>); <code>data/raw/</code> por fuente.
+  <code>figures/</code>, <code>data/processed/</code>); <code>data/raw/</code> por fuente.
   <strong>Buckets concretos para <code>trade/</code> pendientes Q01.</strong></li>
 <li><strong>D2</strong>: <code>WORK_PLAN.md</code> en raíz → <code>docs/WORK_PLAN.md</code>.</li>
 <li><strong>D3</strong>: <code>&lt;dataset&gt;.Rproj</code> excepción operativa en raíz.</li>
@@ -500,7 +507,7 @@ source(here::here(&quot;R&quot;, &quot;09_build_final.R&quot;))
 </tr>
 <tr>
 <td>Hardcoded absolute paths en R</td>
-<td>2 (<code>D:/data/trade/comtrade/...</code>, <code>D:/data/agriculture/faostat</code>) en <code>00_config.R</code> — documentado</td>
+<td>2 (<code>D:/data/trade/comtrade/...</code>, <code>D:/data/agriculture/faostat</code>) en <code>code/00_config.R</code> — documentado</td>
 </tr>
 <tr>
 <td>Figuras <code>/fig-nature</code> style</td>

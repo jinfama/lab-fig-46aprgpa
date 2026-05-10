@@ -93,7 +93,7 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <h1 id="sources-spain-mining-dataset">SOURCES — Spain Mining Dataset</h1>
-<p><strong>Last revised</strong>: 2026-05-09
+<p><strong>Last revised</strong>: 2026-05-10
 <strong>Scope</strong>: Registro file-level de provenance para todos los archivos en <code>data/raw/</code>. Cada bloque enlaza al script de carga / extractor y, cuando aplica, a la cita canónica.
 <strong>Source-of-truth de checksums</strong>: <code>docs/_compute_source_checksums.py</code> (re-ejecutable).</p>
 <p><strong>Reglas (project-organize/SKILL.md:421-486)</strong>:</p>
@@ -118,13 +118,13 @@ li { margin: 0.2rem 0; }
 <li><strong>Tamaño</strong>: ~1.04 MB.</li>
 <li><strong>Encoding</strong>: xlsx multi-sheet (<code>Ramo del laboreo</code>, <code>Ramo del beneficio</code>, <code>Cantera</code>, <code>Non-metallic</code>, <code>CobreCinq</code>, <code>ExtraccionAgregada</code>, <code>Metales</code>).</li>
 <li><strong>SHA256 checksum</strong>: regenerar con <code>python docs/_compute_source_checksums.py</code> (sin commitear binario al repo; el Excel está gitignored).</li>
-<li><strong>Download script / extractor</strong>: actualmente embebido en <code>R/01_load_laboreo.R</code> (hoja laboreo), <code>R/02_load_beneficio.R</code> (hoja beneficio), <code>R/03_harmonize.R</code> (CobreCinq), <code>R/04_classify.R</code> (ExtraccionAgregada/Metales/Non-metallic), <code>R/08_cantera_nonmetallic.R</code> (Non-metallic SITC + Cantera). Sub-arbitraje F08 (debate 2026-05-09:212) acepta esta lectura embebida porque <code>read_excel()</code> directa NO requiere conversión OCR/PDF; futuros extractores con OCR (base Gemini Fase 2) sí migrarán a <code>code/extract/&lt;source&gt;/</code>.</li>
+<li><strong>Download script / extractor</strong>: actualmente embebido en <code>code/laboreo/01_load_laboreo.R</code> (hoja laboreo), <code>code/beneficio/02_load_beneficio.R</code> (hoja beneficio), <code>code/comparatives/03_harmonize.R</code> (CobreCinq), <code>code/validation/04_classify.R</code> (ExtraccionAgregada/Metales/Non-metallic), <code>code/cantera/08_cantera_nonmetallic.R</code> (Non-metallic SITC + Cantera). Sub-arbitraje F08 (debate 2026-05-09:212) acepta esta lectura embebida porque <code>read_excel()</code> directa NO requiere conversión OCR/PDF; futuros extractores con OCR (base Gemini Fase 2) sí migrarán a <code>code/extract/&lt;source&gt;/</code>.</li>
 <li><strong>Used by (file-level)</strong>:</li>
-<li><code>R/01_load_laboreo.R</code> → <code>data/processed/01_laboreo_long.csv</code> (hoja "Ramo del laboreo").</li>
-<li><code>R/02_load_beneficio.R</code> → <code>data/processed/02_beneficio_long.csv</code> (hoja "Ramo del beneficio").</li>
-<li><code>R/03_harmonize.R</code> → <code>data/processed/03_harmonized.csv</code> (hoja "CobreCinq" para metal-content).</li>
-<li><code>R/04_classify.R</code> → <code>data/processed/04_classified.csv</code> (hojas "ExtraccionAgregada", "Metales", "Non-metallic").</li>
-<li><code>R/08_cantera_nonmetallic.R</code> → <code>data/processed/08_cantera_sitc.csv</code> (hoja "Cantera" + filas 103-151 SITC de "Non-metallic").</li>
+<li><code>code/laboreo/01_load_laboreo.R</code> → <code>data/processed/laboreo/01_laboreo_raw.csv</code> (hoja "Ramo del laboreo").</li>
+<li><code>code/beneficio/02_load_beneficio.R</code> → <code>data/processed/beneficio/02_beneficio_raw.csv</code> (hoja "Ramo del beneficio").</li>
+<li><code>code/comparatives/03_harmonize.R</code> → <code>data/processed/comparatives/03_*_harmonized.csv</code> (hoja "CobreCinq" para metal-content).</li>
+<li><code>code/validation/04_classify.R</code> → <code>data/processed/validation/04_*_classified.csv</code> (hojas "ExtraccionAgregada", "Metales", "Non-metallic").</li>
+<li><code>code/cantera/08_cantera_nonmetallic.R</code> → <code>data/processed/cantera/08_cantera_sitc.csv</code> (hoja "Cantera" + filas 103-151 SITC de "Non-metallic").</li>
 <li><strong>Notes</strong>:</li>
 <li>El Excel está gitignored (<code>.gitignore:8</code> <code>data/raw/**/*.xlsx</code>); el archivo físico vive sólo en OneDrive del PI hasta que se publique en Zenodo.</li>
 <li>El paper compilado/dataset Zenodo NO está publicado todavía; al publicarse, este bloque se actualiza con DOI y la cita canónica salta a 🟢.</li>
@@ -133,15 +133,15 @@ li { margin: 0.2rem 0; }
 <ul>
 <li><strong>Status</strong>: 🟢 (datos abiertos, portal MITECO)</li>
 <li><strong>Institución / autor</strong>: MITECO (Ministerio para la Transición Ecológica y el Reto Demográfico) — Estadística Minera de España, datos abiertos.</li>
-<li><strong>URL pública</strong>: portal MITECO / Minerva — <code>&lt;pendiente — pegar URL exacta del download&gt;</code>. Ver <code>R/07_extend_miteco.R</code> y <code>_AUDIT.md</code> (<code>docs/_reports/_AUDIT.md</code>) para el origen documentado.</li>
+<li><strong>URL pública</strong>: portal MITECO / Minerva — <code>&lt;pendiente — pegar URL exacta del download&gt;</code>. Ver <code>code/extension/07_extend_miteco.R</code> y <code>_AUDIT.md</code> (<code>docs/_reports/_AUDIT.md</code>) para el origen documentado.</li>
 <li><strong>Cita canónica</strong>: MITECO (s.f.). <em>Estadística Minera de España — Producción minera por sustancia y provincia</em>. Datos abiertos, Ministerio para la Transición Ecológica y el Reto Demográfico. España.</li>
-<li><strong>Cobertura temporal</strong>: 2005-2023 (según comentario en <code>R/07_extend_miteco.R</code>).</li>
+<li><strong>Cobertura temporal</strong>: 2005-2023 (según comentario en <code>code/extension/07_extend_miteco.R</code>).</li>
 <li><strong>Cobertura espacial</strong>: nacional + provincial × sustancia × año.</li>
 <li><strong>Tamaño</strong>: ~1.16 MB, encoding latin1.</li>
 <li><strong>SHA256 checksum</strong>: regenerar con <code>python docs/_compute_source_checksums.py</code>.</li>
-<li><strong>Download script / extractor</strong>: actualmente embebido en <code>R/07_extend_miteco.R</code>. Sub-arbitraje F08 deja explícito que cuando se ejecute la sesión IMPLEMENT de extractores, este CSV se documentará como output canónico de <code>code/extract/miteco/</code> (el CSV ya existe; sólo falta el wrapper extractor).</li>
+<li><strong>Download script / extractor</strong>: el CSV ya está pre-producido por MITECO; <code>code/extension/07_extend_miteco.R</code> lo lee directamente. Sub-arbitraje F08 (D4 con proporcionalidad, 2026-05-10) confirma que NO requiere split a <code>code/extract/miteco/</code> mientras la fuente siga llegando como CSV. Si en el futuro MITECO publica los datos sólo en PDF/HTML, se añadirá un extractor en <code>code/extract/miteco/</code> que produzca este mismo CSV.</li>
 <li><strong>Used by (file-level)</strong>:</li>
-<li><code>R/07_extend_miteco.R</code> → <code>data/processed/07_overlap_validation.csv</code> y splice 2017-2018 hacia <code>data/final/mining_spain_national_extended.csv</code>.</li>
+<li><code>code/extension/07_extend_miteco.R</code> → <code>data/processed/extension/07_overlap_validation.csv</code> y splice 2017-2018 hacia <code>data/final/mining_spain_national_extended.csv</code>.</li>
 <li><strong>Notes</strong>:</li>
 <li>Splice 2017→2018 con la serie histórica genera un salto +1.079 % (laboreo) que <strong>no debe leerse como real</strong> (cambio de fuente). Documentado en <code>docs/methodology/07_extend_miteco.md</code> y <code>docs/_reports/_AUDIT.md §4.3</code>.</li>
 <li>El CSV está gitignored como heavy raw (no por estar protegido) — actualmente <code>.gitignore</code> excluye <code>*.xlsx</code>, <code>*.xls</code>, <code>*.csv.gz</code>; este <code>.csv</code> no está bloqueado por la regla actual, pero respetamos <code>data/raw/</code> como intocable.</li>
@@ -154,9 +154,9 @@ li { margin: 0.2rem 0; }
 <h2 id="como-regenerar-sourceshtml">Cómo regenerar SOURCES.html</h2>
 <pre><code class="language-bash">python docs/_render_sources_html.py
 </code></pre>
-<h2 id="gaps-conocidos-2026-05-09">Gaps conocidos (2026-05-09)</h2>
+<h2 id="gaps-conocidos-2026-05-10">Gaps conocidos (2026-05-10)</h2>
 <ol>
-<li><strong>URL exacta MITECO</strong> del CSV <code>produccion_minera.csv</code> no está documentada en este fichero ni en <code>R/07_extend_miteco.R</code>. Pendiente confirmar con el PI y, una vez confirmada, pasar el bloque MITECO a 🟢-completo.</li>
+<li><strong>URL exacta MITECO</strong> del CSV <code>produccion_minera.csv</code> no está documentada en este fichero ni en <code>code/extension/07_extend_miteco.R</code>. Pendiente confirmar con el PI y, una vez confirmada, pasar el bloque MITECO a 🟢-completo.</li>
 <li><strong>Cita canónica del Excel compilado</strong>: hoy <code>&lt;pendiente&gt;</code> porque la compilación interna de J. Infante-Amate no está publicada como dataset Zenodo. Al publicarse, se cita el DOI y este bloque pasa a 🟢.</li>
 <li><strong>Base Gemini (Fase 2)</strong> mencionada en <code>README.md:25</code> (pipeline OCR en <code>D:/data/spain/spain_minning/</code>) — todavía no integrada. Cuando se integre, se añade un bloque por archivo extraído.</li>
 </ol>

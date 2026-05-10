@@ -93,14 +93,14 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <hr />
-<p>last_revised: 2026-05-09
+<p>last_revised: 2026-05-10
 scope: Snapshot canónico del estado actual del dataset GHG (qué es, AHORA, pendientes).
 supersedes: AUDIT.md (movido a docs/_reports/AUDIT.md como referencia histórica)
 complementa: docs/architecture.md, docs/SOURCES.md, CHANGELOG.md
 debate_origin: docs/agent_debates/2026-05-09_audit_structure.md (F02)</p>
 <hr />
 <h1 id="status-spain-ghg-dataset">STATUS — Spain GHG Dataset</h1>
-<p><em>Última actualización: 2026-05-09 (post-aplicación findings F01/F02/F06/F07/F08/F09)</em></p>
+<p><em>Última actualización: 2026-05-10 (post-aplicación findings F03 + F04 + F05; reorganización física aplicada)</em></p>
 <p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
 <hr />
 <h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
@@ -132,22 +132,13 @@ años, con columna <code>source</code> que documenta procedencia fila a fila.</p
 ├── STATUS.html                   # render de docs/STATUS.md (este doc)
 ├── SOURCES.html                  # render de docs/SOURCES.md
 │
-├── R/                            # pipeline R (code-protocol)
-│   ├── 00_setup.R
-│   ├── 00_diagnostico_crf.R
-│   ├── 01_series_crf_desagregadas.R
-│   ├── 02_analisis_temporal_cnae.R
-│   ├── 03_extension_y_comparativa.R
-│   ├── 04_serie_mejorada_v2.R    # output principal
-│   ├── 05_agregaciones_visor.R
-│   └── _archive/
-│
-├── tools/                        # helpers Python (auditoría, fix, integridad)
-│   ├── apply_energy_fugitive_fix.py
-│   ├── compute_checksums.py
-│   ├── integrity_tests.py
-│   ├── rebuild_visor_csv.py
-│   └── rebuild_zenodo_xlsx.py
+├── code/                         # pipeline (R) + utilidades (Python), bucketizado por indicador
+│   ├── _shared/                  # 00_setup.R (paths, libs, theme)
+│   ├── crf_disaggregation/       # 00..02 R scripts (CRF + CNAE bridge)
+│   ├── historical_series/        # 04_serie_mejorada_v2.R (output principal)
+│   ├── validation/               # 03_extension_y_comparativa.R + integrity_tests.py
+│   ├── viewer_aggregations/      # 05_agregaciones_visor.R
+│   └── support/                  # ex-tools/ (compute_checksums, rebuild_*, fix)
 │
 ├── data/
 │   ├── raw/                      # 100% auto-contenido (9 fuentes)
@@ -160,12 +151,17 @@ años, con columna <code>source</code> que documenta procedencia fila a fila.</p
 │   │   ├── mfa_resumen/          # INT-CAHE (reorganizado 2026-05-09)
 │   │   ├── population/           # INT-DERIVED
 │   │   └── primap/               # EXT (Gütschow)
-│   ├── processed/                # 9 CSVs intermedios
+│   ├── processed/
+│   │   └── crf_disaggregation/   # 9 CSVs intermedios (todos del bucket CRF)
 │   └── final/                    # ghg_mejorada_v2.csv + emisiones_visor*.csv
 │       └── _archive/             # backups pre-fix (NO purgar)
 │
-├── figures/                      # 14 PNG fig-nature 300 dpi
-│   └── _code/                    # 1 setup + 14 fig + run_all.py
+├── figures/                      # 14 PNG fig-nature 300 dpi, bucketizadas
+│   ├── _shared/                  # _style.py + _data.py + run_all.py
+│   ├── crf_disaggregation/       # fig_08, fig_09 (+ _code/)
+│   ├── historical_series/        # fig_01, 03, 05, 06, 14 (+ _code/)
+│   ├── validation/               # fig_02, 04, 07 (+ _code/)
+│   └── viewer_aggregations/      # fig_10, 11, 12, 13 (+ _code/)
 │
 ├── docs/
 │   ├── STATUS.md                 # (este archivo)
@@ -215,14 +211,14 @@ años, con columna <code>source</code> que documenta procedencia fila a fila.</p
 <td>Formato ancho Excel.</td>
 </tr>
 <tr>
-<td><code>data/processed/*.csv</code></td>
+<td><code>data/processed/crf_disaggregation/*.csv</code></td>
 <td>9 ficheros</td>
 <td>1990–2023</td>
 <td>Desagregaciones CRF/CNAE intermedias.</td>
 </tr>
 <tr>
-<td><code>figures/fig_01..fig_14.png</code></td>
-<td>14 PNG</td>
+<td><code>figures/&lt;bucket&gt;/fig_*.png</code></td>
+<td>14 PNG en 4 buckets</td>
 <td>1860–2023</td>
 <td>Figuras Nature-style 300 dpi.</td>
 </tr>
@@ -424,15 +420,16 @@ años, con columna <code>source</code> que documenta procedencia fila a fila.</p
    en <code>methodology/03_new_categories.md</code>.</li>
 <li>Añadir DOIs exactos a <code>methodology/00_data_sources.md</code> (parcialmente
    en <code>SOURCES.md</code>).</li>
-<li>Renombrar/eliminar figuras R legacy en <code>R/_archive/</code> (ya
-   reemplazadas por Python).</li>
+<li>Limpiar/eliminar figuras R legacy si reaparecen (<code>R/_archive/</code> ya
+   no existe tras F03; las figuras vivas son las 14 PNG Python en
+   <code>figures/&lt;bucket&gt;/</code>).</li>
 </ol>
 <h3 id="nice-to-have-low">Nice-to-have (LOW)</h3>
 <ol start="8">
 <li>Test de integridad automatizado (Python o R) que verifique:
    Total = Σ cats; rango años; sin NaN; sin duplicados.</li>
-<li>Migrar <code>figures/_code/</code> a recibir parámetro <code>--out</code> para guardar en
-   <code>paper/figures/</code> cuando se llame desde un futuro paper.</li>
+<li>Migrar <code>figures/&lt;bucket&gt;/_code/</code> a recibir parámetro <code>--out</code> para
+   guardar en <code>paper/figures/</code> cuando se llame desde un futuro paper.</li>
 </ol>
 <hr />
 <h2 id="7-decisiones-estructurales-aplicadas-2026-05-09">7. Decisiones estructurales aplicadas (2026-05-09)</h2>
@@ -451,30 +448,34 @@ años, con columna <code>source</code> que documenta procedencia fila a fila.</p
 <li><strong>F09</strong> — <code>.gitignore</code> extendido (<code>.Renviron</code>,
   <code>docs/_agents/_tmp/</code>, …); caches <code>__pycache__</code> purgados.</li>
 </ul>
-<h3 id="aplazadas">Aplazadas</h3>
+<h3 id="aplicadas-2026-05-10">Aplicadas (2026-05-10)</h3>
 <ul>
-<li><strong>F03</strong> (renombre <code>R/</code> → <code>code/</code> + consolidación <code>tools/</code>) — pendiente
-  de sub-arbitraje del PI.</li>
-<li><strong>F04 / F05</strong> (reorganización física por bucket de indicador en
-  <code>code/</code>, <code>figures/</code>, <code>data/processed/</code>) — sesión IMPLEMENT separada.</li>
+<li><strong>F03</strong> — Renombre <code>R/</code> → <code>code/</code> + disolución de <code>tools/</code> (todos sus
+  scripts no eran extractores; reubicados a <code>code/support/</code> y
+  <code>code/validation/</code>).</li>
+<li><strong>F04 / F05</strong> — Reorganización física por bucket de indicador
+  aplicada en <code>code/</code>, <code>figures/</code> y <code>data/processed/</code>. Verificación:
+  <code>Rscript code/_shared/00_setup.R</code> carga; <code>python
+  code/validation/integrity_tests.py</code> pasa 27 checks; <code>python
+  figures/_shared/run_all.py</code> regenera 14 figuras.</li>
 </ul>
 <hr />
 <h2 id="8-como-regenerar">8. Cómo regenerar</h2>
 <pre><code class="language-bash"># Datos (R)
-Rscript R/00_diagnostico_crf.R
-Rscript R/01_series_crf_desagregadas.R
-Rscript R/02_analisis_temporal_cnae.R
-Rscript R/03_extension_y_comparativa.R
-Rscript R/04_serie_mejorada_v2.R
-Rscript R/05_agregaciones_visor.R
+Rscript code/crf_disaggregation/00_diagnostico_crf.R
+Rscript code/crf_disaggregation/01_series_crf_desagregadas.R
+Rscript code/crf_disaggregation/02_analisis_temporal_cnae.R
+Rscript code/validation/03_extension_y_comparativa.R
+Rscript code/historical_series/04_serie_mejorada_v2.R
+Rscript code/viewer_aggregations/05_agregaciones_visor.R
 
 # Integridad
-python tools/integrity_tests.py
-python tools/compute_checksums.py            # legacy
+python code/validation/integrity_tests.py
+python code/support/compute_checksums.py     # equivalente a docs/_compute_source_checksums.py
 python docs/_compute_source_checksums.py     # canónico (idéntico output)
 
 # Figuras (Python, fig-nature)
-cd figures/_code &amp;&amp; python run_all.py
+cd figures/_shared &amp;&amp; python run_all.py
 
 # Renderizado HTML de docs
 python docs/_render_status_html.py

@@ -163,7 +163,7 @@ pueden inferir desde el filesystem y necesitan que el PI las complete.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code>, <code>R/06_electricity.R</code> (buckets <code>fossil/</code>, <code>electricity/</code>)</td>
+<td><code>code/fossil/04_coal.R</code>, <code>code/fossil/05_oil_gas.R</code>, <code>code/electricity/06_electricity.R</code> (buckets <code>fossil/</code>, <code>electricity/</code>)</td>
 </tr>
 <tr>
 <td>Notes</td>
@@ -218,7 +218,7 @@ pueden inferir desde el filesystem y necesitan que el PI las complete.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code>, <code>R/06_electricity.R</code></td>
+<td><code>code/fossil/04_coal.R</code>, <code>code/fossil/05_oil_gas.R</code>, <code>code/electricity/06_electricity.R</code></td>
 </tr>
 <tr>
 <td>Notes</td>
@@ -475,7 +475,7 @@ pueden inferir desde el filesystem y necesitan que el PI las complete.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/08_validate.R</code> (bucket <code>validation/</code>)</td>
+<td><code>code/validation/08_validate.R</code> (bucket <code>validation/</code>)</td>
 </tr>
 <tr>
 <td>Notes</td>
@@ -570,21 +570,21 @@ Bloqueador conocido para Zenodo (ver <code>docs/_reports/_AUDIT_2026-04-14.md</c
 <td><code>D:/data/zz_sources/international_macro/fossil_fuels/zz_unified/output/02_fossil_harmonized_pj.csv</code></td>
 <td>Compilado interno (BP + Darmstadter + EHP + EIA + Malanima + UN pre/post-50)</td>
 <td>1820-2024</td>
-<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code></td>
+<td><code>code/fossil/04_coal.R</code>, <code>code/fossil/05_oil_gas.R</code></td>
 <td>🔴 (no portable)</td>
 </tr>
 <tr>
 <td><code>D:/data/zz_sources/international_macro/fossil_fuels/iea/iea_data.csv</code></td>
 <td>International Energy Agency</td>
 <td>1971-2024</td>
-<td><code>R/04</code>, <code>R/05</code>, <code>R/06</code></td>
+<td><code>code/fossil/04_coal.R</code>, <code>code/fossil/05_oil_gas.R</code>, <code>code/electricity/06_electricity.R</code></td>
 <td>🔴 (licencia + no portable)</td>
 </tr>
 <tr>
 <td><code>D:/data/zz_sources/international_macro/fossil_fuels/energy_history_project/energy_history_project_data.csv</code></td>
 <td>Energy History Project — <em>Power to the People</em> (Kander, Gales, Rubio, Malanima)</td>
 <td>1850-2021</td>
-<td><code>R/06_electricity.R</code></td>
+<td><code>code/electricity/06_electricity.R</code></td>
 <td>🔴 (no portable)</td>
 </tr>
 </tbody>
@@ -609,25 +609,25 @@ por ruta relativa, no se duplican.</p>
 <tr>
 <td><code>../agriculture/data/final/spain_agriculture_national.csv</code> (fallback <code>_archive/pipeline_v2/final/</code>)</td>
 <td><code>spain/datasets/agriculture</code></td>
-<td><code>R/01_biomass_food.R</code>, <code>R/02_biomass_fodder.R</code></td>
+<td><code>code/biomass/01_food.R</code>, <code>code/biomass/02_fodder.R</code></td>
 <td>Periodo 1860-2024. Actualmente fallback v2; v3 no repopulado.</td>
 </tr>
 <tr>
 <td><code>../forest/data/final/forest_series.csv</code></td>
 <td><code>spain/datasets/forest</code></td>
-<td><code>R/03_biomass_fuelwood.R</code></td>
+<td><code>code/biomass/03_fuelwood.R</code></td>
 <td>Periodo 1860-2010.</td>
 </tr>
 <tr>
 <td><code>../mining/data/final/mining_spain_national.csv</code></td>
 <td><code>spain/datasets/mining</code></td>
-<td><code>R/04_fossil_coal.R</code></td>
+<td><code>code/fossil/04_coal.R</code></td>
 <td>Periodo 1861-2017.</td>
 </tr>
 <tr>
 <td><code>../trade/data/processed/01_historical_trade_long.csv</code></td>
 <td><code>spain/datasets/trade</code></td>
-<td><code>R/04_fossil_coal.R</code>, <code>R/05_fossil_oil_gas.R</code></td>
+<td><code>code/fossil/04_coal.R</code>, <code>code/fossil/05_oil_gas.R</code></td>
 <td>Cobertura XIX-XXI.</td>
 </tr>
 </tbody>

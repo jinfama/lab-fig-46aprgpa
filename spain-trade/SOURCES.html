@@ -94,7 +94,7 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <h1 id="sources-spain-trade-dataset">SOURCES — Spain Trade Dataset</h1>
-<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure)</em></p>
+<p><em>Última actualización: 2026-05-10 (sesión IMPLEMENT structure Tier 3, post Q01/Q02 PI ratification)</em></p>
 <p>Inventario file-level de toda la primaria bajo <code>data/raw/</code>. Una entrada
 por archivo atómico con SHA256, citation, status semáforo, used by
 y download script. Render navegable: <code>SOURCES.html</code> en raíz.</p>
@@ -113,9 +113,13 @@ y download script. Render navegable: <code>SOURCES.html</code> en raíz.</p>
   helpers OCR históricos no productivos.</li>
 </ul>
 <p>Las semillas de este documento provienen de
-<code>docs/references/inventario_fuentes.md</code> (2026-03-06, v2). Esa fuente
-queda en su ubicación actual hasta que el PI arbitre Q02 (F07
-cross-audit 2026-05-09).</p>
+<code>docs/references/inventario_fuentes.md</code> (2026-03-06, v2). Tras el
+arbitraje PI 2026-05-10 (Q02, opción c), ese inventario y los otros
+3 markdown históricos (<code>metodologia_completa.md</code>,
+<code>metodologia_bilateral.md</code>, <code>metodologia_serie_directa.md</code>) se han
+archivado en <code>_archive/old_docs_references/</code> y el contenido vigente
+queda consolidado aquí (§ entradas file-level + §§ "Material de
+referencia adicional" más abajo).</p>
 <p>Re-generar checksums: <code>python docs/_compute_source_checksums.py</code>.
 Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 <hr />
@@ -143,7 +147,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Citation</td>
-<td>Nadal, J., Barciela, C., Zambrana, J. F. et al. (compilación interna del PI; ver <code>docs/references/metodologia_completa.md</code>)</td>
+<td>Nadal, J., Barciela, C., Zambrana, J. F. et al. (compilación interna del PI; metodología detallada en <code>docs/methodology/01_direct_historical.md</code> + <code>_archive/old_docs_references/metodologia_completa.md</code>)</td>
 </tr>
 <tr>
 <td>Coverage</td>
@@ -163,7 +167,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/01_direct_historical.R</code>, paths definidos en <code>R/00_config.R</code></td>
+<td><code>code/direct/01_direct_historical.R</code>, paths definidos en <code>code/00_config.R</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -210,7 +214,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><strong>ORPHAN</strong> — path <code>f_histphy</code> declarado en <code>R/00_config.R</code> pero ningún script lo <code>read_xlsx()</code></td>
+<td><strong>ORPHAN</strong> — path <code>f_histphy</code> declarado en <code>code/00_config.R</code> pero ningún script lo <code>read_xlsx()</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -257,7 +261,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><strong>ORPHAN</strong> — path <code>f_series</code> declarado en <code>R/00_config.R</code>, ningún <code>read_xlsx()</code></td>
+<td><strong>ORPHAN</strong> — path <code>f_series</code> declarado en <code>code/00_config.R</code>, ningún <code>read_xlsx()</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -310,7 +314,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/04_bilateral_snapshots.R</code></td>
+<td><code>code/bilateral/04_bilateral_snapshots.R</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -357,7 +361,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/04_bilateral_snapshots.R</code>; hojas activas <code>Bilateral_Product</code> (343 nombres → 94 EnEm) y <code>Bilateral_Area</code> (20 socios → 8 regiones). Hojas <code>Direct</code>, <code>Codes</code>, <code>Comt_Comm</code>, <code>Comt_Area</code>, <code>Country_Cat</code> no consumidas.</td>
+<td><code>code/bilateral/04_bilateral_snapshots.R</code>; hojas activas <code>Bilateral_Product</code> (343 nombres → 94 EnEm) y <code>Bilateral_Area</code> (20 socios → 8 regiones). Hojas <code>Direct</code>, <code>Codes</code>, <code>Comt_Comm</code>, <code>Comt_Area</code>, <code>Country_Cat</code> no consumidas.</td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -406,7 +410,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/00_config.R</code> (carga global), <code>R/02_direct_comtrade.R</code>, <code>R/06_bilateral_comtrade.R</code></td>
+<td><code>code/00_config.R</code> (carga global), <code>code/direct/02_direct_comtrade.R</code>, <code>code/bilateral/06_bilateral_comtrade.R</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -453,7 +457,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><strong>ORPHAN</strong> — <code>f_fcl_enem</code> definido en <code>R/00_config.R</code>; reservado para sub-base FAOSTAT mencionada en config</td>
+<td><strong>ORPHAN</strong> — <code>f_fcl_enem</code> definido en <code>code/00_config.R</code>; reservado para sub-base FAOSTAT mencionada en config</td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -500,7 +504,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><strong>ORPHAN</strong> — <code>f_sitc_hs</code> declarado en <code>R/00_config.R</code>, nunca leído</td>
+<td><strong>ORPHAN</strong> — <code>f_sitc_hs</code> declarado en <code>code/00_config.R</code>, nunca leído</td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -553,7 +557,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/08_monetary_diagnostics.R</code> (diagnóstico, no entra en serie física)</td>
+<td><code>code/diagnostics/08_monetary_diagnostics.R</code> (diagnóstico, no entra en serie física)</td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -606,7 +610,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/08_monetary_diagnostics.R</code></td>
+<td><code>code/diagnostics/08_monetary_diagnostics.R</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -657,7 +661,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/08_monetary_diagnostics.R</code></td>
+<td><code>code/diagnostics/08_monetary_diagnostics.R</code></td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -710,7 +714,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td><code>R/08_monetary_diagnostics.R</code> (diagnóstico)</td>
+<td><code>code/diagnostics/08_monetary_diagnostics.R</code> (diagnóstico)</td>
 </tr>
 <tr>
 <td>Download script</td>
@@ -743,7 +747,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tr>
 <tr>
 <td>Used by</td>
-<td>path declarado en <code>R/00_config.R</code> (<code>D:/data/agriculture/faostat</code>); ningún archivo local</td>
+<td>path declarado en <code>code/00_config.R</code> (<code>D:/data/agriculture/faostat</code>); ningún archivo local</td>
 </tr>
 <tr>
 <td>Notes</td>
@@ -768,7 +772,7 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 <td><code>D:/data/trade/comtrade/data/final/db1_by_year/*.parquet</code></td>
 <td>UN Comtrade DB1 por año</td>
 <td>1962-2024</td>
-<td><code>R/02_direct_comtrade.R</code>, <code>R/06_bilateral_comtrade.R</code></td>
+<td><code>code/direct/02_direct_comtrade.R</code>, <code>code/bilateral/06_bilateral_comtrade.R</code></td>
 </tr>
 <tr>
 <td><code>D:/data/agriculture/faostat/</code></td>
@@ -791,16 +795,239 @@ Re-render HTML: <code>python docs/_render_sources_html.py</code>.</p>
 </tbody>
 </table>
 <hr />
-<h2 id="pendientes-q01-q02-cross-audit-2026-05-09">Pendientes Q01 / Q02 (cross-audit 2026-05-09)</h2>
+<h2 id="material-de-referencia-adicional-no-en-dataraw-no-en-pipeline-live">Material de referencia adicional (no en <code>data/raw/</code>, no en pipeline live)</h2>
+<p>Migrado desde <code>docs/references/inventario_fuentes.md</code> §3, §6, §7 tras
+el arbitraje Q02 (PI 2026-05-10). Cubre: PDFs source de los anuarios,
+fuentes pendientes de integración, colecciones documentales y bases
+de datos online no descargadas.</p>
+<h3 id="anuarios-de-estadistica-del-comercio-exterior-de-espana-pdfs-source">Anuarios de Estadística del Comercio Exterior de España (PDFs source)</h3>
 <ul>
-<li><strong>Q01 / F03</strong> — eje INDICADOR aprobado (D1 forest 2026-05-09);
-  buckets concretos en <code>R/</code>, <code>figures/</code>, <code>data/processed/</code> PENDIENTES
-  de arbitraje del PI. Ver <code>docs/architecture.md</code>.</li>
-<li><strong>Q02 / F07</strong> — los 4 markdown en <code>docs/references/</code> (incluyendo
-  <code>inventario_fuentes.md</code> que sirvió de semilla para este SOURCES.md)
-  esperan decisión: archivar / migrar parcial / mantener como
-  documentación complementaria. Esta sesión no los toca.</li>
+<li><strong>Ubicación</strong>: <code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/spain_macro/spain_trade/</code></li>
+<li><strong>96 PDFs</strong>, ~15 GB, cobertura 1792-1962.</li>
+<li>Formato: imágenes escaneadas sin OCR (calidad buena, verificada
+  Claude Vision 2026-03-06). 68 de 96 archivos &gt; 100 MB.</li>
+<li>Sub-bloques cronológicos:</li>
+<li><strong>Pre-1849</strong> (3 archivos, sólo totales generales): 1792, 1795, 1826.</li>
+<li><strong>1849-1887</strong> (38 archivos, anual continuo): 1849-1850.pdf, 1851.pdf, …, 1887.pdf.</li>
+<li><strong>1890-1935</strong> (33 archivos, con huecos): 1890, 1891, 1894, 1896-1899; 1900-1902 (a veces .1/.2); 1905; 1908-1912; 1914-1915; 1917; 1919-1924; 1927; 1930-1932; 1934-1935. Huecos: 1888-89, 1892-93, 1895, 1903-04, 1906-07, 1913, 1916, 1918, 1925-26, 1928-29, 1933.</li>
+<li><strong>1936-1939</strong>: sin datos (Guerra Civil).</li>
+<li><strong>1940-1962</strong> (22 archivos, bianuales): 1940, 1941-40, 1943, 1945-44, 1947-46, 1949-48, 1951-50, 1953-52, 1955-54, 1957-56, 1959-58, 1960 (Ene-Jun y Jul-Dic), 1961, 1962.1.</li>
+<li><strong>Estado de extracción</strong>: sólo 5 snapshots extraídos manualmente por el PI (1870, 1890, 1910, 1930, 1951) → poblan <code>data/raw/bilateral/Bilateral.xlsx</code>. El resto contiene bilateral NO extraído.</li>
 </ul>
+<h3 id="fuentes-pendientes-de-integracion">Fuentes pendientes de integración</h3>
+<table>
+<thead>
+<tr>
+<th>Fuente</th>
+<th>Cobertura</th>
+<th>Tipo</th>
+<th>Estado</th>
+<th>Prioridad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DataComex</td>
+<td><strong>1995</strong>-2026, bilateral</td>
+<td>peso (kg) por país y producto</td>
+<td>No descargado</td>
+<td>Alta (fuente española oficial)</td>
+</tr>
+<tr>
+<td>724ESP.csv (Comtrade)</td>
+<td>1962-1979, bilateral</td>
+<td>peso (kg), SITC</td>
+<td>Disponible en <code>_archive/original_trade/old/</code></td>
+<td>Media</td>
+</tr>
+<tr>
+<td>Comtrade bulk SITC (D:)</td>
+<td>1962-1987, bilateral</td>
+<td>peso (kg), SITC</td>
+<td>Descargado, sin procesar</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>Comtrade bulk HS (D:)</td>
+<td>1988-2024, bilateral</td>
+<td>peso (kg), HS</td>
+<td>Parcial (1988-2001)</td>
+<td>Baja (DataComex preferida)</td>
+</tr>
+<tr>
+<td>BACI</td>
+<td>1995-2024, bilateral</td>
+<td>peso (tons), HS6, limpio</td>
+<td>En <code>_archive/old_data_processed/</code></td>
+<td>Validación</td>
+</tr>
+<tr>
+<td>FAOSTAT TM (Trade_DetailedMatrix)</td>
+<td>1986-2024, bilateral</td>
+<td>peso (tons), agrícola FCL</td>
+<td>En <code>_archive/old_data_processed/</code></td>
+<td>Complemento (sub-base agrícola futura)</td>
+</tr>
+<tr>
+<td>Anuarios adicionales (PDF)</td>
+<td>variable, bilateral</td>
+<td>cantidades + valores</td>
+<td>PDFs disponibles</td>
+<td>Para mejorar interpolación pre-1962</td>
+</tr>
+</tbody>
+</table>
+<h3 id="colecciones-de-pdfs-relevantes-otras">Colecciones de PDFs relevantes (otras)</h3>
+<table>
+<thead>
+<tr>
+<th>Colección</th>
+<th>Ubicación</th>
+<th>Archivos</th>
+<th>Tamaño</th>
+<th>Tipo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anuarios de Estadística Agraria</td>
+<td><code>D:/spain_agriculture/data/pdfs_anuarios/by_year/</code></td>
+<td>~2 119</td>
+<td>18 GB</td>
+<td>Comercio agrícola (25 capítulos "Comercio_exterior" 1972-2011 + apéndice 1930)</td>
+</tr>
+<tr>
+<td>Estadísticas Mineras de España</td>
+<td><code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/spain_macro/spain_minning/</code></td>
+<td>136</td>
+<td>2.9 GB</td>
+<td>Exportaciones de hierro, plomo, cobre, mercurio (s. XIX)</td>
+</tr>
+<tr>
+<td>Estadísticas Históricas de España (compilaciones)</td>
+<td><code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/spain_macro/historical_statistics/</code></td>
+<td>2</td>
+<td>85 MB</td>
+<td>Carreras y Tafunell 2005 (7.6 MB) + GEHR <code>Estadsticashistricascompletasbisbis.pdf</code> (77 MB)</td>
+</tr>
+<tr>
+<td>UK Statistical Abstracts (mirror trade GBR-ESP)</td>
+<td><code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/international_macro/general_series/uk_statistical_abstract/data_raw/SA_COUNTRY_EXTRATE_PAGE/trade/</code></td>
+<td>~45</td>
+<td>—</td>
+<td>UK con países extranjeros 1860-1904 (validación cruzada bilateral)</td>
+</tr>
+<tr>
+<td>FAO Trade 1950</td>
+<td><code>C:/Users/jinfa/OneDrive/03_research_resources/01_sources/FAO/pdfs_fao/fao_extracted_pages_1950/fao_trade_1950/</code></td>
+<td>~80</td>
+<td>—</td>
+<td>Benchmark adicional circa 1950</td>
+</tr>
+<tr>
+<td>Literatura académica relevante</td>
+<td><code>D:/00_archive/</code></td>
+<td>~12</td>
+<td>~50 MB</td>
+<td>Clar et al. 2015; Pinilla (Cambio agrario, Mediterranean wine, ToT); Serrano &amp; Pinilla 2010/2011/2013; Zambrana 2004 (aceites); Collantes &amp; Pinilla — <em>Peaceful Surrender</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="bases-de-datos-historicas-bilaterales-online-consultadas-pendientes">Bases de datos históricas bilaterales online (consultadas / pendientes)</h3>
+<table>
+<thead>
+<tr>
+<th>Base</th>
+<th>URL</th>
+<th>Período</th>
+<th>Tipo</th>
+<th>Formato</th>
+<th>Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RICardo (Sciences Po)</td>
+<td>github.com/medialab/ricardo_data</td>
+<td>c. 1787-1938</td>
+<td>Bilateral monetario (GBP, francos…)</td>
+<td>CSV</td>
+<td><strong>Descargado</strong> (<code>D:/ricardo_data/</code>); Spain extraído → <code>data/raw/ricardo/ricardo_spain_flows.csv</code> (20 528 registros)</td>
+</tr>
+<tr>
+<td>COW Trade v4.0</td>
+<td>correlatesofwar.org/data-sets/bilateral-trade/</td>
+<td>1870-2014</td>
+<td>Bilateral monetario (USD)</td>
+<td>CSV</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>Federico-Tena</td>
+<td>edatos.consorciomadrono.es/dataverse/federico-tena</td>
+<td>1821-2020</td>
+<td>Totales país</td>
+<td>Excel</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>Tena Junguito (1992)</td>
+<td>repositorio.bde.es (<code>SR_15429.v1.xlsx</code>)</td>
+<td>1890-1983</td>
+<td>Índices fiabilidad</td>
+<td>Excel</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>Martinez-Ruiz (2006)</td>
+<td>repositorio.bde.es (<code>SR_15428.v1.xlsx</code>)</td>
+<td>1936-1939</td>
+<td>Comercio Guerra Civil</td>
+<td>Excel</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>INE Anuarios</td>
+<td>https://www.ine.es/inebaseweb/25687.do</td>
+<td>1858-1997</td>
+<td>PDFs navegables, OCR parcial</td>
+<td>PDF</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>Internet Archive</td>
+<td>archive.org (búsqueda "estadistica general comercio exterior espana")</td>
+<td>volúmenes sueltos (e.g. 1905)</td>
+<td>Texto OCR disponible</td>
+<td>PDF/TXT</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>Google Books</td>
+<td>books.google.com</td>
+<td>volúmenes sueltos</td>
+<td>vista parcial / completa</td>
+<td>—</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>HathiTrust</td>
+<td>catalog.hathitrust.org/Record/009345237</td>
+<td>múltiples volúmenes</td>
+<td>acceso requiere afiliación universitaria USA</td>
+<td>PDF</td>
+<td>No descargado</td>
+</tr>
+<tr>
+<td>INSEE (Paris)</td>
+<td>bibliotheque.insee.net</td>
+<td>desde 1899</td>
+<td>físico, no digital</td>
+<td>—</td>
+<td>No accedido</td>
+</tr>
+</tbody>
+</table>
 <div class="footer">Rendered from <code>docs/SOURCES.md</code> via <code>docs/_render_sources_html.py</code>. Checksums in <code>docs/_source_checksums.tsv</code>.</div>
 </body>
 </html>

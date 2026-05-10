@@ -93,7 +93,7 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <h1 id="status-spain-trees-dataset">STATUS — Spain Trees Dataset</h1>
-<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure post-cross-audit)</em></p>
+<p><em>Última actualización: 2026-05-10 (sesión IMPLEMENT structure Tier 3 — reorg física por bucket)</em></p>
 <p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
 <hr />
 <h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
@@ -142,9 +142,11 @@ canónicas en <a href="methodology/DECISIONS.md"><code>docs/methodology/DECISION
 <h3 id="23-figuras-figures">2.3 Figuras (<code>figures/</code>)</h3>
 <p>10 figuras PNG: 4 en R (01-04 base) + 6 en Python con estilo <code>fig-nature</code>
 (facets por especie × provincia, heatmap olivar, top-5 provincias por
-especie, matriz de cobertura indicador × año). Generadores en
-<code>figures/_code/</code> (layout actual; reorganización por bucket aplazada,
-ver <code>docs/architecture.md</code>).</p>
+especie, matriz de cobertura indicador × año). <strong>Tras Tier 3 (2026-05-10)
+los generadores viven en <code>figures/&lt;bucket&gt;/_code/</code></strong> (<code>surface/</code>,
+<code>counts/</code>, <code>density/</code>, <code>comparatives/</code>); el estilo y los loaders comunes
+están en <code>figures/_shared/_style.{R,py}</code> y <code>_data.py</code>. Ver
+<code>figures/README.md</code> para la tabla bucket↔fig.</p>
 <hr />
 <h2 id="3-pendientes">3. Pendientes</h2>
 <table>
@@ -179,12 +181,12 @@ ver <code>docs/architecture.md</code>).</p>
 <tr>
 <td>Mover scripts/figuras a buckets <code>surface/</code>, <code>counts/</code>, <code>density/</code>, <code>comparatives/</code></td>
 <td>layout físico</td>
-<td>🟡 Aplazado (D1 lógica aplicada en <code>docs/architecture.md</code>; move físico requiere sesión IMPLEMENT separada).</td>
+<td>🟢 Aplicado 2026-05-10 (Tier 3): <code>code/{bucket}/{01-15}_*.R</code>, <code>figures/{bucket}/_code/</code>, <code>figures/_shared/</code>. <code>data/processed/</code> se mantiene flat (transversal, los integradores 08/09/10/15 globean <code>DIR_PROC</code>).</td>
 </tr>
 <tr>
 <td>Crear <code>zenodo/</code> deposit</td>
 <td>publicación dataset</td>
-<td>🔴 Aplazado por D5 PI hasta cerrar puntos anteriores.</td>
+<td>🔴 Aplazado por D5 PI hasta cerrar <code>REFERENCE_PENDING_*</code> + VLM 2000-2020 + MAPA 2024. Carpeta no existe en disco (placeholder reservado).</td>
 </tr>
 </tbody>
 </table>
@@ -199,10 +201,14 @@ ver <code>docs/architecture.md</code>).</p>
 ├── trees.Rproj              # excepción RStudio (D3)
 ├── .gitignore
 │
-├── code/                    # 15 scripts R + extractores
-│   ├── 00_config.R … 15_extrapolate_tree_counts.R
-│   └── extract/anuarios_pdf/
-│       └── extract_1930.py  # extractor PDF (post-F05)
+├── code/                    # 15 scripts R + extractores (Tier 3 reorg 2026-05-10)
+│   ├── 00_config.R              # config compartida (D6)
+│   ├── extract/anuarios_pdf/
+│   │   └── extract_1930.py      # extractor PDF (D4, eje por fuente)
+│   ├── surface/    {01,03,12,14}_*.R
+│   ├── counts/     {02,04,13,15}_*.R
+│   ├── density/    {05,06,08}_*.R
+│   └── comparatives/ {07,09,10,11}_*.R
 │
 ├── data/
 │   ├── raw/                 # primarias intocables
@@ -217,7 +223,12 @@ ver <code>docs/architecture.md</code>).</p>
 │   ├── processed/           # 01_*.csv … 15_*.csv (planos)
 │   └── final/trees_panel.csv  # 187.866 filas
 │
-├── figures/                 # 10 PNG + _code/
+├── figures/                 # 10 PNG en buckets + _shared/_code (Tier 3)
+│   ├── _shared/    _style.{R,py} + _data.py + run_all{,_py}.py
+│   ├── surface/    _code/{fig_02.R,fig_05,fig_08,fig_09} + *.png
+│   ├── counts/     _code/fig_07 + *.png
+│   ├── density/    _code/{fig_03.R,fig_06} + *.png
+│   └── comparatives/ _code/{fig_01.R,fig_04.R,fig_10} + *.png
 │
 ├── docs/
 │   ├── architecture.md      # eje INDICADOR (D1)
@@ -239,32 +250,32 @@ ver <code>docs/architecture.md</code>).</p>
 <hr />
 <h2 id="5-reproducir">5. Reproducir</h2>
 <p>Desde el root del proyecto, en R:</p>
-<pre><code class="language-r"># Ejecutar pipeline completo (orden estricto)
+<pre><code class="language-r"># Ejecutar pipeline completo (orden estricto, post-Tier-3 buckets)
 source(&quot;code/00_config.R&quot;)
-source(&quot;code/01_parse_infante_amate_19thC.R&quot;)
-source(&quot;code/02_parse_scattered_trees_national.R&quot;)
-source(&quot;code/03_parse_originales_frutales.R&quot;)
-source(&quot;code/04_parse_numero_arboles.R&quot;)
-source(&quot;code/05_parse_olivar_benchmarks.R&quot;)
-source(&quot;code/06_parse_gehr_aea_olive.R&quot;)
-source(&quot;code/07_parse_cultidata.R&quot;)
-source(&quot;code/08_compute_density_endogenous.R&quot;)
-source(&quot;code/09_interpolate_annual.R&quot;)
-source(&quot;code/10_integrate.R&quot;)        # produce data/final/trees_panel.csv
-source(&quot;code/11_validate.R&quot;)
+source(&quot;code/surface/01_parse_infante_amate_19thC.R&quot;)
+source(&quot;code/counts/02_parse_scattered_trees_national.R&quot;)
+source(&quot;code/surface/03_parse_originales_frutales.R&quot;)
+source(&quot;code/counts/04_parse_numero_arboles.R&quot;)
+source(&quot;code/density/05_parse_olivar_benchmarks.R&quot;)
+source(&quot;code/density/06_parse_gehr_aea_olive.R&quot;)
+source(&quot;code/comparatives/07_parse_cultidata.R&quot;)
+source(&quot;code/density/08_compute_density_endogenous.R&quot;)
+source(&quot;code/comparatives/09_interpolate_annual.R&quot;)
+source(&quot;code/comparatives/10_integrate.R&quot;)    # produce data/final/trees_panel.csv
+source(&quot;code/comparatives/11_validate.R&quot;)
 # Extensiones (insertan en panel via 10_integrate.R re-run):
-source(&quot;code/12_parse_anuarios_clean.R&quot;)
-source(&quot;code/13_parse_anuario_pdfs.R&quot;)
-source(&quot;code/14_parse_mapa_updates.R&quot;)
-source(&quot;code/15_extrapolate_tree_counts.R&quot;)
+source(&quot;code/surface/12_parse_anuarios_clean.R&quot;)
+source(&quot;code/counts/13_parse_anuario_pdfs.R&quot;)
+source(&quot;code/surface/14_parse_mapa_updates.R&quot;)
+source(&quot;code/counts/15_extrapolate_tree_counts.R&quot;)
 </code></pre>
 <p>Atajo (desde shell):</p>
 <pre><code class="language-bash">Rscript code/00_config.R   # solo config; verifica paths
 # Luego ejecutar 01..15 en orden con un wrapper si se desea.
 </code></pre>
 <p>Figuras:</p>
-<pre><code class="language-bash">Rscript figures/_code/run_all.R       # figs 01-04 (R)
-python figures/_code/run_all_py.py    # figs 05-10 (Python, fig-nature style)
+<pre><code class="language-bash">Rscript figures/_shared/run_all.R       # figs R (01, 02, 03, 04)
+python figures/_shared/run_all_py.py    # figs Python (05-10, fig-nature)
 </code></pre>
 <p>Re-ejecutar extracción PDF (one-time):</p>
 <pre><code class="language-bash">python code/extract/anuarios_pdf/extract_1930.py
@@ -277,11 +288,12 @@ python docs/_render_sources_html.py
 <hr />
 <h2 id="6-decisiones-canonicas-heredadas-cross-audit-forest-2026-05-09">6. Decisiones canónicas heredadas (cross-audit <code>forest/</code> 2026-05-09)</h2>
 <ul>
-<li><strong>D1</strong>: eje canónico = INDICADOR (<code>surface/</code>, <code>counts/</code>, <code>density/</code>, <code>comparatives/</code>). Aplicada <strong>lógicamente</strong> en <code>docs/architecture.md</code>; move físico aplazado.</li>
+<li><strong>D1</strong>: eje canónico = INDICADOR (<code>surface/</code>, <code>counts/</code>, <code>density/</code>, <code>comparatives/</code>). <strong>Aplicada físicamente 2026-05-10</strong> (Tier 3) en <code>code/</code> y <code>figures/</code>. <code>data/processed/</code> se mantiene flat.</li>
 <li><strong>D2</strong>: documentos de trabajo viven en <code>docs/</code>. Ya cumplido en <code>trees/</code>.</li>
 <li><strong>D3</strong>: <code>trees.Rproj</code> aceptado como excepción RStudio.</li>
 <li><strong>D4</strong>: extractores en <code>code/extract/&lt;source&gt;/</code>. Aplicado 2026-05-09 (F05): <code>code/extract/anuarios_pdf/extract_1930.py</code>; output → <code>data/interim/anuarios_pdf/1930_pdf.csv</code>.</li>
-<li><strong>D5</strong> (específica <code>trees/</code>): <code>zenodo/</code> aplazado hasta cerrar <code>REFERENCE_PENDING_*</code> + VLM 2000-2020 + MAPA 2024.</li>
+<li><strong>D5</strong> (específica <code>trees/</code>, formalizada 2026-05-10): <code>zenodo/</code> no se compartimenta por buckets aunque contenga outputs cross-indicator. Carpeta no existe en disco hasta deposit real.</li>
+<li><strong>D6</strong> (específica <code>trees/</code>, formalizada 2026-05-10): <code>code/00_config.R</code> y <code>code/extract/&lt;source&gt;/</code> permanecen en raíz de <code>code/</code>, no se mueven a un bucket.</li>
 </ul>
 <hr />
 <h2 id="7-referencias-cruzadas">7. Referencias cruzadas</h2>

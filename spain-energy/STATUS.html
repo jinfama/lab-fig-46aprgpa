@@ -121,7 +121,7 @@ snapshot operativo.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>R/</code> pasa de 15 a <strong>9 scripts activos</strong></td>
+<td><code>R/</code> pasa de 15 a <strong>9 scripts activos</strong> (renombrado a <code>code/</code> el 2026-05-10)</td>
 <td>Los 6 restantes tenían paths rotos o eran versiones antiguas superseded</td>
 </tr>
 <tr>
@@ -207,21 +207,23 @@ snapshot operativo.</p>
 </table>
 <hr />
 <h2 id="2-estado-del-pipeline">2. Estado del pipeline</h2>
-<h3 id="21-pipeline-activo-9-scripts-r-16-scripts-python">2.1 Pipeline activo (9 scripts R + 16 scripts Python)</h3>
-<pre><code>R/00_config.R
+<h3 id="21-pipeline-activo-9-scripts-r-13-scripts-python">2.1 Pipeline activo (9 scripts R + 13 scripts Python)</h3>
+<p>Reorg física por INDICADOR aplicada 2026-05-10 (sub-arbitrajes D1, D5 y <code>R/</code>→<code>code/</code>):</p>
+<pre><code>code/00_config.R
   ↓
-R/01_biomass_food.R      ← ../agriculture
-R/02_biomass_fodder.R    ← ../agriculture
-R/03_biomass_fuelwood.R  ← ../forest
-R/04_fossil_coal.R       ← ../mining + ../trade + MITECO + IEA + zz_unified
-R/05_fossil_oil_gas.R    ← ../trade + MITECO + IEA + zz_unified
-R/06_electricity.R       ← Eurostat + IEA + EHP
+code/biomass/01_food.R         ← ../agriculture
+code/biomass/02_fodder.R       ← ../agriculture
+code/biomass/03_fuelwood.R     ← ../forest
+code/fossil/04_coal.R          ← ../mining + ../trade + MITECO + IEA + zz_unified
+code/fossil/05_oil_gas.R       ← ../trade + MITECO + IEA + zz_unified
+code/electricity/06_electricity.R  ← Eurostat + IEA + EHP
   ↓
-R/07_integrate.R         → data/final/energy_spain_national.csv
+code/integration/07_integrate.R    → data/final/energy_spain_national.csv
   ↓
-R/08_validate.R          → reporte CSV vs Rubio-Varas
+code/validation/08_validate.R      → data/processed/validation/08_*.csv
   ↓
-figures/_code/run_all.py → 15 PNG fig-nature
+figures/{biomass,integration,validation}/_code/run_all.py → 13 PNG fig-nature
+                                  (helpers compartidos en figures/_shared/)
 </code></pre>
 <h3 id="22-series-producidas-1860-2024-pj">2.2 Series producidas (1860-2024, PJ)</h3>
 <table>
@@ -371,7 +373,7 @@ figures/_code/run_all.py → 15 PNG fig-nature
 <h3 id="31-bloqueantes-para-zenodo">3.1 Bloqueantes para Zenodo</h3>
 <ul>
 <li>[ ] <strong>Unidades de forraje (verde vs MS)</strong>. <code>fodder</code> sigue alto en 1984-2000 porque el anuario reporta en peso verde pero aplicamos factores de MS. Solución: añadir columna <code>moisture_content</code> en <code>fodder_factors</code> y convertir fresh→DM antes de multiplicar por GJ/t DM.</li>
-<li>[ ] <strong>Validación fuente-a-fuente vs Rubio-Varas</strong>. Calcular diff_pct por cada fuente (no sólo total) e identificar qué fuente contribuye más al +35 %. Ya está la estructura en <code>R/08_validate.R</code> y <code>figures/_code/fig_04_comparison_rubio.py</code>, falta el análisis explícito.</li>
+<li>[ ] <strong>Validación fuente-a-fuente vs Rubio-Varas</strong>. Calcular diff_pct por cada fuente (no sólo total) e identificar qué fuente contribuye más al +35 %. Ya está la estructura en <code>code/validation/08_validate.R</code> y <code>figures/validation/_code/fig_04_comparison_rubio.py</code>, falta el análisis explícito.</li>
 <li>[ ] <strong>Subset local de fuentes externas</strong>. Las rutas <code>D:/data/zz_sources/...</code> no son reproducibles. Extraer el subset España de cada panel (IEA, EHP, zz_unified) y versionarlo en <code>data/raw/harmonized/</code>.</li>
 <li>[ ] <strong>Gas &lt;1968</strong>. Actualmente empieza en 1968; Rubio tiene datos desde 1950s. Revisar si zz_unified o trade aportan la serie previa.</li>
 <li>[ ] <strong>Re-ejecutar el pipeline en R</strong> (cuando haya R disponible) para confirmar que produce exactamente lo mismo que el helper Python <code>rebuild_fodder_and_integrate.py</code>. El código está corregido pero no lo he podido ejecutar desde aquí.</li>

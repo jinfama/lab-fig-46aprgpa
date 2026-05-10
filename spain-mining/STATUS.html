@@ -266,6 +266,60 @@ li { margin: 0.2rem 0; }
 <li><strong>Extractor split (F08)</strong> — sólo si llegan fuentes OCR/PDF no triviales (Fase 2 Gemini).</li>
 </ol>
 <hr />
+<h2 id="snapshot-2026-05-10-post-implement-structure-tier-3">Snapshot 2026-05-10 (post IMPLEMENT structure Tier 3)</h2>
+<h3 id="cambios-respecto-al-snapshot-2026-05-09">Cambios respecto al snapshot 2026-05-09</h3>
+<ul>
+<li><strong>F04 aplicado</strong> — <code>R/</code> migrado a <code>code/{laboreo,beneficio,cantera,extension,validation,comparatives}/</code>. <code>code/00_config.R</code> declara <code>path_proc_&lt;bucket&gt;</code> y crea las sub-carpetas. Todos los <code>source()</code> apuntan a <code>code/00_config.R</code>. README, AGENTS.md y architecture.md actualizados.</li>
+<li><strong>F05 aplicado</strong> — <code>figures/_code/</code> → <code>figures/{comparatives,laboreo,beneficio,cantera,extension,quality}/_code/</code>. PNGs movidos al bucket de su generador. Helpers compartidos en <code>figures/_shared/_style.py</code> (paleta + tight_axes + panels + save) y <code>figures/_shared/_data.py</code> (loaders). Cada <code>&lt;bucket&gt;/_code/fig_*.py</code> resuelve <code>_shared</code> vía <code>sys.path.insert</code>. Runner: <code>figures/_shared/run_all.py</code> (camina <code>*/_code/fig_*.py</code>).</li>
+<li><strong>F08 aplicado (D4 con proporcionalidad)</strong> — <code>code/extension/07_extend_miteco.R</code> lee directamente <code>data/raw/miteco/produccion_minera.csv</code>; no hay paso PDF→CSV embebido, así que NO se separa extractor. Documentado en SOURCES.md y AGENTS.md. Si en futuras fases aparecen fuentes con OCR/PDF (Gemini Fase 2), se ubicarán en <code>code/extract/&lt;source&gt;/</code>.</li>
+<li><strong><code>data/processed/</code> reorganizado</strong> — sub-bucket por indicador; CSVs locales movidos a <code>data/processed/{laboreo,beneficio,cantera,extension,validation,comparatives}/</code>. Como <code>data/processed/</code> está gitignored, el cambio sólo afecta al árbol local hasta el siguiente run del pipeline.</li>
+<li><strong>D5 ratificado</strong> — <code>zenodo/</code> permanece vacío hasta sesión de release; AGENTS.md sección "D5 — Excepción canónica <code>zenodo/</code> vacío" añadida.</li>
+<li><strong>MASTER_PLAN.md</strong> — visor URL completado: <a href="https://jinfama.github.io/lab-fig-46aprgpa/spain-mining/">https://jinfama.github.io/lab-fig-46aprgpa/spain-mining/</a>.</li>
+</ul>
+<h3 id="pipeline-estado-fisico-actual">Pipeline (estado físico actual)</h3>
+<table>
+<thead>
+<tr>
+<th>Componente</th>
+<th>Estado</th>
+<th>Notas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code/00_config.R</code> + 8 scripts en <code>code/&lt;bucket&gt;/</code></td>
+<td>OK funcional</td>
+<td>Drift <code>%&gt;%</code> x227 sigue pendiente; no es blocker pero debe limpiarse antes del release Zenodo.</td>
+</tr>
+<tr>
+<td><code>figures/_shared/{_style.py,_data.py,run_all.py}</code> + 8 scripts en <code>figures/&lt;bucket&gt;/_code/</code></td>
+<td>OK</td>
+<td>Bucketing F05 aplicado.</td>
+</tr>
+<tr>
+<td><code>data/raw/</code></td>
+<td>Inmutable, no tocado</td>
+<td>2 archivos. Inventario en SOURCES.md.</td>
+</tr>
+<tr>
+<td><code>data/processed/{bucket}/</code></td>
+<td>Reorg por bucket aplicada localmente</td>
+<td>Gitignored — se regenera con <code>Rscript code/laboreo/01_load_laboreo.R</code> y subsiguientes.</td>
+</tr>
+<tr>
+<td><code>data/final/</code></td>
+<td>6 CSV CAHE-13col</td>
+<td>Sin cambios estructurales.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sesiones-implement-pendientes-post-tier-3">Sesiones IMPLEMENT pendientes (post-Tier 3)</h3>
+<ol>
+<li><strong>Code-protocol catch-up</strong> — <code>%&gt;%</code> → <code>|&gt;</code> + headers canónicos R + comentarios EN (drift documentado en <code>_AUDIT.md §2.1</code>).</li>
+<li><strong>Zenodo release</strong> — populate <code>zenodo/</code>, methodology PDF, decidir CSV canónico, splice 2017→2018 anotado.</li>
+<li><strong>Extractor split (F08-future)</strong> — sólo si llegan fuentes OCR/PDF no triviales (Fase 2 Gemini).</li>
+</ol>
+<hr />
 <h2 id="como-regenerar-este-html">Cómo regenerar este HTML</h2>
 <pre><code class="language-bash">python docs/_render_status_html.py
 </code></pre>

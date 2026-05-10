@@ -93,7 +93,7 @@ li { margin: 0.2rem 0; }
 </head>
 <body>
 <h1 id="status-spain-forest-dataset">STATUS — Spain Forest Dataset</h1>
-<p><em>Última actualización: 2026-05-09 (sesión IMPLEMENT structure tras cross-audit)</em></p>
+<p><em>Última actualización: 2026-05-10 (sesión IMPLEMENT structure Tier 3 — F02 reorg física aplicada)</em></p>
 <p>Si vuelves al proyecto y solo lees una cosa, lee esto.</p>
 <hr />
 <h2 id="0-estado-de-aplicacion-cross-audit-2026-05-09">0. Estado de aplicación cross-audit 2026-05-09</h2>
@@ -108,8 +108,8 @@ li { margin: 0.2rem 0; }
 </ul>
 <p>Aplazado a sesiones IMPLEMENT separadas (riesgo de romper rutas R <code>source()</code>):</p>
 <ul>
-<li><strong>F02</strong> — reorg física de <code>figures/code/</code> → <code>figures/&lt;indicador&gt;/_code/</code>, y de <code>code/</code> y <code>data/processed/</code> por indicador.</li>
-<li>Verificación end-to-end del pipeline tras la reorg.</li>
+<li><strong>F02</strong> ✅ APLICADO 2026-05-10 — <code>code/</code> ahora tiene 5 buckets activos (<code>surface/</code>, <code>extraction/</code>, <code>stocks/</code>, <code>species/</code>, <code>comparatives/</code>) + <code>npp/</code> placeholder; <code>data/processed/</code> reorganizado en los mismos buckets; <code>figures/</code> con <code>_shared/_style.py</code> + <code>_shared/_data.py</code> y <code>&lt;indicador&gt;/_code/</code> por bucket. Ver entrada CHANGELOG 2026-05-10. Verificación: <code>00_setup.R</code> OK; comparatives Python 6/7 OK; pipeline R end-to-end queda como <code>PENDING_VERIFICATION</code>.</li>
+<li><strong>D5</strong> ✅ APLICADO 2026-05-10 — <code>zenodo/</code> declarada como excepción canónica en raíz en <code>AGENTS.md</code>.</li>
 </ul>
 <hr />
 <h2 id="1-que-es-este-proyecto">1. Qué es este proyecto</h2>
@@ -134,27 +134,24 @@ cadena de provenance de 3 niveles (archivo → paper → primarias).</p>
 ├── WORK_PLAN.md                  # Gaps pendientes (G1–G8) y roadmap
 ├── _AUDIT.md                     # Bitácora técnica Sprints 1–6
 │
-├── code/                         # Pipeline R (code-protocol)
-│   ├── 00_setup.R
-│   ├── 01_parse_surface.R        01b_parse_surface_1860.R    01c_parse_surface_2010.R
-│   ├── 02_parse_extraction.R     02b_parse_miteco_aef.R
-│   │                             02c_parse_miteco_provincial.R
-│   │                             02d_parse_miteco_aef_ccaa.R    # NEW Sprint 8
-│   ├── 03_parse_stocks.R         03b_parse_ifn_biomasa_detailed.R
-│   │                             03c_parse_ifn_numero_arboles.R
-│   │                             03d_parse_stocks_adjustments.R
-│   ├── 04_parse_species.R
-│   ├── 05_build_annual.R         # PCHIP + stocks + NPP identidad
-│   ├── 06_validate.R
-│   ├── 08_species_shares_annual.R
-│   └── 10_stocks_replicated.R
+├── code/                         # Pipeline R (code-protocol) — buckets por INDICADOR (F02 2026-05-10)
+│   ├── 00_setup.R                # común: paths, crosswalks, cite_keys, constantes
+│   ├── extract/surface/          # helpers Excel/PDF → data/processed/&lt;bucket&gt;/
+│   ├── surface/                  # 01_parse_surface, 01b_parse_surface_1860, 01c_parse_surface_2010
+│   ├── extraction/               # 02_parse_extraction, 02b/02c/02d_parse_miteco_*
+│   ├── stocks/                   # 03_parse_stocks, 03b/03c/03d_parse_ifn_*, 10_stocks_replicated
+│   ├── species/                  # 04_parse_species, 08_species_shares_annual
+│   ├── npp/                      # placeholder (G6 NPP smoothed)
+│   └── comparatives/             # 05_build_annual (PCHIP + stocks + NPP identidad), 06_validate
 │
 ├── data/
 │   ├── raw/                      # Primarias reorganizadas por fuente
 │   │   ├── surface/ extraction/ stocks/ species/
 │   │   ├── miteco_aef/ ifn/ eurostat/ fao/ unfccc/
 │   │   └── anuarios_pdf/         # 33 PDFs MITECO 1972–2007
-│   ├── processed/                # 27 CSVs intermedios (01–10)
+│   ├── processed/                # 30 CSVs intermedios — buckets por INDICADOR (F02 2026-05-10)
+│   │   ├── surface/ extraction/ stocks/ species/
+│   │   ├── npp/ comparatives/    # placeholders
 │   └── final/
 │       ├── forest_series.csv     # 54 208 filas, 1860–2020 (producción Python)
 │       ├── forest_series_R.csv   # 54 206 filas, pipeline R (paridad Sprint 9)
@@ -163,9 +160,14 @@ cadena de provenance de 3 niveles (archivo → paper → primarias).</p>
 │       ├── validation_summary_R.csv     # 23 checks (nuevo, R)
 │       └── validation_summary_py.csv    # 23 checks (nuevo, misma lógica en Python prod)
 │
-├── figures/
-│   ├── code/                     # 12 scripts fig_*.py + fig_00_setup
-│   └── fig_01..fig_12.png        # 300 dpi, fig-nature style
+├── figures/                      # F02 2026-05-10 — buckets por INDICADOR + _shared/
+│   ├── _shared/                  # _style.py + _data.py (helpers únicos compartidos)
+│   ├── surface/_code/            # 03_surface_provinces.py + 03_surface_provinces.png
+│   ├── extraction/_code/         # 04_extraction_provinces.py + .png (exporta facet_province)
+│   ├── stocks/_code/             # 05_stocks_provinces.py + .png
+│   ├── npp/_code/                # 06_npp_provinces.py, 09_npp_identity.py + 2 PNGs
+│   ├── species/_code/            # placeholder
+│   └── comparatives/_code/       # 01,02,07,08,10,11,12 + run_all.py + 7 PNGs
 │
 ├── docs/
 │   ├── STATUS.md                 # (este archivo)
