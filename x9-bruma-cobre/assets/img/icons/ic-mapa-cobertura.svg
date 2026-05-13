@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Map grid -->
+  <rect x="96" y="96" width="320" height="320" fill="none" stroke="#1e2832" stroke-width="10" rx="4" opacity="0.2"/>
+  <line x1="96" y1="256" x2="416" y2="256" stroke="#1e2832" stroke-width="4" opacity="0.15"/>
+  <line x1="256" y1="96" x2="256" y2="416" stroke="#1e2832" stroke-width="4" opacity="0.15"/>
+  <!-- Colored regions -->
+  <rect x="110" y="110" width="138" height="138" fill="#7ec8b8" opacity="0.5" rx="2"/>
+  <rect x="264" y="110" width="138" height="138" fill="#5a9e8f" opacity="0.4" rx="2"/>
+  <rect x="110" y="264" width="138" height="138" fill="#1e2832" opacity="0.15" rx="2"/>
+  <rect x="264" y="264" width="138" height="138" fill="#7ec8b8" opacity="0.3" rx="2"/>
+  <!-- Pin -->
+  <circle cx="256" cy="440" r="14" fill="#7ec8b8"/>
+  <line x1="256" y1="416" x2="256" y2="426" stroke="#7ec8b8" stroke-width="6" stroke-linecap="round"/>
+</svg>

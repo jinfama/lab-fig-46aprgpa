@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizaciones - CAHE</title>
+  <link rel="icon" type="image/png" href="assets/img/cropped-favicon-1.png">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="site-logo">
+        <img src="assets/img/logo-blanco-2.png" alt="CAHE">
+      </a>
+      <button class="nav-toggle" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="main-nav">
+        <ul>
+          <li><a href="visualizaciones.html" class="active">Visualizaciones</a></li>
+          <li><a href="datos.html">Datos</a></li>
+          <li><a href="perspectivas.html">Perspectivas</a></li>
+          <li><a href="equipo.html">Equipo</a></li>
+          <li><a href="la-web.html">La web</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero-minimal">
+    <div class="container">
+      <h1>Visualizaciones</h1>
+    </div>
+  </section>
+
+  <!-- Visualization cards -->
+  <section class="section">
+    <div class="container">
+
+      <!-- España en perspectiva global -->
+      <h2 class="viz-section-title">España en perspectiva global</h2>
+      <div class="viz-grid">
+
+        <div class="viz-card" data-href="visualizaciones/tendencias.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-line-chart-line"></i>
+            </div>
+            <h3>Tendencias</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Indicadores ambientales: España vs. mundo</p>
+            <a href="visualizaciones/tendencias.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/correlacion.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-bubble-chart-line"></i>
+            </div>
+            <h3>Correlación</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Correlación entre indicadores ambientales y socioeconómicos</p>
+            <a href="visualizaciones/correlacion.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/descomposicion.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-bar-chart-2-line"></i>
+            </div>
+            <h3>Descomposición</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Población, riqueza e intensidad tecnológica</p>
+            <a href="visualizaciones/descomposicion.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/desacoplamiento.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-guide-line"></i>
+            </div>
+            <h3>Desacoplamiento</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Indicadores ambientales vs. PIB (escenarios de Tapio)</p>
+            <a href="visualizaciones/desacoplamiento.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Indicadores en detalle -->
+      <h2 class="viz-section-title">Indicadores en detalle</h2>
+      <div class="viz-grid">
+
+        <div class="viz-card" data-href="visualizaciones/energia.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-flashlight-line"></i>
+            </div>
+            <h3>Energía</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Consumo de energía: fuentes modernas y tradicionales</p>
+            <a href="visualizaciones/energia.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/emisiones.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-mist-line"></i>
+            </div>
+            <h3>Emisiones GEI</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Gases de efecto invernadero totales</p>
+            <a href="visualizaciones/emisiones.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/emisiones-co2.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-cloud-line"></i>
+            </div>
+            <h3>Emisiones CO₂</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>CO₂ por fuente energética y usos del suelo</p>
+            <a href="visualizaciones/emisiones-co2.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/materiales.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-hammer-line"></i>
+            </div>
+            <h3>Materiales</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Flujos de materiales: biomasa, fósiles y minerales</p>
+            <a href="visualizaciones/materiales.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/tierra.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-earth-line"></i>
+            </div>
+            <h3>Tierra</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Grandes usos del suelo en España</p>
+            <a href="visualizaciones/tierra.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card viz-card-upcoming">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-coin-line"></i>
+            </div>
+            <h3>Ahorro Genuino</h3>
+          </div>
+          <div class="viz-card-back"></div>
+        </div>
+
+      </div>
+
+      <!-- Sectores en detalle -->
+      <h2 class="viz-section-title">Sectores en detalle</h2>
+      <div class="viz-grid">
+
+        <div class="viz-card" data-href="visualizaciones/cultivos.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-seedling-line"></i>
+            </div>
+            <h3>Cultivos</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Superficie cultivada y grandes grupos de cultivos</p>
+            <a href="visualizaciones/cultivos.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/bosques.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-tree-line"></i>
+            </div>
+            <h3>Bosques</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Superficie y stocks de carbono forestales</p>
+            <a href="visualizaciones/bosques.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/industria.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-building-3-line"></i>
+            </div>
+            <h3>Industria</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Energía y emisiones industriales por subsector</p>
+            <a href="visualizaciones/industria.html" class="cta">Ver gráfica &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mapas -->
+      <h2 class="viz-section-title">Mapas provinciales</h2>
+      <div class="viz-grid">
+
+        <div class="viz-card" data-href="visualizaciones/mapa-bosques.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-map-2-line"></i>
+            </div>
+            <h3>Mapa de bosques</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Superficie y carbono forestal por provincias</p>
+            <a href="visualizaciones/mapa-bosques.html" class="cta">Ver mapa &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/mapa-cobertura.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-earth-line"></i>
+            </div>
+            <h3>Mapa de cobertura</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Usos del suelo por provincias</p>
+            <a href="visualizaciones/mapa-cobertura.html" class="cta">Ver mapa &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card" data-href="visualizaciones/mapa-cultivos.html">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-seedling-line"></i>
+            </div>
+            <h3>Mapa de cultivos</h3>
+          </div>
+          <div class="viz-card-back">
+            <p>Cultivos por provincias: superficie y producción</p>
+            <a href="visualizaciones/mapa-cultivos.html" class="cta">Ver mapa &rarr;</a>
+          </div>
+        </div>
+
+        <div class="viz-card viz-card-upcoming">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-flashlight-line"></i>
+            </div>
+            <h3>Mapa de energía</h3>
+          </div>
+          <div class="viz-card-back"></div>
+        </div>
+
+        <div class="viz-card viz-card-upcoming">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-mist-line"></i>
+            </div>
+            <h3>Mapa de emisiones GEI</h3>
+          </div>
+          <div class="viz-card-back"></div>
+        </div>
+
+      </div>
+
+      <!-- Productos -->
+      <h2 class="viz-section-title">Productos</h2>
+      <div class="viz-grid">
+
+        <div class="viz-card viz-card-upcoming">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-plant-line"></i>
+            </div>
+            <h3>Olivo</h3>
+          </div>
+          <div class="viz-card-back"></div>
+        </div>
+
+        <div class="viz-card viz-card-upcoming">
+          <div class="viz-card-front">
+            <div class="viz-card-icon">
+              <i class="ri-flask-line"></i>
+            </div>
+            <h3>Potasa</h3>
+          </div>
+          <div class="viz-card-back"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+<!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <img src="assets/img/logo-ugr.png" alt="Universidad de Granada">
+        <img src="assets/img/logo-unizar.png" alt="Universidad de Zaragoza">
+        <img src="assets/img/logo-csic.jpg" alt="CSIC">
+      </div>
+      <p>&copy; 2026 Contabilidad Ambiental<br>Hist&oacute;rica de Espa&ntilde;a</p>
+      <div class="footer-col">
+        <img src="assets/img/logo-agencia.png" alt="Agencia Estatal de Investigaci&oacute;n">
+        <img src="assets/img/logo-areces.jpg" alt="Fundaci&oacute;n Ram&oacute;n Areces">
+        <img src="assets/img/logo-bbva.jpg" alt="Fundaci&oacute;n BBVA">
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

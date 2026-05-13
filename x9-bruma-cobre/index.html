@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive">
+  <title>CAHE - Contabilidad Ambiental HistÃ³rica de EspaÃ±a</title>
+  <link rel="icon" type="image/png" href="assets/img/cropped-favicon-1.png">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Full-screen Globe Hero (no header) -->
+  <section class="hero-globe">
+
+    <!-- Text at top -->
+    <div class="hero-globe-text">
+      <h1 class="hero-globe-title">Contabilidad Ambiental<br>HistÃ³rica de EspaÃ±a</h1>
+      <p class="hero-globe-subtitle">Series histÃ³ricas sobre uso de recursos, impactos ambientales y desarrollo econÃ³mico en perspectiva histÃ³rica y global</p>
+    </div>
+
+    <!-- Globe in center -->
+    <div class="globe-container">
+      <canvas id="globe-canvas"></canvas>
+    </div>
+
+    <!-- Navigation cards at bottom -->
+    <div class="hero-nav-grid">
+      <a href="visualizaciones.html" class="hero-nav-card">
+        <div class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <span>Visualizaciones</span>
+      </a>
+      <a href="perspectivas.html" class="hero-nav-card">
+        <div class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <span>Perspectivas</span>
+      </a>
+      <a href="datos.html" class="hero-nav-card">
+        <div class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+        </div>
+        <span>Datos</span>
+      </a>
+      <a href="equipo.html" class="hero-nav-card">
+        <div class="nav-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <span>Equipo</span>
+      </a>
+    </div>
+
+    <!-- Info links -->
+    <div class="hero-info-links">
+      <a href="la-web.html#actualizaciones" class="hero-info-link hero-updates-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+        Novedades
+      </a>
+      <span class="hero-info-sep">Â·</span>
+      <a href="la-web.html" class="hero-info-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        Sobre la web
+      </a>
+    </div>
+
+  </section>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/d3.v7.min.js"></script>
+  <script src="assets/js/globe.js"></script>
+</body>
+</html>
+
