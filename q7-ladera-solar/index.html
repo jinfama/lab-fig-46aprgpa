@@ -1,0 +1,305 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Atlas Agrario de Am&eacute;rica Latina</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23D4A032'/%3E%3Cpath d='M12 4v16M8 12c0-2 2-4 4-4M16 12c0-2-2-4-4-4M8 8c0-2 2-4 4-4M16 8c0-2-2-4-4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=20260513-trend-area-timeline-fix31">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js" } }
+</script>
+</head>
+<body>
+
+<!-- Landing / Hero page -->
+<div class="landing" id="landing">
+    <canvas class="landing-globe" id="landing-globe"></canvas>
+    <canvas class="landing-particles" id="landing-particles"></canvas>
+    <div class="landing-retro-map" id="landing-retro-map"></div>
+    <div class="landing-content" id="landing-content">
+        <div class="landing-top">
+            <div class="landing-atlas">ATLAS</div>
+            <h1 class="landing-title">Agrario de Am&eacute;rica Latina</h1>
+            <div class="landing-rule"></div>
+            <p class="landing-subtitle">Producci&oacute;n, comercio y trabajo agrario en perspectiva hist&oacute;rica</p>
+            <div class="landing-progress" id="landing-progress">
+                <div class="landing-bar"></div>
+            </div>
+            <button class="landing-cta" id="landing-cta" style="display:none">
+                Explorar el atlas
+                <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5v10z" fill="currentColor"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- App -->
+<div id="app">
+    <!-- Atlas-like dark sidebar for views -->
+    <nav class="sidebar">
+        <div class="sb-categories" id="sidebar"></div>
+        <button class="sb-info-btn" id="btn-info" title="Informaci&oacute;n">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        </button>
+    </nav>
+
+    <!-- Hidden indicator panel (populated by JS, used as data source for dropdown) -->
+    <aside class="ind-panel hidden" id="ind-panel"></aside>
+
+    <!-- Main content area -->
+    <div class="main">
+        <!-- Query bar: reads like a sentence -->
+        <div class="query-bar">
+            <div class="query-segment query-cat-segment">
+                <button class="query-btn query-cat-btn" id="query-cat" title="Categor&iacute;a">
+                    <svg class="query-cat-icon" viewBox="0 0 24 24" id="query-cat-icon"></svg>
+                    <span id="category-label">Cultivos</span>
+                    <svg class="query-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+                <div class="query-dropdown" id="query-cat-dropdown"></div>
+            </div>
+            <span class="query-sep">/</span>
+            <span class="query-breadcrumb" id="indicator-label">Producci&oacute;n</span>
+            <!-- Selection chips (inline inside query bar) -->
+            <div class="selection-bar" id="selection-bar"></div>
+            <div class="query-spacer"></div>
+            <button class="query-icon-btn" id="btn-toggle-panel" title="Mostrar/ocultar panel">
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
+            </button>
+        </div>
+
+        <!-- Visualization panels -->
+        <div class="viz-container">
+
+
+            <div class="viz-panel active" id="panel-map">
+                <div class="map-container" id="map-container" style="flex:1; border-right:1px solid var(--c-border); position:relative;">
+                    <div class="map-year" id="map-year"></div>
+                    <svg class="map-svg" id="map-svg"></svg>
+                    <div class="map-legend" id="map-legend"></div>
+                </div>
+                <div class="map-container" id="map-container-2" style="flex:1; display:none; position:relative;">
+                    <div class="map-year" id="map-year-2"></div>
+                    <svg class="map-svg" id="map-svg-2"></svg>
+                    <button id="btn-close-compare" style="position:absolute; top:12px; right:16px; padding:4px 10px; background:var(--c-bg); border:1px solid var(--c-border); cursor:pointer; border-radius:4px; font-size:11px; z-index:10; opacity:0.7;" title="Cerrar comparación">✕</button>
+                </div>
+            </div>
+            <div class="viz-panel" id="panel-trend">
+                <div class="chart-container" id="trend-chart-container">
+                    <svg class="chart-svg" id="trend-svg"></svg>
+                    <div class="chart-empty" id="trend-empty">Selecciona uno o m&aacute;s pa&iacute;ses para ver la evoluci&oacute;n</div>
+                </div>
+            </div>
+            <div class="viz-panel" id="panel-treemap">
+                <div class="treemap-container" id="treemap-container">
+                    <div class="treemap-header" id="treemap-header"></div>
+                    <div class="treemap-chart" id="treemap-chart"></div>
+                </div>
+            </div>
+            <div class="viz-panel" id="panel-ranking">
+                <div class="ranking-container" id="ranking-container"></div>
+            </div>
+            <div class="viz-panel" id="panel-table">
+                <div class="table-container" id="table-container"></div>
+            </div>
+            <div class="viz-panel" id="panel-bilateral">
+                <div class="bilateral-controls" id="bilateral-controls">
+                    <div class="bc-group">
+                        <label class="bc-label">EXPORTADOR</label>
+                        <select class="bc-select" id="bc-exporter"></select>
+                    </div>
+                    <button class="bc-swap" id="bc-swap" title="Intercambiar">&#8644;</button>
+                    <div class="bc-group">
+                        <label class="bc-label">DESTINO</label>
+                        <select class="bc-select" id="bc-importer" disabled title="Todos los socios comerciales">
+                            <option value="world">Todos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bilateral-container" id="bilateral-container" style="flex:1; position:relative;">
+                    <div class="map-year" id="bilateral-year"></div>
+                    <svg class="map-svg" id="bilateral-svg"></svg>
+                    <div class="map-legend" id="bilateral-legend"></div>
+                    <div class="bilateral-info" id="bilateral-info"></div>
+                </div>
+            </div>
+            <div class="viz-panel" id="panel-about">
+                <div class="about-container" id="about-container">
+                    <div class="about-content">
+                        <h1>Atlas Agrario de Am&eacute;rica Latina</h1>
+                        <p class="about-lead">Plataforma de datos hist&oacute;ricos sobre producci&oacute;n agr&iacute;cola, comercio, ganader&iacute;a y trabajo agrario en Am&eacute;rica Latina.</p>
+                        <div class="about-nav" id="about-nav">
+                            <button class="about-nav-btn active" data-section="metodologia">Metodolog&iacute;a</button>
+                            <button class="about-nav-btn" data-section="equipo">Equipo</button>
+                            <button class="about-nav-btn" data-section="publicaciones">Publicaciones</button>
+                        </div>
+                        <div class="about-section active" id="about-metodologia">
+                            <div class="method-cards" id="method-cards">
+                                <section class="method-card">
+                                    <h2>Base agraria</h2>
+                                    <p>Cultivos, comercio, ganader&iacute;a y uso del suelo se armonizan en paneles pa&iacute;s-a&ntilde;o, con observaciones originales preservadas y rellenos trazables.</p>
+                                </section>
+                                <section class="method-card">
+                                    <h2>Subnacional</h2>
+                                    <p>El desglose admin1 se usa cuando existen datos y geometr&iacute;a. Si no hay detalle real para un indicador, el visor muestra el valor nacional.</p>
+                                </section>
+                                <section class="method-card">
+                                    <h2>Desigualdad</h2>
+                                    <p>El bloque socioecon&oacute;mico empieza con Gini de la tierra, Gini de ingreso y reforma agraria, citando las fuentes externas originales.</p>
+                                </section>
+                                <a class="method-link" href="docs/metodologia.md" target="_blank" rel="noopener">Documento metodol&oacute;gico completo</a>
+                            </div>
+                        </div>
+                        <div class="about-section" id="about-equipo">
+                            <div class="about-team-grid">
+                                <article class="about-card">
+                                    <div class="about-avatar"><img src="img/juaninfante.jpg" alt="Juan Infante-Amate"></div>
+                                    <div class="about-card-name">Juan Infante-Amate</div>
+                                    <div class="about-card-role">Universidad de Granada</div>
+                                    <div class="about-card-desc">Historia ambiental y econ&oacute;mica agraria</div>
+                                    <div class="about-card-links">
+                                        <a href="https://www.ugr.es/en/staff/juan-infante-amate" target="_blank" rel="noopener">Web</a>
+                                        <a href="https://scholar.google.com/citations?user=s89YchgAAAAJ" target="_blank" rel="noopener">Scholar</a>
+                                        <a href="https://orcid.org/0000-0003-1446-7181" target="_blank" rel="noopener">ORCID</a>
+                                    </div>
+                                </article>
+                                <article class="about-card">
+                                    <div class="about-avatar"><img src="img/alexander-urrego.jpg" alt="Alexander Urrego Mesa"></div>
+                                    <div class="about-card-name">Alexander Urrego Mesa</div>
+                                    <div class="about-card-role">Universitat de Barcelona</div>
+                                    <div class="about-card-desc">Historia econ&oacute;mica y metabolismo agrario</div>
+                                    <div class="about-card-links">
+                                        <a href="https://webgrec.ub.edu/webpages/000005/cas/alex.urrego.mesa.ub.edu.html" target="_blank" rel="noopener">Web</a>
+                                        <a href="https://www.scopus.com/authid/detail.uri?authorId=57205240733" target="_blank" rel="noopener">Scopus</a>
+                                        <a href="https://orcid.org/0000-0002-8256-0321" target="_blank" rel="noopener">ORCID</a>
+                                    </div>
+                                </article>
+                                <article class="about-card">
+                                    <div class="about-avatar"><img src="img/eduardo.jpg" alt="Eduardo Aguilera"></div>
+                                    <div class="about-card-name">Eduardo Aguilera</div>
+                                    <div class="about-card-role">CSIC &middot; IEGD</div>
+                                    <div class="about-card-desc">Agroecolog&iacute;a y cambio clim&aacute;tico</div>
+                                    <div class="about-card-links">
+                                        <a href="https://iegd.csic.es/es/personal/eduardo-manuel-aguilera-fernandez" target="_blank" rel="noopener">Web</a>
+                                        <a href="https://scholar.google.es/citations?user=3c01eqQAAAAJ" target="_blank" rel="noopener">Scholar</a>
+                                        <a href="https://orcid.org/0000-0003-4382-124X" target="_blank" rel="noopener">ORCID</a>
+                                    </div>
+                                </article>
+                                <article class="about-card">
+                                    <div class="about-avatar"><img src="img/marc-badia.jpg" alt="Marc Badia-Mir&oacute;"></div>
+                                    <div class="about-card-name">Marc Badia-Mir&oacute;</div>
+                                    <div class="about-card-role">Universitat de Barcelona</div>
+                                    <div class="about-card-desc">Historia econ&oacute;mica de Am&eacute;rica Latina</div>
+                                    <div class="about-card-links">
+                                        <a href="https://www.ub.edu/school-economics/researchers/badia-marc/" target="_blank" rel="noopener">Web</a>
+                                        <a href="https://webofscience.com/wos/author/record/D-8431-2011" target="_blank" rel="noopener">WOS</a>
+                                        <a href="https://orcid.org/0000-0001-5326-1819" target="_blank" rel="noopener">ORCID</a>
+                                    </div>
+                                </article>
+                            </div>
+                            <p class="about-team-note">Perfiles y fotograf&iacute;as enlazados desde las fichas institucionales p&uacute;blicas de UGR, CSIC y UB.</p>
+                        </div>
+                        <div class="about-section" id="about-publicaciones">
+                            <p class="about-placeholder">Listado de publicaciones pr&oacute;ximamente.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+            <button class="tl-play" id="tl-play">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="tl-speed" id="tl-speed">4x</button>
+            <input class="tl-year-input" id="tl-year-start" type="number" title="A&ntilde;o inicio">
+            <div class="tl-track" id="tl-track">
+                <div class="tl-rail"></div>
+                <div class="tl-range-fill" id="tl-range-fill"></div>
+                <div class="tl-handle" id="tl-handle-from">
+                    <div class="tl-handle-label" id="tl-label-from"></div>
+                </div>
+                <div class="tl-handle" id="tl-handle-to">
+                    <div class="tl-handle-label" id="tl-label-to"></div>
+                </div>
+            </div>
+            <input class="tl-year-input" id="tl-year-end" type="number" title="A&ntilde;o fin">
+            <div class="tl-year" id="tl-year">2020</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span>Fuente: FAO &middot; FAOSTAT &middot; IIA &middot; Estad&iacute;sticas nacionales</span>
+            <div class="footer-actions">
+                <button class="footer-btn" id="btn-csv" title="Descargar datos, fuentes y cita del panel actual">Descargar</button>
+                <button class="footer-btn" id="btn-fs">Pantalla completa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right panel: options, products, territories -->
+    <aside class="right-panel" id="right-panel">
+      <div class="right-panel-resizer" id="right-panel-resizer" title="Cambiar ancho del panel"></div>
+      <div class="rp-section" id="rp-options">
+        <div class="rp-section-header">OPCIONES</div>
+        <div class="rp-section-body" id="rp-options-body"></div>
+      </div>
+      <div class="rp-section" id="rp-products" style="display:none">
+        <div class="rp-section-header" id="rp-products-header">PRODUCTOS</div>
+        <div class="rp-section-body rp-scrollable" id="rp-products-body">
+          <div class="rp-search"><input type="text" id="rp-product-search" placeholder="Buscar..."></div>
+          <div id="rp-product-list"></div>
+        </div>
+      </div>
+      <div class="rp-section" id="rp-partners" style="display:none">
+        <div class="rp-section-header" id="rp-partners-header">SOCIOS</div>
+        <div class="rp-section-body rp-scrollable" id="rp-partners-body">
+          <div class="rp-search"><input type="text" id="rp-partner-search" placeholder="Buscar socio..."></div>
+          <div id="rp-partner-list"></div>
+        </div>
+      </div>
+      <div class="rp-section" id="rp-territories">
+        <div class="rp-section-header">TERRITORIOS</div>
+        <div class="rp-section-body rp-scrollable" id="rp-territories-body">
+          <div id="rp-level-pills"></div>
+          <div class="rp-search"><input type="text" id="rp-territory-search" placeholder="Buscar pa&iacute;s..."></div>
+          <div id="rp-territory-list"></div>
+        </div>
+      </div>
+    </aside>
+</div>
+
+<div class="download-modal" id="download-modal" hidden>
+  <div class="download-dialog" role="dialog" aria-modal="true" aria-labelledby="download-title">
+    <div class="download-header">
+      <div>
+        <div class="download-eyebrow">Panel actual</div>
+        <h2 id="download-title">Descarga y documentación</h2>
+      </div>
+      <button class="download-close" id="download-close" type="button" aria-label="Cerrar">&times;</button>
+    </div>
+    <div class="download-tabs" role="tablist">
+      <button class="download-tab active" type="button" data-download-tab="data">Datos</button>
+      <button class="download-tab" type="button" data-download-tab="sources">Fuentes y método</button>
+      <button class="download-tab" type="button" data-download-tab="citation">Cita y créditos</button>
+    </div>
+    <div class="download-body" id="download-body"></div>
+    <div class="download-actions">
+      <button class="footer-btn download-secondary" id="download-secondary" type="button">Cerrar</button>
+      <button class="footer-btn download-primary" id="download-primary" type="button">Descargar CSV</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/landing.js?v=20260513-trend-area-timeline-fix31"></script>
+</body>
+</html>
