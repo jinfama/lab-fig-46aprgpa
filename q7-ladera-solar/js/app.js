@@ -1,16 +1,16 @@
-﻿/* app.js — Main application controller for Atlas Agrario de América Latina */
+/* app.js - Main application controller for Atlas Agrario de América Latina */
 
-import State from './state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from './data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { COUNTRIES, REGIONS, CATEGORY_ICONS, VIEWS, CAT_COLORS, fmt, fmtUnit, shortItemLabel, shortEntityLabel } from './utils.js?v=20260513-trend-area-timeline-fix31';
-import { initMapView, updateMapView } from './views/map-view.js?v=20260513-trend-area-timeline-fix31';
-import { initTrendView, updateTrendView } from './views/trend-view.js?v=20260513-trend-area-timeline-fix31';
-import { initTreemapView, updateTreemapView } from './views/treemap-view.js?v=20260513-trend-area-timeline-fix31';
-import { initRankingView, updateRankingView } from './views/ranking-view.js?v=20260513-trend-area-timeline-fix31';
-import { initTableView, updateTableView } from './views/table-view.js?v=20260513-trend-area-timeline-fix31';
-import { initBilateralView, updateBilateralView } from './views/bilateral-view.js?v=20260513-trend-area-timeline-fix31';
-import { initTimeline, updateTimeline } from './components/timeline.js?v=20260513-trend-area-timeline-fix31';
-import { initTooltip, hideTooltip } from './components/tooltip.js';
+import State from './state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from './data-loader.js?v=20260514-sidebar-gini-fix52';
+import { COUNTRIES, REGIONS, CATEGORY_ICONS, VIEWS, CAT_COLORS, fmt, fmtUnit, shortItemLabel, shortEntityLabel } from './utils.js?v=20260514-sidebar-gini-fix52';
+import { initMapView, updateMapView } from './views/map-view.js?v=20260514-sidebar-gini-fix52';
+import { initTrendView, updateTrendView } from './views/trend-view.js?v=20260514-sidebar-gini-fix52';
+import { initTreemapView, updateTreemapView } from './views/treemap-view.js?v=20260514-sidebar-gini-fix52';
+import { initRankingView, updateRankingView } from './views/ranking-view.js?v=20260514-sidebar-gini-fix52';
+import { initTableView, updateTableView } from './views/table-view.js?v=20260514-sidebar-gini-fix52';
+import { initBilateralView, updateBilateralView } from './views/bilateral-view.js?v=20260514-sidebar-gini-fix52';
+import { initTimeline, updateTimeline } from './components/timeline.js?v=20260514-sidebar-gini-fix52';
+import { initTooltip, showTooltip, hideTooltip } from './components/tooltip.js';
 
 const CATEGORY_ORDER = ['landuse', 'agriculture', 'livestock', 'trade', 'labor', 'socioeconomic'];
 
@@ -19,6 +19,7 @@ const ITEM_PICKER_LABELS = {
     agriculture: { title: 'Seleccionar cultivo', search: 'Buscar cultivo...', all: 'Todos los cultivos', header: 'CULTIVOS' },
     trade:       { title: 'Seleccionar producto', search: 'Buscar producto...', all: 'Todos los productos', header: 'PRODUCTOS' },
     livestock:   { title: 'Seleccionar especie', search: 'Buscar especie...', all: 'Todas las especies', header: 'ESPECIES' },
+    labor:       { title: 'Seleccionar tipo', search: 'Buscar tipo...', all: 'Todos los tipos', header: 'TIPOS DE PRODUCTO' },
 };
 
 const ITEM_FACET_LABEL = {
@@ -26,6 +27,7 @@ const ITEM_FACET_LABEL = {
     trade: 'producto',
     livestock: 'especie',
     landuse: 'uso',
+    labor: 'tipo',
 };
 
 const CATEGORY_SOURCE_INFO = {
@@ -40,7 +42,7 @@ const CATEGORY_SOURCE_INFO = {
         availability: 'El JSON de navegador conserva productos/socios bilaterales agregados, pero no una etiqueta fuente/método por celda.',
     },
     landuse: {
-        sources: 'FAOSTAT Inputs/Land Use y la base final land_use_national cuando está disponible.',
+        sources: 'FAOSTAT Inputs/Land Use y la base final land_use_national cuando est- disponible.',
         method: 'Se armonizan usos de suelo principales y agregados regionales a partir de las series nacionales.',
         availability: 'El JSON actual no incluye fuente/método por observación; se puede añadir regenerando desde el panel largo original.',
     },
@@ -50,15 +52,53 @@ const CATEGORY_SOURCE_INFO = {
         availability: 'La base original sí contiene source/method_value, pero el JSON agregado del visor aún no los expone por celda.',
     },
     labor: {
-        sources: 'Panel histórico de empleo agrario y forestal procedente de series externas armonizadas.',
-        method: 'Se ofrecen personas, horas y participaciones cuando la fuente cubre la economía total comparable.',
-        availability: 'El JSON del visor no conserva método/fuente por celda.',
+        sources: 'Panel histórico de empleo agrario y forestal y base labour_synthesis del proyecto de huella laboral por tipo de producto.',
+        method: 'Los totales nacionales mantienen la serie histórica 1900-2024. El selector por tipo usa la desagregación producto/categoría disponible para 1961-2021, agregada a países y regiones latinoamericanas.',
+        availability: 'El JSON del visor conserva la desagregación por tipo, pero no aún la fuente/método por celda de la base larga original.',
     },
     socioeconomic: {
-        sources: 'Gini de tierra: Frankema, Deininger/Olinto y WCAD/FAOSTAT. Gini de ingreso: SWIID. Reforma agraria: Albertus.',
+        sources: 'Gini de tierra: Frankema, Deininger/Olinto y WCAD/FAOSTAT. Reforma agraria: Albertus.',
         method: 'Las observaciones originales se preservan como puntos de corte; las series anuales pueden incluir interpolación lineal y agregación regional con panel fijo.',
-        availability: 'Este módulo sí conserva metadatos de source/method en las observaciones del JSON.',
+        availability: 'Este módulo s- conserva metadatos de source/method en las observaciones del JSON.',
     },
+};
+
+const FOOTER_SOURCE_LABELS = {
+    agriculture: 'Fuente: IIA · FAO/FAOSTAT · estadísticas nacionales',
+    trade: 'Fuente: FAOSTAT · panel histórico de comercio · matrices bilaterales',
+    landuse: 'Fuente: FAOSTAT Land Use · base land_use_national',
+    livestock: 'Fuente: base livestock.rds · FAOSTAT · fuentes nacionales',
+    labor: 'Fuente: empleo agrario histórico · labour_synthesis',
+    socioeconomic: 'Fuente: Gini tierra histórico · reforma agraria · ver fuentes y método',
+};
+
+const INDICATOR_HELP = {
+    production: 'Producción física anual del cultivo o conjunto de cultivos seleccionados. Es aditiva por producto y territorio.',
+    area: 'Superficie cosechada o cultivada asociada al producto seleccionado. Es una magnitud aditiva.',
+    yield: 'Rendimiento por hectárea. Es un cociente, por eso no debe sumarse como si fuera producción.',
+    exports: 'Exportaciones agrarias directas del territorio seleccionado hacia el resto del mundo, agregadas por producto.',
+    imports: 'Importaciones agrarias directas recibidas por el territorio seleccionado, agregadas por producto.',
+    balance: 'Exportaciones menos importaciones. Puede ser positivo o negativo y no conviene tratarlo como participación porcentual.',
+    bilateral_exports: 'Flujos bilaterales de exportación desde el origen latinoamericano hacia cada socio. El mapa mundial muestra los principales socios del año y producto seleccionados.',
+    bilateral_imports: 'Flujos bilaterales de importación desde cada socio hacia el territorio latinoamericano seleccionado.',
+    bilateral_balance: 'Saldo bilateral entre exportaciones e importaciones para el socio seleccionado. Puede ser positivo o negativo.',
+    land_area: 'Superficie dedicada al uso del suelo seleccionado. La serie nacional se usa como respaldo cuando no hay desagregación subnacional.',
+    heads: 'Número de cabezas de ganado. Es útil para stock físico, pero no compara bien especies de tamaños muy distintos.',
+    lu: 'Unidades ganaderas, una conversión del stock animal a una unidad común para comparar especies.',
+    grass_intake: 'Energía anual de forraje o alimentación asociada al stock ganadero.',
+    workers: 'Personas ocupadas en actividades agrarias. Si seleccionas un tipo de producto, muestra el trabajo asignado a ese tipo en la base de huella laboral.',
+    workers_forestry: 'Personas ocupadas en agricultura y actividades forestales cuando la fuente las presenta conjuntamente.',
+    workers_livestock: 'Personas ocupadas en ganadería estimadas a partir del componente ganadero.',
+    hours: 'Horas anuales de trabajo agrario, expresadas en millones de horas. Con tipo de producto seleccionado, muestra las horas asignadas a ese tipo.',
+    hours_forestry: 'Horas anuales de agricultura y forestal cuando la fuente combina ambas actividades.',
+    hours_livestock: 'Horas anuales de trabajo ganadero estimadas.',
+    share: 'Participación del empleo agrario en el empleo total. Es un porcentaje, no una cantidad aditiva.',
+    land_gini: 'Índice de concentración de la propiedad o distribución de la tierra. Cero sería igualdad perfecta y uno máxima concentración.',
+    gini_disp: 'Índice de Gini de ingreso disponible, después de impuestos y transferencias cuando la fuente lo permite.',
+    gini_mkt: 'Índice de Gini de ingreso de mercado, antes del efecto redistributivo de impuestos y transferencias.',
+    reform_total_pc: 'Tierra afectada por reforma agraria en el año, expresada como porcentaje de la tierra cultivable. Mide alcance anual, no producción.',
+    reform_intensity: 'Código ordinal de intensidad de reforma agraria. Los valores ordenan intensidad institucional, no son una cantidad física.',
+    reform_binary: 'Indicador 0/1 de presencia de legislación o episodio de reforma agraria. Sirve para identificar eventos, no magnitudes.',
 };
 
 function _orderedCategories(meta) {
@@ -74,10 +114,11 @@ function _orderedCategories(meta) {
 // should NOT trigger redundant view updates (data may not match the new category yet).
 let _categoryChanging = false;
 let _categoryChangeSeq = 0;
+let _aboutCoverageLoaded = false;
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Initialization
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 (function init() {
   try {
     console.log('[INIT] Starting app initialization...');
@@ -110,7 +151,7 @@ let _categoryChangeSeq = 0;
     // Preload subnational data in background (so it's ready when user clicks Subnacional)
     DataLoader.loadSubnational();
 
-    // Sync yearRange with loaded data — use effective range based on actual data availability
+    // Sync yearRange with loaded data - use effective range based on actual data availability
     _updateYearRangeFromData();
     const effectiveRange = State.get('yearRange');
     if (effectiveRange) {
@@ -163,10 +204,12 @@ let _categoryChangeSeq = 0;
         const panel = document.getElementById('right-panel');
         if (panel) {
             panel.classList.toggle('hidden');
+            document.body.classList.toggle('right-panel-hidden', panel.classList.contains('hidden'));
             // Trigger resize for map/chart after panel hides/shows
             setTimeout(() => window.dispatchEvent(new Event('resize')), 250);
         }
     });
+    _bindIndicatorInfoButton();
 
     // Info button
     document.getElementById('btn-info').addEventListener('click', () => {
@@ -191,6 +234,9 @@ let _categoryChangeSeq = 0;
             document.querySelectorAll('.about-section').forEach(s => s.classList.remove('active'));
             const target = document.getElementById('about-' + btn.dataset.section);
             if (target) target.classList.add('active');
+            if (btn.dataset.section === 'cobertura') {
+                _ensureAboutCoverage(meta);
+            }
         });
     });
 
@@ -203,7 +249,7 @@ let _categoryChangeSeq = 0;
     // Ensure initial view panel is activated
     _switchView(State.get('activeView'));
 
-    // Trigger initial render — use rAF to ensure DOM has reflowed after panel activation
+    // Trigger initial render - use rAF to ensure DOM has reflowed after panel activation
     requestAnimationFrame(() => {
         _updateAllViews();
         // Rebuild right panel after data is loaded and views rendered
@@ -220,9 +266,293 @@ let _categoryChangeSeq = 0;
   }
 })();
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
+   About: methodology and coverage
+   ----------------------------------------------- */
+async function _ensureAboutCoverage(meta) {
+    if (_aboutCoverageLoaded) return;
+    const summary = document.getElementById('coverage-summary');
+    const grid = document.getElementById('coverage-grid');
+    if (!summary || !grid) return;
+
+    _aboutCoverageLoaded = true;
+    summary.innerHTML = '<span class="coverage-loading">Calculando cobertura desde los JSON actuales del visor...</span>';
+    grid.innerHTML = '';
+
+    try {
+        const cats = _orderedCategories(meta).filter(cat => cat.enabled);
+        const results = await Promise.all(cats.map(async cat => {
+            const data = await DataLoader.loadCategory(cat.id);
+            return { cat, data };
+        }));
+
+        const cards = results.map(({ cat, data }) => _buildCoverageCard(cat, data));
+        try {
+            await DataLoader.loadSubnational();
+            cards.push(_buildSubnationalCoverageCard(DataLoader.getSubnationalData()));
+        } catch (err) {
+            console.warn('[ABOUT] Subnational coverage unavailable:', err);
+        }
+
+        grid.innerHTML = cards.join('');
+
+        const totalIndicators = results.reduce((sum, item) => sum + _indicatorEntries(item.cat).length, 0);
+        const totalCountries = new Set(results.flatMap(item => Object.keys(item.data?.countries || {}))).size;
+        const globalRange = _formatRange(_mergeCoverageRanges(
+            results.map(item => _dataYearRange(item.data)).filter(Boolean)
+        ));
+        summary.innerHTML = `
+            <div class="coverage-summary-card">
+                <strong>${totalIndicators}</strong> indicadores activos -
+                <strong>${totalCountries}</strong> pa&iacute;ses con datos -
+                cobertura temporal general <strong>${globalRange}</strong>.
+                <span>Los rangos se calculan sobre valores no nulos; no sustituyen la documentaci&oacute;n metodol&oacute;gica final.</span>
+            </div>
+        `;
+    } catch (err) {
+        _aboutCoverageLoaded = false;
+        console.error('[ABOUT] Coverage failed:', err);
+        summary.innerHTML = '<span class="coverage-error">No se pudo calcular la cobertura. Revisa la consola del navegador.</span>';
+    }
+}
+
+function _buildCoverageCard(cat, data) {
+    const entries = _indicatorEntries(cat);
+    const dataRange = _formatRange(_dataYearRange(data));
+    const countryCount = Object.keys(data?.countries || {}).length;
+    const regionCount = Object.keys(data?.regions || {}).length;
+    const source = CATEGORY_SOURCE_INFO[cat.id]?.sources || 'Fuente pendiente de documentar.';
+    const rows = entries.map(entry => _coverageRow(entry, data));
+    const rowHtml = rows.length
+        ? rows.map(row => `
+            <tr>
+                <td>${_escapeHtml(row.label)}</td>
+                <td>${_escapeHtml(row.range)}</td>
+                <td>${row.countries}</td>
+                <td>${row.regions}</td>
+                <td>${_fmtInt(row.observations)}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="5">Sin indicadores activos.</td></tr>';
+
+    return `
+        <article class="coverage-card">
+            <div class="coverage-card-header">
+                <div>
+                    <h2>${_escapeHtml(cat.label)}</h2>
+                    <p>${dataRange} - ${countryCount} pa&iacute;ses - ${regionCount} regiones</p>
+                </div>
+                <span class="coverage-pill">${entries.length} ind.</span>
+            </div>
+            <div class="coverage-source">${_escapeHtml(source)}</div>
+            <table class="coverage-table">
+                <thead>
+                    <tr>
+                        <th>Indicador</th>
+                        <th>A&ntilde;os</th>
+                        <th>Pa&iacute;ses</th>
+                        <th>Regiones</th>
+                        <th>Obs.</th>
+                    </tr>
+                </thead>
+                <tbody>${rowHtml}</tbody>
+            </table>
+        </article>
+    `;
+}
+
+function _buildSubnationalCoverageCard(subData) {
+    if (!subData?.countries) {
+        return `
+            <article class="coverage-card">
+                <div class="coverage-card-header">
+                    <div>
+                        <h2>Subnacional</h2>
+                        <p>Sin datos subnacionales cargados</p>
+                    </div>
+                    <span class="coverage-pill">admin1</span>
+                </div>
+            </article>
+        `;
+    }
+
+    const fieldLabels = {
+        production: 'Producci&oacute;n',
+        area: 'Superficie',
+        value_GJ: 'Producci&oacute;n (GJ)',
+        yield: 'Rendimiento',
+    };
+    const fields = new Set();
+    Object.values(subData.countries || {}).forEach(country => {
+        Object.values(country.admin1 || {}).forEach(admin => {
+            Object.keys(admin.totals || {}).forEach(field => fields.add(field));
+        });
+    });
+    const countryCount = Object.keys(subData.countries || {}).length;
+    const adminCount = Object.values(subData.countries || {})
+        .reduce((sum, country) => sum + Object.keys(country.admin1 || {}).length, 0);
+    const rows = [...fields].sort().map(field => {
+        const cov = _scanAdminCoverage(subData, field);
+        return `
+            <tr>
+                <td>${fieldLabels[field] || _escapeHtml(field)}</td>
+                <td>${_formatRange(cov.range)}</td>
+                <td>${cov.countries}</td>
+                <td>${cov.admins} uds.</td>
+                <td>${_fmtInt(cov.observations)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    return `
+        <article class="coverage-card coverage-card-subnational">
+            <div class="coverage-card-header">
+                <div>
+                    <h2>Subnacional</h2>
+                    <p>${_formatRange(_dataYearRange(subData))} - ${countryCount} pa&iacute;ses - ${adminCount} unidades admin1</p>
+                </div>
+                <span class="coverage-pill">admin1</span>
+            </div>
+            <div class="coverage-source">Cobertura territorial desagregada disponible en los JSON subnacionales del visor.</div>
+            <table class="coverage-table">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>A&ntilde;os</th>
+                        <th>Pa&iacute;ses</th>
+                        <th>Unidades</th>
+                        <th>Obs.</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </article>
+    `;
+}
+
+function _indicatorEntries(cat) {
+    return (cat.indicatorGroups || []).flatMap(group => (
+        (group.indicators || [])
+            .filter(ind => ind.enabled)
+            .map(ind => ({ group, ind, cat }))
+    ));
+}
+
+function _coverageRow(entry, data) {
+    const field = entry.ind.dataField || entry.ind.id;
+    const country = _scanEntityCoverage(data?.countries, data?.years, field);
+    const region = _scanEntityCoverage(data?.regions, data?.years, field);
+    const range = _mergeCoverageRanges([country.range, region.range]);
+    const groupLabel = entry.group?.label || '';
+    const indicatorLabel = entry.ind?.label || field;
+    const label = groupLabel && groupLabel !== indicatorLabel
+        ? `${groupLabel} - ${indicatorLabel}`
+        : indicatorLabel;
+
+    return {
+        label,
+        range: _formatRange(range),
+        countries: country.entities,
+        regions: region.entities,
+        observations: country.observations + region.observations,
+    };
+}
+
+function _scanEntityCoverage(entities, years = [], field) {
+    const out = { entities: 0, observations: 0, range: null };
+    if (!entities || !field) return out;
+    let first = Infinity;
+    let last = -Infinity;
+
+    Object.values(entities).forEach(entity => {
+        const series = entity?.totals?.[field];
+        if (!Array.isArray(series)) return;
+        let hasData = false;
+        series.forEach((value, index) => {
+            if (!_isFiniteValue(value)) return;
+            const year = years[index];
+            if (year == null) return;
+            hasData = true;
+            out.observations += 1;
+            first = Math.min(first, year);
+            last = Math.max(last, year);
+        });
+        if (hasData) out.entities += 1;
+    });
+
+    out.range = first === Infinity ? null : [first, last];
+    return out;
+}
+
+function _scanAdminCoverage(subData, field) {
+    const out = { countries: 0, admins: 0, observations: 0, range: null };
+    let first = Infinity;
+    let last = -Infinity;
+    Object.values(subData?.countries || {}).forEach(country => {
+        let countryHasData = false;
+        Object.values(country.admin1 || {}).forEach(admin => {
+            const series = admin?.totals?.[field];
+            if (!Array.isArray(series)) return;
+            let adminHasData = false;
+            series.forEach((value, index) => {
+                if (!_isFiniteValue(value)) return;
+                const year = subData.years?.[index];
+                if (year == null) return;
+                adminHasData = true;
+                countryHasData = true;
+                out.observations += 1;
+                first = Math.min(first, year);
+                last = Math.max(last, year);
+            });
+            if (adminHasData) out.admins += 1;
+        });
+        if (countryHasData) out.countries += 1;
+    });
+    out.range = first === Infinity ? null : [first, last];
+    return out;
+}
+
+function _dataYearRange(data) {
+    const years = data?.years || [];
+    if (!years.length) return null;
+    return [years[0], years[years.length - 1]];
+}
+
+function _mergeCoverageRanges(ranges) {
+    const valid = (ranges || []).filter(range => Array.isArray(range) && range.length === 2);
+    if (!valid.length) return null;
+    return [
+        Math.min(...valid.map(range => Number(range[0]))),
+        Math.max(...valid.map(range => Number(range[1]))),
+    ];
+}
+
+function _formatRange(range) {
+    if (!Array.isArray(range) || range.length !== 2) return 'Sin datos';
+    if (range[0] === range[1]) return String(range[0]);
+    return `${range[0]}-${range[1]}`;
+}
+
+function _isFiniteValue(value) {
+    return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function _fmtInt(value) {
+    return new Intl.NumberFormat('es-ES').format(value || 0);
+}
+
+function _escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/* -----------------------------------------------
    Sidebar (App Categories)
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _buildSidebar() {
     const container = document.getElementById('sidebar');
     if (!container) return;
@@ -254,6 +584,17 @@ function _buildSidebar() {
 
         container.appendChild(btn);
     });
+
+    const locked = document.createElement('button');
+    locked.className = 'sb-btn locked';
+    locked.disabled = true;
+    locked.title = 'Huellas (pr&oacute;ximamente)';
+    locked.innerHTML = `
+        <svg class="sb-icon" viewBox="0 0 24 24">${CATEGORY_ICONS.footprints || CATEGORY_ICONS.landuse}</svg>
+        <span class="sb-label">Huellas</span>
+        <span class="sb-lock">Pr&oacute;x.</span>
+    `;
+    container.appendChild(locked);
 }
 
 /**
@@ -264,7 +605,7 @@ function _getAvailableViews() {
     const catId = State.get('activeCategory');
 
     // Categories that have item-level breakdown for treemap
-    const hasItemData = (catId === 'agriculture' || catId === 'trade' || catId === 'livestock');
+    const hasItemData = (catId === 'agriculture' || catId === 'trade' || catId === 'livestock' || catId === 'labor');
 
     // Bilateral indicator -> show bilateral world map
     const ind = State.get('activeIndicator');
@@ -354,9 +695,9 @@ function _clearMapLegend() {
     if (legend) legend.innerHTML = '';
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Query bar dropdowns (category + indicator)
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _buildIndicatorPanel(meta) {
     _buildCategoryDropdown(meta);
     _updateQueryBarLabels(meta);
@@ -403,7 +744,7 @@ function _buildIndicatorDropdown(meta) {
     const cat = meta.categories.find(c => c.id === State.get('activeCategory'));
     if (!cat || !cat.indicatorGroups) return;
 
-    // Flatten all indicators — group headers only if multiple groups exist
+    // Flatten all indicators - group headers only if multiple groups exist
     const totalIndicators = cat.indicatorGroups.reduce((n, g) => n + g.indicators.filter(i => i.enabled).length, 0);
     const showHeaders = cat.indicatorGroups.length > 1 && totalIndicators > cat.indicatorGroups.length;
 
@@ -447,6 +788,7 @@ function _updateQueryBarLabels(meta) {
     const catLabel = document.getElementById('category-label');
     const indLabel = document.getElementById('indicator-label');
     const catIcon = document.getElementById('query-cat-icon');
+    _updateFooterSource(cat?.id);
 
     if (cat) {
         if (catLabel) catLabel.textContent = cat.label;
@@ -454,7 +796,7 @@ function _updateQueryBarLabels(meta) {
     }
 
     if (cat && indLabel) {
-        // Build rich breadcrumb: Indicator · Product · Unit
+        // Build rich breadcrumb: Indicator - Product - Unit
         const parts = [];
         let found = false;
         for (const group of (cat.indicatorGroups || [])) {
@@ -473,7 +815,10 @@ function _updateQueryBarLabels(meta) {
         if (selectedItems.length === 1) parts.push(shortItemLabel(selectedItems[0]));
         else if (selectedItems.length > 1) {
             const facet = ITEM_FACET_LABEL[cat.id] || 'producto';
-            const plural = facet === 'especie' ? 'especies' : facet === 'uso' ? 'usos' : 'productos';
+            const plural = facet === 'especie' ? 'especies'
+                : facet === 'uso' ? 'usos'
+                : facet === 'tipo' ? 'tipos'
+                : 'productos';
             parts.push(`${selectedItems.length} ${plural}`);
         }
         else if (cropCat !== 'all') parts.push(cropCat);
@@ -481,8 +826,101 @@ function _updateQueryBarLabels(meta) {
         const activeUnit = State.get('activeUnit');
         if (activeUnit === 'GJ') parts.push('GJ');
 
-        indLabel.textContent = parts.join(' · ');
+        indLabel.textContent = parts.join(' - ');
     }
+
+    const infoBtn = document.getElementById('btn-indicator-info');
+    const activeInd = _getActiveIndicator(meta);
+    if (infoBtn && cat && activeInd) {
+        const activeGroup = _getActiveIndicatorGroupMeta(meta);
+        const label = [cat.label, activeGroup?.label, activeInd.label].filter(Boolean).join(' - ');
+        infoBtn.title = `Qué mide: ${label}`;
+        infoBtn.setAttribute('aria-label', `Información del indicador ${label}`);
+    }
+}
+
+function _updateFooterSource(catId) {
+    const footerSource = document.getElementById('footer-source');
+    if (!footerSource) return;
+    footerSource.textContent = FOOTER_SOURCE_LABELS[catId] || 'Fuente: ver fuentes y método';
+}
+
+function _bindIndicatorInfoButton() {
+    const btn = document.getElementById('btn-indicator-info');
+    if (!btn) return;
+    const show = (event) => {
+        const rect = btn.getBoundingClientRect();
+        const pointer = {
+            clientX: event.clientX || rect.left + rect.width / 2,
+            clientY: event.clientY || rect.bottom + 4,
+        };
+        showTooltip(pointer, _buildIndicatorInfoTooltip(DataLoader.getMetadata()));
+    };
+    btn.addEventListener('mouseenter', show);
+    btn.addEventListener('mousemove', show);
+    btn.addEventListener('focus', show);
+    btn.addEventListener('click', (event) => {
+        event.preventDefault();
+        show(event);
+    });
+    btn.addEventListener('mouseleave', hideTooltip);
+    btn.addEventListener('blur', hideTooltip);
+}
+
+function _buildIndicatorInfoTooltip(meta) {
+    const cat = meta?.categories?.find(c => c.id === State.get('activeCategory'));
+    const ind = _getActiveIndicator(meta);
+    if (!cat || !ind) {
+        return {
+            title: 'Indicador',
+            value: 'Sin indicador activo',
+            sub: 'Selecciona una categoría e indicador para ver su definición.',
+        };
+    }
+
+    const group = _getActiveIndicatorGroupMeta(meta);
+    const sourceInfo = CATEGORY_SOURCE_INFO[cat.id] || {};
+    const unit = _indicatorUnitLabel(cat, ind);
+    const field = State.get('activeUnit') === 'GJ' && ind.dataFieldGJ ? ind.dataFieldGJ : ind.dataField;
+    const view = _viewLabel(State.get('activeView'));
+    const description = INDICATOR_HELP[ind.id] || `Muestra ${ind.label} dentro de ${cat.label}.`;
+    const note = _indicatorInfoNote(cat, group, ind);
+    const groupLabel = group?.label ? `${cat.label} / ${group.label}` : cat.label;
+    const sub = [
+        _html(description),
+        '',
+        `<strong>Unidad:</strong> ${_html(unit || 'según indicador')} | <strong>Vista:</strong> ${_html(view)}`,
+        field ? `<strong>Campo:</strong> ${_html(field)}` : '',
+        note ? `<strong>Nota:</strong> ${_html(note)}` : '',
+        sourceInfo.sources ? `<strong>Fuente:</strong> ${_html(sourceInfo.sources)}` : '',
+    ].filter(line => line !== '').join('<br>');
+
+    return {
+        title: groupLabel,
+        value: _html(ind.label),
+        sub,
+    };
+}
+
+function _indicatorUnitLabel(cat, ind) {
+    if (State.get('activeUnit') === 'GJ' && ind?.dataFieldGJ) {
+        return ind.id === 'yield' ? 'GJ/ha' : 'GJ';
+    }
+    return ind?.unit || cat?.unitOptions?.find(opt => opt.id === State.get('activeUnit'))?.label || '';
+}
+
+function _indicatorInfoNote(cat, group, ind) {
+    if (!ind) return '';
+    if (ind.id?.startsWith('bilateral_')) {
+        return 'La matriz bilateral del visor está disponible en toneladas; no se muestran energía, tierra o trabajo incorporado si esos campos no existen en el JSON bilateral.';
+    }
+    if (cat?.id === 'socioeconomic' && group?.id === 'land_reform') {
+        return 'Los indicadores de reforma agraria identifican alcance, intensidad o evento institucional; no son magnitudes productivas aditivas.';
+    }
+    if (_isNonAdditiveIndicator(ind)) {
+        return 'Indicador no aditivo: las opciones de suma, porcentajes o área apilada deben tratarse con cautela.';
+    }
+    return '';
 }
 
 // Close dropdowns when clicking outside
@@ -495,6 +933,7 @@ document.addEventListener('click', () => {
 function _switchView(viewId) {
     console.log('[VIEW] Switching to:', viewId);
     hideTooltip();
+    document.body.classList.toggle('about-active', viewId === 'about');
     document.querySelectorAll('.viz-panel').forEach(p => p.classList.remove('active'));
     const panel = document.getElementById(`panel-${viewId}`);
     if (panel) { panel.classList.add('active'); }
@@ -564,11 +1003,11 @@ function _syncRightPanelState() {
     panel.dataset.openSections = String(openSections.length);
 }
 
-// Split layout helpers — keep a trend chart visible alongside the map on wide screens
+// Split layout helpers - keep a trend chart visible alongside the map on wide screens
 function _isSplitActive() {
     return State.get('splitMode') === true
         && State.get('activeView') === 'map'
-        && window.innerWidth >= 1280;
+        && window.innerWidth >= 960;
 }
 
 function _applySplitLayout() {
@@ -580,9 +1019,9 @@ function _applySplitLayout() {
     if (trendPanel) trendPanel.classList.toggle('active-pair', active);
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Selection bar (country chips)
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 var _initDone = false;
 
 function _getSelectedItems() {
@@ -650,13 +1089,15 @@ function _buildSelectionBar() {
     const selected = State.get('selectedCountries');
     selected.forEach((code, i) => {
         const chip = document.createElement('div');
-        chip.className = 'sel-chip';
+        const chipType = _territoryChipType(code);
+        chip.className = `sel-chip sel-chip-territory sel-chip-${chipType.className}`;
         const color = CAT_COLORS[i % CAT_COLORS.length];
         const countryName = DataLoader.getCountryName(code);
         const countryLabel = shortEntityLabel(countryName);
         if (countryName !== countryLabel) chip.title = countryName;
         chip.innerHTML = `
             <span class="sel-chip-color" style="background:${color}"></span>
+            <span class="sel-chip-kind">${chipType.label}</span>
             <span>${countryLabel}</span>
             <span class="sel-chip-remove" data-code="${code}">&times;</span>
         `;
@@ -672,11 +1113,12 @@ function _buildSelectionBar() {
     if (selectedItems.length > 0) {
         selectedItems.forEach(itemLabel => {
             const chip = document.createElement('div');
-            chip.className = 'sel-chip';
+            chip.className = 'sel-chip sel-chip-product';
             const displayLabel = shortItemLabel(itemLabel);
             if (displayLabel !== itemLabel) chip.title = itemLabel;
             chip.innerHTML = `
                 <span class="sel-chip-color" style="background:var(--c-accent)"></span>
+                <span class="sel-chip-kind">${_itemChipKindLabel()}</span>
                 <span>${displayLabel}</span>
                 <span class="sel-chip-remove">&times;</span>
             `;
@@ -692,9 +1134,10 @@ function _buildSelectionBar() {
         });
     } else if (cropCategory !== 'all') {
         const chip = document.createElement('div');
-        chip.className = 'sel-chip';
+        chip.className = 'sel-chip sel-chip-product';
         chip.innerHTML = `
             <span class="sel-chip-color" style="background:var(--c-accent)"></span>
+            <span class="sel-chip-kind">Grupo</span>
             <span>${cropCategory}</span>
             <span class="sel-chip-remove">&times;</span>
         `;
@@ -713,11 +1156,12 @@ function _buildSelectionBar() {
     if (_isBilateralIndicator() && selectedPartners.length > 0) {
         selectedPartners.forEach(partnerName => {
             const chip = document.createElement('div');
-            chip.className = 'sel-chip';
+            chip.className = 'sel-chip sel-chip-partner';
             const displayLabel = shortEntityLabel(partnerName);
             if (displayLabel !== partnerName) chip.title = partnerName;
             chip.innerHTML = `
                 <span class="sel-chip-color" style="background:#8B5E3C"></span>
+                <span class="sel-chip-kind">Socio</span>
                 <span>${displayLabel}</span>
                 <span class="sel-chip-remove">&times;</span>
             `;
@@ -734,7 +1178,7 @@ function _buildSelectionBar() {
     // Rebuild view buttons (availability may have changed when selection changes)
     _buildTopViews();
 
-    // Rebuild right panel territories (NOT options — avoid cascade loop)
+    // Rebuild right panel territories (NOT options - avoid cascade loop)
     _buildRPTerritories();
     _buildRPPartners();
 
@@ -750,9 +1194,16 @@ function _buildSelectionBar() {
     }
 }
 
-/* ═══════════════════════════════════════════════
+function _territoryChipType(code) {
+    if (code === 'latin_america') return { label: 'LatAm', className: 'latam' };
+    if (REGIONS[code]) return { label: 'Región', className: 'region' };
+    if (State.get('geoLevel') === 'subnational') return { label: 'Subnac.', className: 'subnational' };
+    return { label: 'País', className: 'country' };
+}
+
+/* -----------------------------------------------
    Right Panel
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _buildRightPanel(meta) {
     // Set up section collapse toggling (class-based for robustness)
     document.querySelectorAll('.rp-section-header').forEach(header => {
@@ -764,6 +1215,7 @@ function _buildRightPanel(meta) {
             window.dispatchEvent(new Event('resize'));
         });
     });
+    document.getElementById('rp-options')?.classList.remove('collapsed');
 
     _buildRPOptions(meta);
     _buildRPProducts();
@@ -827,7 +1279,7 @@ function _buildRPOptions(meta) {
     const cat = meta.categories.find(c => c.id === catId);
     const geoLevel = State.get('geoLevel');
     const selected = State.get('selectedCountries');
-    const hasItems = ['agriculture', 'trade', 'livestock', 'landuse'].includes(catId);
+    const hasItems = ['agriculture', 'trade', 'livestock', 'landuse', 'labor'].includes(catId);
     let activeInd = _getActiveIndicator(meta);
     if (!activeInd && cat?.indicatorGroups?.length) {
         const firstInd = cat.indicatorGroups.flatMap(ig => ig.indicators || []).find(ind => ind.enabled);
@@ -839,7 +1291,7 @@ function _buildRPOptions(meta) {
     }
     const isBilateralIndicator = activeInd?.id?.startsWith('bilateral_');
 
-    // ── Indicator selector ──
+    // -- Indicator selector --
     const activeUnit = State.get('activeUnit');
     const isEnergy = activeUnit === 'GJ';
 
@@ -872,47 +1324,23 @@ function _buildRPOptions(meta) {
     if (cat && cat.indicatorGroups) {
         // Count total enabled indicators
         const allInds = cat.indicatorGroups.flatMap(ig => ig.indicators.filter(i => i.enabled));
-        const useList = allInds.length > 4; // List mode for many indicators (trabajo, suelo)
 
         const group = _createRPGroup('Indicador');
+        group.classList.add('rp-group-wide');
 
-        if (useList) {
-            // List mode (like product picker) — for categories with many indicators
-            const list = document.createElement('div');
-            list.className = 'rp-list';
-            cat.indicatorGroups.forEach(ig => {
-                if (cat.indicatorGroups.length > 1) {
-                    const header = document.createElement('div');
-                    header.className = 'picker-region-title indicator-group-title' + (ig.id === 'bilateral' ? ' is-bilateral' : '');
-                    header.textContent = ig.label;
-                    list.appendChild(header);
-                }
-                ig.indicators.forEach(ind => {
-                    if (!ind.enabled) return;
-                    const item = document.createElement('button');
-                    const isActive = ind.id === State.get('activeIndicator');
-                    item.type = 'button';
-                    item.className = 'picker-item indicator-option indicator-option-' + ig.id + (isActive ? ' selected' : '');
-                    item.innerHTML = `<span class="picker-check">${isActive ? '&#10003;' : ''}</span><span>${ind.label}</span>`;
-                    item.addEventListener('click', () => {
-                        State.set('activeIndicator', ind.id);
-                        _updateQueryBarLabels(meta);
-                        _buildRPOptions(meta);
-                        _updateCurrentView();
-                    });
-                    list.appendChild(item);
-                });
-            });
-            group.appendChild(list);
+        // Comercio direct/bilateral are different modes; keep them visually split.
+        // Other categories are single-indicator choices, so a select is clearer
+        // than a checkbox-looking list.
+        if (catId === 'trade') {
+            group.appendChild(_createTradeIndicatorSelector(cat, meta));
         } else {
-            // Pill mode — for categories with few indicators (cultivos, ganadería)
             const indicatorOpts = [];
             cat.indicatorGroups.forEach(ig => {
                 ig.indicators.forEach(ind => {
                     if (!ind.enabled) return;
                     const noGJ = isEnergy && cat.unitToggle && !ind.dataFieldGJ;
                     const noTreemapYield = view === 'treemap' && ind.id === 'yield';
-                    const prefix = cat.indicatorGroups.length > 1 && ig.label ? `${ig.label} · ` : '';
+                    const prefix = cat.indicatorGroups.length > 1 && ig.label ? `${ig.label} - ` : '';
                     indicatorOpts.push({
                         id: ind.id,
                         label: `${prefix}${ind.label}`,
@@ -930,11 +1358,11 @@ function _buildRPOptions(meta) {
         body.appendChild(group);
     }
 
-    // ── Unit toggle / display — visible for categories with unitToggle (not bilateral view) ──
+    // -- Unit toggle / display - visible for categories with unitToggle (not bilateral view) --
     if (cat && cat.unitToggle && cat.unitOptions && view !== 'bilateral') {
         const curInd = cat.indicatorGroups?.flatMap(ig => ig.indicators).find(i => i.id === State.get('activeIndicator'));
         if (curInd && curInd.dataFieldGJ) {
-            // Indicator supports energy toggle — adapt labels to indicator type
+            // Indicator supports energy toggle - adapt labels to indicator type
             const currentUnit = State.get('activeUnit') || cat.unitOptions[0].id;
             const isYield = curInd.dataField === 'yield';
             const unitOpts = isYield
@@ -950,14 +1378,14 @@ function _buildRPOptions(meta) {
             group.appendChild(pills);
             body.appendChild(group);
         } else {
-            // Indicator doesn't support GJ — no toggle needed, just reset unit
+            // Indicator doesn't support GJ - no toggle needed, just reset unit
             if (State.get('activeUnit') === 'GJ') {
                 State.set('activeUnit', cat.unitOptions[0].id);
             }
         }
     }
 
-    // ── Scale pills (Linear | Log) — only for map and trend ──
+    // -- Scale pills (Linear | Log) - only for map and trend --
     const canUseLogScale = (view === 'map' || view === 'trend') && _canUseLogScale(meta);
     if (canUseLogScale) {
         const group = _createRPGroup('Escala');
@@ -974,7 +1402,7 @@ function _buildRPOptions(meta) {
         State.set('scaleType', 'linear');
     }
 
-    // ── Chart type pills (Líneas | Área apilada) — only for trend view ──
+    // -- Chart type pills (Líneas | Área apilada) - only for trend view --
     // Stacked area only makes sense with multiple series, so hide the toggle
     // when the user has 0/1 country selected and there's no multi-region default.
     const selectedItemCount = _getSelectedItems().length;
@@ -1001,7 +1429,7 @@ function _buildRPOptions(meta) {
         State.set('chartType', 'lines');
     }
 
-    // ── Layout pills (Superpuesto | Facetas) — only for trend view ──
+    // -- Layout pills (Superpuesto | Facetas) - only for trend view --
     if (view === 'trend' && !isBilateralIndicator) {
         const currentLayout = State.get('chartLayout') || 'overlay';
         const layoutOpts = [{ id: 'overlay', label: 'Todo junto' }];
@@ -1018,26 +1446,45 @@ function _buildRPOptions(meta) {
             const group = _createRPGroup('Diseño');
             const pills = _createRPPills(layoutOpts, validIds.includes(currentLayout) ? currentLayout : 'overlay', val => {
                 State.set('chartLayout', val);
+                _buildRPOptions(meta);
                 _updateCurrentView();
             });
             group.appendChild(pills);
             body.appendChild(group);
         }
+
+        const effectiveLayout = validIds.includes(currentLayout) ? currentLayout : 'overlay';
+        if (effectiveLayout !== 'overlay') {
+            const yGroup = _createRPGroup('Eje Y');
+            const currentYMode = State.get('facetYMode') || 'shared';
+            yGroup.appendChild(_createRPPills([
+                { id: 'shared', label: 'Compartido' },
+                { id: 'free', label: 'Libre por panel' },
+            ], currentYMode, val => {
+                State.set('facetYMode', val);
+                _updateCurrentView();
+            }));
+            body.appendChild(yGroup);
+        } else if ((State.get('facetYMode') || 'shared') !== 'shared') {
+            State.set('facetYMode', 'shared');
+        }
     } else if (view === 'trend' && isBilateralIndicator) {
         if (State.get('chartType') === 'stacked') State.set('chartType', 'lines');
         if ((State.get('chartLayout') || 'overlay') !== 'overlay') State.set('chartLayout', 'overlay');
+        if ((State.get('facetYMode') || 'shared') !== 'shared') State.set('facetYMode', 'shared');
     }
 
-    // ── Map comparison (1 Mapa | 2 Mapas) — only for map view ──
+    // -- Map comparison (1 Mapa | 2 Mapas) - only for map view --
     if (view === 'map') {
         const group = _createRPGroup('Vista');
-        const activeLayout = State.get('splitMode') && window.innerWidth >= 1280
+        const canSplit = window.innerWidth >= 960;
+        const activeLayout = State.get('splitMode') && canSplit
             ? 'split'
             : (State.get('compareMode') ? 'dual' : 'single');
         const pills = _createRPPills([
             { id: 'single', label: '1 mapa' },
             { id: 'dual', label: '2 mapas' },
-            { id: 'split', label: 'Mapa + gráfica', disabled: window.innerWidth < 1280, title: 'Disponible en pantalla ancha' }
+            { id: 'split', label: 'Mapa + gráfica', disabled: !canSplit, title: 'Disponible desde pantalla mediana' }
         ], activeLayout, val => {
             if (val === 'single') {
                 State.set('compareMode', false);
@@ -1059,7 +1506,7 @@ function _buildRPOptions(meta) {
         body.appendChild(group);
     }
 
-    // ── Axis mode — only for views that support it (not treemap, not bilateral) ──
+    // -- Axis mode - only for views that support it (not treemap, not bilateral) --
     // pct_territory only makes sense when category has items AND a specific item is selected
     // index only makes sense for trend (time series)
     const showMetric = view !== 'treemap' && view !== 'bilateral' && !isBilateralIndicator;
@@ -1110,11 +1557,11 @@ function _buildRPOptions(meta) {
         }
     }
 
-    // ── Top N (for ranking / treemap) ──
+    // -- Top N (for ranking / treemap) --
     if (view === 'ranking' || view === 'treemap') {
         const group = _createRPGroup('Elementos');
         const cur = String(State.get('rankingTopN') || 10);
-        // Top 50 was rarely useful and crowded the chart — keep just 10 / 20.
+        // Top 50 was rarely useful and crowded the chart - keep just 10 / 20.
         const validCur = ['10', '20'].includes(cur) ? cur : '10';
         if (cur !== validCur) State.set('rankingTopN', Number(validCur));
         const pills = _createRPPills([
@@ -1128,7 +1575,7 @@ function _buildRPOptions(meta) {
         body.appendChild(group);
     }
 
-    // ── Ranking mode: by country vs by product ──
+    // -- Ranking mode: by country vs by product --
     if (view === 'ranking' && hasItems) {
         const group = _createRPGroup('Modo de ranking');
         const pills = _createRPPills([
@@ -1164,6 +1611,7 @@ function _buildRPProducts() {
     // Update header text
     if (headerEl) headerEl.textContent = labels.header;
     if (searchEl) searchEl.placeholder = labels.search;
+    if (searchEl?.parentElement) searchEl.parentElement.style.display = '';
 
     listEl.innerHTML = '';
     listEl.className = 'rp-list';
@@ -1191,7 +1639,7 @@ function _buildRPProducts() {
     });
     listEl.appendChild(allBtn);
 
-    // Top items FIRST (most useful — individual crops/products)
+    // Top items FIRST (most useful - individual crops/products)
     const code = State.get('selectedCountries').length > 0
         ? State.get('selectedCountries')[0]
         : 'latin_america';
@@ -1621,7 +2069,16 @@ function _rankItemNamesByLatestValue(itemNames, code, dataField, effectiveGeo) {
 function _topItemsHeader(catId) {
     if (catId === 'livestock') return 'Top especies';
     if (catId === 'landuse') return 'Top usos';
+    if (catId === 'labor') return 'Top tipos';
     return 'Top productos';
+}
+
+function _itemChipKindLabel() {
+    const facet = ITEM_FACET_LABEL[State.get('activeCategory')] || 'producto';
+    if (facet === 'especie') return 'Especie';
+    if (facet === 'uso') return 'Uso';
+    if (facet === 'tipo') return 'Tipo';
+    return 'Producto';
 }
 
 function _collectAvailableItemNames(code, dataField, effectiveGeo) {
@@ -1662,7 +2119,7 @@ function _buildRPTerritories() {
     const searchParent = searchEl?.parentElement;
     if (searchParent) searchParent.style.display = (activeView === 'map' || activeView === 'bilateral') ? 'none' : '';
 
-    // ── Level pills ──
+    // -- Level pills --
     if (levelPillsEl) {
         levelPillsEl.innerHTML = '';
         levelPillsEl.className = 'rp-level-pills';
@@ -1711,7 +2168,7 @@ function _buildRPTerritories() {
         });
     }
 
-    // ── Territory list ──
+    // -- Territory list --
     listEl.innerHTML = '';
     listEl.className = 'rp-list';
 
@@ -1719,6 +2176,23 @@ function _buildRPTerritories() {
     const geoLevel = State.get('geoLevel');
     if (bilateralMode && selected.length > 1) {
         State.setCountries([selected[0]]);
+        return;
+    }
+
+    if (activeView === 'map' && !bilateralMode) {
+        const note = document.createElement('div');
+        note.className = 'territory-map-note';
+        const modeLabel = geoLevel === 'region'
+            ? 'regiones'
+            : geoLevel === 'subnational'
+                ? 'unidades subnacionales'
+                : 'países';
+        note.innerHTML = `
+            <strong>${modeLabel}</strong>
+            <span>En mapa, usa estos tres botones para cambiar el nivel y selecciona territorios directamente sobre el mapa.</span>
+        `;
+        listEl.appendChild(note);
+        _syncRightPanelState();
         return;
     }
 
@@ -1737,65 +2211,91 @@ function _buildRPTerritories() {
 
         const title = document.createElement('div');
         title.className = 'picker-region-title';
-        title.textContent = 'Países';
+        title.textContent = activeView === 'trend' ? 'Países con unidades subnacionales' : 'Países';
         listEl.appendChild(title);
 
-        allCountries.forEach(iso3 => {
-            const item = document.createElement('div');
+        const visibleCountries = activeView === 'trend'
+            ? allCountries.filter(iso3 => subCountries.includes(iso3))
+            : allCountries;
+        if (activeView === 'trend' && visibleCountries.length === 0) {
+            const note = document.createElement('div');
+            note.className = 'territory-map-note';
+            note.innerHTML = '<strong>Sin desglose</strong><span>No hay series subnacionales para este indicador.</span>';
+            listEl.appendChild(note);
+        }
+
+        visibleCountries.forEach(iso3 => {
             const isSelected = selected.includes(iso3);
             const hasSub = subCountries.includes(iso3);
-            item.className = 'picker-item' + (isSelected ? ' selected' : '');
-            item.innerHTML = `
-                <span class="picker-check">${isSelected ? '&#10003;' : ''}</span>
-                <span>${DataLoader.getCountryName(iso3)}</span>
-                <span style="color:#A89888;font-size:11px;margin-left:auto">${hasSub ? `${DataLoader.getAdmin1Names(iso3).length} uds` : 'nacional'}</span>
-            `;
-            item.addEventListener('click', () => {
-                State.clearCountries();
-                if (!isSelected) State.addCountry(iso3);
-                _buildRPTerritories();
-            });
-            listEl.appendChild(item);
-        });
+            const admin1Names = hasSub ? DataLoader.getAdmin1Names(iso3).sort((a, b) => a.localeCompare(b)) : [];
 
-        // Also list admin1 units for selected country
-        if (selected.length > 0 && subCountries.includes(selected[0])) {
-            const adminTitle = document.createElement('div');
-            adminTitle.className = 'picker-region-title';
-            adminTitle.style.marginTop = '12px';
-            adminTitle.textContent = `Provincias / Estados de ${DataLoader.getCountryName(selected[0])}`;
-            listEl.appendChild(adminTitle);
-
-            const admin1Names = DataLoader.getAdmin1Names(selected[0]);
-            admin1Names.sort().forEach(name => {
+            if (activeView === 'trend' && hasSub) {
+                const details = document.createElement('details');
+                details.className = 'subnational-country' + (isSelected ? ' selected' : '');
+                if (isSelected) details.open = true;
+                details.innerHTML = `
+                    <summary>
+                        <span class="subnational-country-name">${DataLoader.getCountryName(iso3)}</span>
+                        <span class="subnational-count">${admin1Names.length} uds</span>
+                    </summary>
+                    <div class="subnational-actions">
+                        <button type="button" class="subnational-action${isSelected ? ' active' : ''}" data-action="all">Todos</button>
+                        <button type="button" class="subnational-action" data-action="clear">Borrar</button>
+                    </div>
+                    <div class="subnational-admin-list">
+                        ${admin1Names.map(name => `<span class="subnational-admin-item">${name}</span>`).join('')}
+                    </div>
+                `;
+                details.querySelector('[data-action="all"]')?.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    State.setCountries([iso3]);
+                    _buildRPTerritories();
+                    _updateCurrentView();
+                });
+                details.querySelector('[data-action="clear"]')?.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (isSelected) State.clearCountries();
+                    else _buildRPTerritories();
+                    _updateCurrentView();
+                });
+                listEl.appendChild(details);
+            } else {
                 const item = document.createElement('div');
-                item.className = 'picker-item';
-                item.style.paddingLeft = '24px';
-                item.style.fontSize = '12px';
-                item.innerHTML = `<span style="color:#A89888;margin-right:6px">&middot;</span> ${name}`;
+                item.className = 'picker-item' + (isSelected ? ' selected' : '');
+                item.innerHTML = `
+                    <span class="picker-check">${isSelected ? '&#10003;' : ''}</span>
+                    <span>${DataLoader.getCountryName(iso3)}</span>
+                    <span style="color:#A89888;font-size:11px;margin-left:auto">${hasSub ? `${admin1Names.length} uds` : 'nacional'}</span>
+                `;
+                item.addEventListener('click', () => {
+                    State.setCountries(isSelected ? [] : [iso3]);
+                    _buildRPTerritories();
+                });
                 listEl.appendChild(item);
-            });
-        }
+            }
+        });
     } else if (geoLevel === 'country') {
         const allCountryCodes = Object.values(REGIONS).flatMap(reg => reg.countries);
         _appendTerritoryActions(listEl, [
             {
-                label: 'América Latina',
-                active: selected.length === 0,
-                onClick: () => {
-                    if (State.get('geoLevel') !== 'country') State.set('geoLevel', 'country');
-                    State.clearCountries();
-                    _buildRPTerritories();
-                },
-            },
-            {
-                label: 'Todos los países',
+                label: 'Seleccionar todos',
                 active: selected.length === allCountryCodes.length,
                 onClick: () => {
                     if (bilateralMode) State.clearCountries();
                     else State.setCountries(allCountryCodes);
                     _buildRPTerritories();
                     if (bilateralMode) _updateCurrentView();
+                },
+            },
+            {
+                label: 'Limpiar',
+                active: selected.length === 0,
+                onClick: () => {
+                    State.clearCountries();
+                    _buildRPTerritories();
+                    _updateCurrentView();
                 },
             },
         ]);
@@ -1808,8 +2308,15 @@ function _buildRPTerritories() {
         // Group countries by region
         for (const [regId, reg] of Object.entries(REGIONS)) {
             const title = document.createElement('div');
-            title.className = 'picker-region-title';
-            title.textContent = reg.label;
+            title.className = 'picker-region-title region-shortcut';
+            title.innerHTML = `<span>${reg.label}</span><button type="button">Ver región</button>`;
+            title.querySelector('button').addEventListener('click', (event) => {
+                event.stopPropagation();
+                State.set('geoLevel', 'region');
+                State.setCountries([regId]);
+                _buildRPTerritories();
+                _updateCurrentView();
+            });
             listEl.appendChild(title);
 
             reg.countries.forEach(iso3 => {
@@ -1824,6 +2331,8 @@ function _buildRPTerritories() {
                     if (bilateralMode) {
                         if (isSelected && selected.length === 1) State.clearCountries();
                         else State.setCountries([iso3]);
+                    } else if (selected.includes('latin_america')) {
+                        State.setCountries([iso3]);
                     } else {
                         State.toggleCountry(iso3);
                     }
@@ -1836,16 +2345,31 @@ function _buildRPTerritories() {
             });
         }
     } else if (geoLevel === 'region') {
-        _appendTerritoryActions(listEl, [
-            {
-                label: 'Todas las regiones',
-                active: selected.length === 0,
+        const allRegionIds = Object.keys(REGIONS);
+        const allRegionsSelected = selected.length === 0
+            || (selected.length === allRegionIds.length && allRegionIds.every(id => selected.includes(id)));
+        const actions = [];
+        if (activeView === 'trend') {
+            actions.push({
+                label: 'Toda América Latina',
+                active: selected.length === 1 && selected[0] === 'latin_america',
                 onClick: () => {
-                    State.clearCountries();
+                    State.setCountries(['latin_america']);
                     _buildRPTerritories();
+                    _updateCurrentView();
                 },
+            });
+        }
+        actions.push({
+            label: 'Seleccionar todas',
+            active: allRegionsSelected,
+            onClick: () => {
+                State.setCountries(allRegionIds);
+                _buildRPTerritories();
+                _updateCurrentView();
             },
-        ]);
+        });
+        _appendTerritoryActions(listEl, actions);
 
         // Show regions
         for (const [regId, reg] of Object.entries(REGIONS)) {
@@ -1859,6 +2383,8 @@ function _buildRPTerritories() {
             item.addEventListener('click', () => {
                 if (selected.includes(regId)) {
                     State.removeCountry(regId);
+                } else if (selected.includes('latin_america')) {
+                    State.setCountries([regId]);
                 } else {
                     if (bilateralMode) State.setCountries([regId]);
                     else State.addCountry(regId);
@@ -1876,7 +2402,7 @@ function _buildRPTerritories() {
         searchEl.parentNode.replaceChild(newSearch, searchEl);
         newSearch.addEventListener('input', () => {
             const q = newSearch.value.toLowerCase();
-            listEl.querySelectorAll('.picker-item').forEach(item => {
+            listEl.querySelectorAll('.picker-item, .subnational-country').forEach(item => {
                 const name = item.textContent.toLowerCase();
                 item.style.display = name.includes(q) ? '' : 'none';
             });
@@ -1897,6 +2423,34 @@ function _appendTerritoryActions(listEl, actions) {
         row.appendChild(btn);
     });
     listEl.appendChild(row);
+}
+
+function _createTradeIndicatorSelector(cat, meta) {
+    const grid = document.createElement('div');
+    grid.className = 'trade-indicator-grid';
+    (cat.indicatorGroups || []).forEach(ig => {
+        const enabled = (ig.indicators || []).filter(ind => ind.enabled);
+        if (!enabled.length) return;
+        const card = document.createElement('div');
+        const groupActive = enabled.some(ind => ind.id === State.get('activeIndicator'));
+        card.className = 'trade-indicator-card' + (groupActive ? ' active' : '');
+        card.innerHTML = `<div class="trade-indicator-title">${ig.label}</div>`;
+        enabled.forEach(ind => {
+            const isActive = ind.id === State.get('activeIndicator');
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'trade-indicator-option' + (isActive ? ' selected' : '');
+            item.innerHTML = `<span class="picker-check">${isActive ? '&#10003;' : ''}</span><span>${ind.label}</span>`;
+            item.addEventListener('click', () => {
+                State.set('activeIndicator', ind.id);
+                _updateQueryBarLabels(meta);
+                _buildRPOptions(meta);
+            });
+            card.appendChild(item);
+        });
+        grid.appendChild(card);
+    });
+    return grid;
 }
 
 function _createRPGroup(title) {
@@ -1928,7 +2482,7 @@ function _canUseLogScale(meta) {
     const unit = String(ind.unit || '').toLowerCase();
     const id = String(ind.id || '').toLowerCase();
     if (unit.includes('%') || id.includes('share')) return false;
-    if (unit.includes('índice') || unit.includes('indice') || unit === '0-2' || unit === '0/1') return false;
+    if (unit.includes('Índice') || unit.includes('indice') || unit === '0-2' || unit === '0/1') return false;
     if (['land_gini', 'gini_disp', 'gini_mkt', 'reform_intensity', 'reform_binary'].includes(id)) return false;
     if (_isNonAdditiveIndicator(ind)) return false;
     return true;
@@ -1943,7 +2497,7 @@ function _isNonAdditiveIndicator(ind) {
     const field = String(ind.dataField || '').toLowerCase();
     const text = `${id} ${field}`;
 
-    if (unit.includes('%') || unit.includes('índice') || unit.includes('indice')) return true;
+    if (unit.includes('%') || unit.includes('Índice') || unit.includes('indice')) return true;
     if (unit === '0-2' || unit === '0/1') return true;
     if (unit.includes('/')) return true;
     if (/(gini|share|yield|intensity|binary|ratio|rate|_pc\b)/.test(text)) return true;
@@ -2032,9 +2586,9 @@ function _mapUnitToIndicator(unit) {
     }
 }
 
-/* ═══════════════════════════════════════════════
-   Year range helper — restricts timeline to actual data bounds
-   ═══════════════════════════════════════════════ */
+/* -----------------------------------------------
+   Year range helper - restricts timeline to actual data bounds
+   ----------------------------------------------- */
 function _updateYearRangeFromData() {
     const dataField = _getCurrentDataField();
     const effectiveRange = DataLoader.getEffectiveYearRange(dataField);
@@ -2055,9 +2609,9 @@ function _updateYearRangeFromData() {
     }
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Event handlers
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 async function _onCategoryChange(meta) {
     const catId = State.get('activeCategory');
     const changeSeq = ++_categoryChangeSeq;
@@ -2173,6 +2727,7 @@ function _onIndicatorChange() {
     _updateYearRangeFromData();
 
     if (isBilateral) {
+        if (enteringBilateral) document.getElementById('rp-options')?.classList.remove('collapsed');
         if (enteringBilateral && State.get('selectedCountries').length > 0) {
             State.clearCountries();
         }
@@ -2258,9 +2813,9 @@ function _updateAllViews() {
     _updateCurrentView();
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Download / Documentation Export
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 let _downloadModalBound = false;
 
 function _openDownloadModal() {
@@ -2316,8 +2871,8 @@ function _renderDownloadTab(tabId) {
         const nRows = Math.max(0, csv.text.trim().split('\n').length - 1);
         body.innerHTML = `
             <div class="download-summary">
-              <div><b>${_html(ctx.category.label)}</b> · ${_html(ctx.indicatorLabel)}</div>
-              <div>Vista: ${_html(_viewLabel(ctx.view))} · serie completa disponible</div>
+              <div><b>${_html(ctx.category.label)}</b> - ${_html(ctx.indicatorLabel)}</div>
+              <div>Vista: ${_html(_viewLabel(ctx.view))} - serie completa disponible</div>
               <div>${nRows} filas preparadas con fuentes y método en el CSV.</div>
             </div>
             <pre class="download-preview">${_html(csv.text.split('\n').slice(0, 8).join('\n'))}</pre>
@@ -2333,7 +2888,7 @@ function _getDownloadContext() {
     const indicator = _getActiveIndicatorMeta(meta);
     const indicatorGroup = _getActiveIndicatorGroupMeta(meta);
     const indicatorLabel = indicatorGroup && (category?.indicatorGroups || []).length > 1
-        ? `${indicatorGroup.label} · ${indicator?.label || ''}`
+        ? `${indicatorGroup.label} - ${indicator?.label || ''}`
         : (indicator?.label || '');
     return {
         meta,
@@ -2602,7 +3157,7 @@ function _sourceInfoHTML(ctx) {
     const sources = _metadataSourceLines(datasetMeta, ctx.indicator?.dataField);
     return `
         <div class="download-summary">
-          <div><b>${_html(ctx.category.label)}</b> · ${_html(ctx.indicatorLabel)}</div>
+          <div><b>${_html(ctx.category.label)}</b> - ${_html(ctx.indicatorLabel)}</div>
           <div>${_html(info.sources || 'Fuentes detalladas pendientes de documentar en metadata.')}</div>
         </div>
         <div class="download-section-title">Método</div>
@@ -2618,7 +3173,7 @@ function _sourceInfoText(ctx) {
     const datasetMeta = DataLoader.getDatasetMetadata?.(ctx.catId);
     const sources = _metadataSourceLines(datasetMeta, ctx.indicator?.dataField);
     return [
-        `${ctx.category.label} · ${ctx.indicatorLabel}`,
+        `${ctx.category.label} - ${ctx.indicatorLabel}`,
         '',
         'Fuentes:',
         info.sources || 'Fuentes detalladas pendientes de documentar en metadata.',
@@ -2664,7 +3219,7 @@ function _citationText(ctx) {
         'Créditos y fuentes principales:',
         (CATEGORY_SOURCE_INFO[ctx.catId]?.sources || 'Fuentes detalladas pendientes de documentar.'),
         '',
-        'Para módulos socioeconómicos, citar además las fuentes externas correspondientes: Frankema (2010), Deininger y Olinto (2000), SWIID/Solt y Albertus (2015), según el indicador usado.',
+        'Para módulos socioecon-micos, citar además las fuentes externas correspondientes: Frankema (2010), Deininger y Olinto (2000), SWIID/Solt y Albertus (2015), según el indicador usado.',
     ].join('\n');
 }
 
@@ -2719,9 +3274,9 @@ function _getActiveIndicatorGroupMeta(meta) {
     return null;
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Fullscreen
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _toggleFullscreen() {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
@@ -2729,3 +3284,8 @@ function _toggleFullscreen() {
         document.exitFullscreen();
     }
 }
+
+
+
+
+

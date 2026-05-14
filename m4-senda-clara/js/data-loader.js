@@ -82,6 +82,15 @@ const DataLoader = (() => {
         return _monthlyPromises[cid];
     }
 
+    function hasCategory(catId) {
+        return !!_stores[catId];
+    }
+
+    function hasMonthlyData(catId) {
+        const cid = catId || _activeCategory;
+        return !!_monthlyStores[cid];
+    }
+
     function setActiveCategory(catId) { _activeCategory = catId; }
     function getActiveCategory() { return _activeCategory; }
 
@@ -290,6 +299,7 @@ const DataLoader = (() => {
 
     return {
         init, loadCategory, loadMonthlyData,
+        hasCategory, hasMonthlyData,
         setActiveCategory, getActiveCategory,
         getYears, getYearRange, getMeta, getTerritoryMeta,
         getAllTerritories, getValue, getTimeSeries,

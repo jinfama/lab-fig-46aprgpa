@@ -16,6 +16,8 @@ const RidgeView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'ridge') return;
+
         const container = document.getElementById('ridge-container');
         if (!container) return;
         container.innerHTML = '';

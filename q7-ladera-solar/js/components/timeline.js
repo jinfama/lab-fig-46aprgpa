@@ -1,6 +1,6 @@
-﻿/* timeline.js — Year slider with play/pause controls */
+/* timeline.js - Year slider with play/pause controls */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
 
 let _track, _fill, _handleFrom, _handleTo;
 let _trackRect;
@@ -27,7 +27,7 @@ export function initTimeline() {
     const playBtn = document.getElementById('tl-play');
     playBtn.addEventListener('click', _togglePlay);
 
-    // Speed button — opens a popup with speed options
+    // Speed button - opens a popup with speed options
     const speedBtn = document.getElementById('tl-speed');
     speedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -113,7 +113,7 @@ export function updateTimeline() {
 
     document.getElementById('tl-label-from').textContent = labelFromYear;
     document.getElementById('tl-label-to').textContent = labelToYear;
-    document.getElementById('tl-year').textContent = compare ? `${labelFromYear} — ${labelToYear}` : year;
+    document.getElementById('tl-year').textContent = compare ? `${labelFromYear} - ${labelToYear}` : year;
 
     document.getElementById('tl-year-start').value = range[0];
     document.getElementById('tl-year-end').value = range[1];
@@ -171,10 +171,16 @@ function _togglePlay() {
 }
 
 function _startPlay() {
+    if (_playInterval) {
+        clearInterval(_playInterval);
+        _playInterval = null;
+    }
+
     const range = State.get('yearRange');
     const currentYear = State.get('currentYear');
-    if (currentYear < range[0]) State.set('currentYear', range[0]);
-    if (currentYear > range[1]) State.set('currentYear', range[1]);
+    if (currentYear < range[0] || currentYear >= range[1]) {
+        State.set('currentYear', range[0]);
+    }
     updateTimeline();
 
     State.set('isPlaying', true);
@@ -184,14 +190,15 @@ function _startPlay() {
 
     _playInterval = setInterval(() => {
         const range = State.get('yearRange');
-        let year = State.get('currentYear') + 1;
-        if (year > range[1]) {
-            // Stop at last year, don't loop
+        const currentYear = State.get('currentYear');
+        const year = Math.min(currentYear + 1, range[1]);
+        State.set('currentYear', year);
+        updateTimeline();
+
+        if (year >= range[1]) {
             _stopPlay();
             return;
         }
-        State.set('currentYear', year);
-        updateTimeline();
     }, SPEED_OPTIONS[_speedIdx].ms);
 }
 
@@ -207,7 +214,7 @@ function _stopPlay() {
     }
 }
 
-/* ── Speed popup ────────────────────────────────── */
+/* -- Speed popup ---------------------------------- */
 
 function _toggleSpeedPopup(anchorBtn) {
     if (_speedPopup) {
@@ -286,3 +293,8 @@ function _closeSpeedPopup() {
     _speedPopup = null;
     document.removeEventListener('click', _onOutsideClick);
 }
+
+
+
+
+

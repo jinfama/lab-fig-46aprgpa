@@ -1,8 +1,8 @@
-﻿/* ranking-view.js — Horizontal bar chart ranking countries OR items */
+/* ranking-view.js - Horizontal bar chart ranking countries OR items */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { SEQ_COLORS, CAT_COLORS, fmt, fmtUnit } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { SEQ_COLORS, CAT_COLORS, fmt, fmtUnit } from '../utils.js?v=20260514-sidebar-gini-fix52';
 
 let _container;
 
@@ -24,7 +24,7 @@ export function updateRankingView() {
 
     // Determine which ranking mode to use
     const catId = State.get('activeCategory');
-    const hasItems = ['agriculture', 'trade', 'livestock'].includes(catId);
+    const hasItems = ['agriculture', 'trade', 'livestock', 'labor'].includes(catId);
 
     if (rankingMode === 'byProduct' && hasItems) {
         _renderItemRanking(year, dataField, unit, topN, geoLevel, selected);
@@ -33,7 +33,7 @@ export function updateRankingView() {
     }
 }
 
-/** ── Mode 1: Rank entities (countries/regions/admin1) by a single indicator ── */
+/** -- Mode 1: Rank entities (countries/regions/admin1) by a single indicator -- */
 function _renderEntityRanking(year, dataField, unit, topN, geoLevel, selected) {
     let ranking;
     if (geoLevel === 'subnational') {
@@ -55,9 +55,9 @@ function _renderEntityRanking(year, dataField, unit, topN, geoLevel, selected) {
     const title = document.createElement('div');
     title.style.cssText = 'font-size:12px;font-weight:600;color:#7A6A5A;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px';
     const levelLabel = geoLevel === 'subnational'
-        ? (selected.length > 0 ? DataLoader.getCountryName(selected[0]) + ' — subnacional' : 'Subnacional')
+        ? (selected.length > 0 ? DataLoader.getCountryName(selected[0]) + ' - subnacional' : 'Subnacional')
         : '';
-    title.textContent = `${_getActiveIndicatorLabel()} ${levelLabel ? '(' + levelLabel + ')' : ''} — ${year}`;
+    title.textContent = `${_getActiveIndicatorLabel()} ${levelLabel ? '(' + levelLabel + ')' : ''} - ${year}`;
     _container.appendChild(title);
 
     displayRanking.forEach((entry, i) => {
@@ -87,7 +87,7 @@ function _renderEntityRanking(year, dataField, unit, topN, geoLevel, selected) {
     });
 }
 
-/** ── Mode 2: Rank items (products/species) within selected entities ── */
+/** -- Mode 2: Rank items (products/species) within selected entities -- */
 function _renderItemRanking(year, dataField, unit, topN, geoLevel, selected) {
     // If no selection, show for entire LATAM region
     const effectiveCodes = selected.length > 0 ? selected : ['latin_america'];
@@ -107,7 +107,7 @@ function _renderItemRanking(year, dataField, unit, topN, geoLevel, selected) {
         title.style.cssText = 'font-size:12px;font-weight:600;color:#7A6A5A;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px';
         if (effectiveCodes.length > 1 && cIdx > 0) title.style.marginTop = '16px';
         const entityName = DataLoader.getCountryName(code);
-        title.textContent = `${entityName} — ${_getActiveIndicatorLabel()} — ${year}`;
+        title.textContent = `${entityName} - ${_getActiveIndicatorLabel()} - ${year}`;
         _container.appendChild(title);
 
         displayRanking.forEach((entry, i) => {
@@ -184,3 +184,8 @@ function _getActiveIndicatorLabel() {
     }
     return '';
 }
+
+
+
+
+

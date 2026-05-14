@@ -1,10 +1,10 @@
-﻿/* data-loader.js — CSV-first data loader with JSON fallback */
+/* data-loader.js - CSV-first data loader with JSON fallback */
 
-import State from './state.js?v=20260513-trend-area-timeline-fix31';
+import State from './state.js?v=20260514-sidebar-gini-fix52';
 import { COUNTRIES, REGIONS } from './utils.js';
 
 const DataLoader = (() => {
-    const DATA_VERSION = '20260513-trend-area-timeline-fix31';
+    const DATA_VERSION = '20260514-sidebar-gini-fix52';
     let _metadata = null;
     let _geo = null;
     let _topo = null;
@@ -538,7 +538,7 @@ const DataLoader = (() => {
                 }
 
                 // Null out the last year if its values are <10% of the prior year's
-                // across all countries — usually means the source data is mid-year
+                // across all countries - usually means the source data is mid-year
                 // and would distort the map / chart endpoint.
                 _trimPartialLastYear(data);
 
@@ -839,7 +839,21 @@ const DataLoader = (() => {
 
     function _cloneSeries(series) {
         if (!Array.isArray(series)) return [];
-        return series.slice(); // Don't trim here — trimming happens in getTimeSeries
+        return series.slice(); // Don't trim here - trimming happens in getTimeSeries
+    }
+
+    function _activeIndicatorDataField() {
+        const cat = _metadata?.categories?.find(c => c.id === State.get('activeCategory'));
+        if (!cat) return null;
+        const activeUnit = State.get('activeUnit');
+        for (const group of (cat.indicatorGroups || [])) {
+            for (const ind of (group.indicators || [])) {
+                if (ind.id !== State.get('activeIndicator')) continue;
+                if (activeUnit === 'GJ' && ind.dataFieldGJ) return ind.dataFieldGJ;
+                return ind.dataField || null;
+            }
+        }
+        return null;
     }
 
     function _rawSeries(code, dataField, geoLevel = 'country') {
@@ -1213,13 +1227,18 @@ const DataLoader = (() => {
             const bySub = entity.bySpecies || entity.byCategory || entity.byItem;
             if (bySub) {
                 const yrIdx = data.years.length - 1;
+                const preferredField = _activeIndicatorDataField();
                 const items = Object.keys(bySub).map(k => {
+                    const out = { name: k, code: k };
                     let vals = [];
-                    if (bySub[k] && typeof bySub[k] === 'object') {
-                        const keys = Object.keys(bySub[k]);
-                        if (keys.length > 0 && Array.isArray(bySub[k][keys[0]])) vals = bySub[k][keys[0]];
+                    const itemData = bySub[k];
+                    if (itemData && typeof itemData === 'object') {
+                        const keys = Object.keys(itemData).filter(key => Array.isArray(itemData[key]));
+                        keys.forEach(key => { out[key] = itemData[key]; });
+                        vals = itemData[preferredField] || itemData.values || itemData.production || itemData[keys[0]] || [];
                     }
-                    return { name: k, value: vals[yrIdx] || 0 };
+                    out.value = vals[yrIdx] || 0;
+                    return out;
                 }).sort((a, b) => b.value - a.value);
                 entity.topItems = { default: items };
             }
@@ -1357,7 +1376,7 @@ const DataLoader = (() => {
         const entries = [];
         const catId = State.get('activeCategory');
 
-        // Source 1: topItems — individual products (agriculture, trade)
+        // Source 1: topItems - individual products (agriculture, trade)
         // Check this FIRST so that topItems take priority over byCategory
         // (regions have both byCategory for aggregates and topItems for individual crops)
         if (entity.topItems) {
@@ -1369,7 +1388,7 @@ const DataLoader = (() => {
                 if (entity.topItems[dataField]) {
                     subItems = entity.topItems[dataField];
                 } else {
-                    // Try mapping: exports → exports, imports → imports, balance → exports
+                    // Try mapping: exports ? exports, imports ? imports, balance ? exports
                     const key = _topItemsKeyForDataField(dataField) || Object.keys(entity.topItems)[0];
                     subItems = entity.topItems[key];
                 }
@@ -1563,7 +1582,7 @@ const DataLoader = (() => {
         return _subData.countries?.[iso3]?.admin1?.[adminName]?.topItems || [];
     }
 
-    // ── Bilateral trade ──
+    // -- Bilateral trade --
     async function loadBilateral() {
         if (_bilateralPromise) return _bilateralPromise;
         _bilateralPromise = (async () => {
@@ -1716,3 +1735,8 @@ const DataLoader = (() => {
 })();
 
 export default DataLoader;
+
+
+
+
+

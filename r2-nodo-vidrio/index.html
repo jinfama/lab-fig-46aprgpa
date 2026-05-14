@@ -1,16 +1,16 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>Cascorro — Global Environmental & Human Development Explorer</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Growth's Wake: Historical Trajectories of Development and Environment</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/globe.gl"></script>
 <style>
-:root{--c1:#1e6091;--c2:#e63946;--c3:#2a9d8f;--cd:#212529;--cg:#495057;--cl:#adb5bd;--cb:#e0e0e0;--bg:#fff;--bgl:#f8f9fa;--ff:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;--tr:all .2s ease}
+:root{--c1:#1e6091;--c2:#e63946;--c3:#2a9d8f;--cd:#212529;--cg:#495057;--cl:#adb5bd;--cb:#e0e0e0;--bg:#fff;--bgl:#f8f9fa;--ff:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;--ff-map:'Cormorant Garamond',Georgia,"Times New Roman",serif;--tr:all .2s ease}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{font-family:var(--ff);background:var(--bg);color:var(--cd);font-size:13px;line-height:1.5;overflow:hidden;height:100vh}
 #app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -27,6 +27,13 @@ body{font-family:var(--ff);background:var(--bg);color:var(--cd);font-size:13px;l
 .header-btn{width:36px;height:36px;border:none;background:transparent;color:var(--cl);cursor:pointer;transition:var(--tr);display:flex;align-items:center;justify-content:center}
 .header-btn:hover{color:var(--cd);background:var(--bgl)}
 .header-btn svg{width:18px;height:18px}
+.lang-switcher{display:flex;align-items:center;border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.08);backdrop-filter:blur(8px)}
+.header-actions .lang-switcher{border-color:var(--cb);background:var(--bg);backdrop-filter:none}
+.lang-btn{height:28px;min-width:34px;padding:0 8px;border:none;border-right:1px solid rgba(255,255,255,.18);background:transparent;color:rgba(255,255,255,.66);font-size:10px;font-weight:700;font-family:var(--ff);cursor:pointer;letter-spacing:.2px;transition:var(--tr)}
+.lang-btn:last-child{border-right:none}
+.header-actions .lang-btn{color:var(--cl);border-right-color:var(--cb)}
+.lang-btn:hover,.lang-btn.active{background:rgba(255,255,255,.16);color:#fff}
+.header-actions .lang-btn:hover,.header-actions .lang-btn.active{background:var(--bgl);color:var(--cd)}
 /* Sections */
 .section-container{flex:1;position:relative;overflow:hidden}
 .section{position:absolute;top:0;left:0;right:0;bottom:0;display:none;flex-direction:column;overflow:hidden}
@@ -248,6 +255,40 @@ body{font-family:var(--ff);background:var(--bg);color:var(--cd);font-size:13px;l
 .intro-desc-sm a:hover{color:var(--cd)}
 .intro-desc-sm strong{color:var(--cg)}
 .intro-badge{display:inline-block;padding:3px 10px;border:1px solid var(--cb);font-size:10px;font-weight:600;color:var(--cl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
+.intro-wake-container{position:absolute;inset:0;background:#adbecc;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.intro-wake-container.footprint-cursor,.intro-wake-container.footprint-cursor button{cursor:none}
+.intro-wake-container::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,rgba(31,52,62,.075) 0 1px,transparent 1px 124px),repeating-linear-gradient(90deg,rgba(31,52,62,.06) 0 1px,transparent 1px 124px);opacity:.55;pointer-events:none}
+.intro-wake-container::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(245,239,222,.28),rgba(77,104,116,.10));pointer-events:none}
+.intro-wake-svg{position:absolute;inset:0;width:100%;height:100%}
+.intro-wake-copy{position:relative;z-index:2;color:#24343d;width:min(1120px,calc(100vw - 56px));padding:0 28px;text-shadow:0 1px 0 rgba(255,255,255,.26)}
+.intro-lang-switcher{position:fixed;top:22px;right:24px;z-index:3}
+.intro-lang-switcher.lang-switcher{border-color:rgba(35,52,61,.22);background:rgba(244,239,224,.32);backdrop-filter:blur(8px)}
+.intro-lang-switcher .lang-btn{color:rgba(35,52,61,.58);border-right-color:rgba(35,52,61,.18)}
+.intro-lang-switcher .lang-btn:hover,.intro-lang-switcher .lang-btn.active{background:rgba(35,52,61,.12);color:#24343d}
+.intro-wake-header{max-width:760px;margin-bottom:28px}
+.intro-wake-kicker{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0;color:rgba(36,52,61,.66);margin-bottom:14px;opacity:0}
+.intro-wake-copy h1{font-family:var(--ff-map);font-size:76px;font-weight:600;line-height:.94;margin-bottom:0;letter-spacing:0;opacity:0;color:#20323c}
+.intro-poem,.intro-data-panel{opacity:0}
+.intro-poem{position:fixed;right:28px;bottom:24px;z-index:2;max-width:236px;font-family:var(--ff-map);text-align:right;text-shadow:0 1px 0 rgba(255,255,255,.18);pointer-events:none}
+.intro-section-label{font-size:11px;font-weight:800;letter-spacing:0;text-transform:uppercase;color:rgba(36,52,61,.66);margin-bottom:12px}
+.intro-poem .intro-section-label{font-family:var(--ff);font-size:7.5px;color:rgba(36,52,61,.34);margin-bottom:7px;letter-spacing:0}
+.intro-poem blockquote{font-size:11.5px;font-style:italic;line-height:1.42;color:rgba(36,52,61,.50);margin:0 0 7px;padding:0;white-space:pre-line}
+.intro-poem-credit{font-family:var(--ff);font-size:8px;color:rgba(36,52,61,.30)}
+.intro-data-panel{max-width:780px}
+.intro-data-panel .intro-section-label{font-size:13px;color:rgba(36,52,61,.70)}
+.intro-data-panel p{font-size:22px;line-height:1.55;color:rgba(32,50,60,.86);margin:0 0 28px;max-width:760px}
+.intro-wake-copy .intro-enter{background:#f8f3e5;color:#20323c;box-shadow:0 10px 28px rgba(32,50,60,.12);border:1px solid rgba(32,50,60,.18)}
+.intro-wake-copy .intro-enter:hover{background:#fff8e8;color:#20323c}
+@keyframes wakeFlow{from{stroke-dashoffset:0}to{stroke-dashoffset:-220}}
+.wake-line,.wake-halo{animation-name:wakeFlow;animation-timing-function:linear;animation-iteration-count:infinite}
+.wake-footprint{mix-blend-mode:multiply}
+.wake-cursor-footprint,.wake-cursor-trail{position:absolute;width:34px;height:62px;background-repeat:no-repeat;background-size:contain;background-position:center;pointer-events:none;transform-origin:50% 50%;mix-blend-mode:screen}
+.wake-cursor-footprint{z-index:5;opacity:.78;filter:drop-shadow(0 0 8px rgba(32,50,60,.10));mix-blend-mode:multiply}
+.wake-cursor-trail{z-index:1;opacity:.54;animation:cursorFootstepFade 4.6s ease-out forwards;mix-blend-mode:multiply}
+@keyframes cursorFootstepFade{0%{opacity:.58}18%{opacity:.66}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.wake-line,.wake-halo{animation:none!important}}
+@media(max-width:900px){.intro-wake-copy{width:min(760px,calc(100vw - 36px));padding:0 18px}.intro-wake-header{margin-bottom:20px}.intro-wake-copy h1{font-size:48px}.intro-poem{right:18px;bottom:18px;max-width:220px}.intro-poem blockquote{font-size:10.5px}.intro-data-panel p{font-size:18px}}
+@media(max-width:700px){.intro-wake-copy{width:100%;padding:70px 22px 24px;max-height:100vh;overflow-y:auto}.intro-wake-copy h1{font-size:40px}.intro-poem{position:absolute;right:16px;bottom:14px;max-width:200px}.intro-poem blockquote{font-size:9.5px;line-height:1.35}.intro-data-panel p{font-size:16px;line-height:1.55}.intro-section-label{font-size:9px}.intro-wake-kicker{font-size:10px;line-height:1.4}.intro-lang-switcher{top:14px;right:14px}.lang-btn{height:26px;min-width:31px;padding:0 6px}}
 /* Waterfall chart */
 .waterfall-bar{stroke:none}
 .waterfall-connector{stroke:var(--cl);stroke-width:1;stroke-dasharray:3,2}
@@ -391,8 +432,8 @@ body.resizing-right-panel{cursor:col-resize;user-select:none}
 <!-- LOADING -->
 <div class="loading-screen" id="loading-screen">
 <div style="font-size:24px;margin-bottom:12px;opacity:.3">&#127758;</div>
-<div class="loading-title">Cascorro Explorer</div>
-<div class="loading-subtitle">Initializing emissions, GDP &amp; development data...</div>
+<div class="loading-title" data-i18n="introTitle">Growth's Wake</div>
+<div class="loading-subtitle" data-i18n="loadingSubtitle">Preparing historical trajectories of development and environment...</div>
 <div class="loading-bar"></div>
 </div>
 
@@ -400,10 +441,10 @@ body.resizing-right-panel{cursor:col-resize;user-select:none}
 <div class="intro-overlay" id="intro-overlay">
 <div class="intro-card">
 <img src="img/cascorro.jpg" alt="Plaza de Cascorro" style="width:120px;height:120px;object-fit:cover;border-radius:50%;margin-bottom:16px;border:3px solid var(--cb)">
-<h1>Cascorro Explorer</h1>
-<div class="intro-sub">Emissions, GDP &amp; Human Development &middot; 170+ countries &middot; 1850&ndash;2022</div>
-<div class="intro-desc">
-An interactive toolkit for exploring the long-run relationship between <strong>economic growth</strong>, <strong>greenhouse gas emissions</strong>, and <strong>human development</strong> across 170+ countries from 1850 to the present. Developed to accompany ongoing research by Juan Infante-Amate, Eduardo Aguilera &amp; Emiliano Travieso.
+<h1 data-i18n="introTitle">Growth's Wake</h1>
+<div class="intro-sub" data-i18n="introKicker">Historical trajectories of development and environment</div>
+<div class="intro-desc" data-i18n-html="fallbackIntro">
+An interactive toolkit for looking back at the many wakes left by <strong>economic growth</strong>, <strong>human development</strong>, and <strong>environmental change</strong>. The platform follows multiple historical trajectories across countries, making visible both the achievements and the costs that emerge in growth's wake.
 </div>
 <div class="intro-cite">
 Infante-Amate, J., Travieso, E. &amp; Aguilera, E. (2025). &ldquo;Green growth in the mirror of history.&rdquo; <em>Nature Communications</em>, 16, 3766. <a href="https://www.nature.com/articles/s41467-025-58777-4" target="_blank">DOI</a><br>
@@ -413,7 +454,7 @@ Infante-Amate, J., Travieso, E. &amp; Aguilera, E. (2024). &ldquo;Unsustainable 
 <div class="intro-desc-sm">
 For more information on data sources, methodology, and citations, see <a href="#" onclick="document.getElementById('intro-enter').click();setTimeout(function(){document.querySelector('[data-section=about]').click()},800);return false;">About</a>.
 </div>
-<button class="intro-enter" id="intro-enter">Start exploring</button>
+<button class="intro-enter" id="intro-enter" data-i18n="introButton">Explore trajectories</button>
 </div>
 </div>
 
@@ -423,15 +464,16 @@ For more information on data sources, methodology, and citations, see <a href="#
 <!-- APP -->
 <div id="app" style="display:none">
 <header class="app-header">
-<div class="app-logo" style="display:flex;align-items:center;gap:10px"><img src="img/cascorro.jpg" alt="Cascorro" style="width:32px;height:32px;object-fit:cover;border-radius:50%;flex-shrink:0;border:1.5px solid var(--cb)"><div>Cascorro Explorer <span>Global Change Explorer</span></div></div>
+<div class="app-logo" style="display:flex;align-items:center;gap:10px"><img src="img/cascorro.jpg" alt="Growth's Wake" style="width:32px;height:32px;object-fit:cover;border-radius:50%;flex-shrink:0;border:1.5px solid var(--cb)"><div data-i18n-html="logoHtml">Growth's Wake <span>Development &amp; Environment</span></div></div>
 <nav class="tab-nav">
-<button class="tab-btn active" data-section="globe">Country Profile</button>
-<button class="tab-btn" data-section="explore">Explore</button>
-<button class="tab-btn" data-section="analysis">Analysis</button>
-<button class="tab-btn" data-section="about">About</button>
+<button class="tab-btn active" data-section="globe" data-i18n="navProfile">Country Profile</button>
+<button class="tab-btn" data-section="explore" data-i18n="navExplore">Explore</button>
+<button class="tab-btn" data-section="analysis" data-i18n="navAnalysis">Analysis</button>
+<button class="tab-btn" data-section="about" data-i18n="navAbout">About</button>
 </nav>
 <div class="header-actions">
-<button class="header-btn" id="btn-home" title="Back to intro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+<div class="lang-switcher" aria-label="Language"><button class="lang-btn" data-lang="en">EN</button><button class="lang-btn" data-lang="es">ES</button><button class="lang-btn" data-lang="zh">ä¸­æ–‡</button></div>
+<button class="header-btn" id="btn-home" title="Back to intro" data-i18n-title="homeTitle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
 <button class="header-btn" id="btn-fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
 </div>
 </header>
@@ -757,7 +799,7 @@ For more information on data sources, methodology, and citations, see <a href="#
 <span class="opt-label" style="margin-bottom:4px;display:block">Type</span>
 <div class="ctrl-btn-row">
 <button class="ctrl-btn active" id="pop-type-total" data-pop="total">Total</button>
-<button class="ctrl-btn" id="pop-type-density" data-pop="density">Density (/km²)</button>
+<button class="ctrl-btn" id="pop-type-density" data-pop="density">Density (/kmÂ²)</button>
 </div>
 </div>
 <div id="right-panel-bio-opts" style="display:none">
@@ -945,9 +987,9 @@ For more information on data sources, methodology, and citations, see <a href="#
 <div style="flex:1;overflow-y:auto;padding:0">
 <!-- Tab bar -->
 <div class="about-tabs" style="display:flex;border-bottom:1px solid var(--cb);padding:0 20px;position:sticky;top:0;background:var(--bg);z-index:5">
-  <button class="about-tab active" data-about-tab="about">About</button>
-  <button class="about-tab" data-about-tab="methodology">Methodology</button>
-  <button class="about-tab" data-about-tab="publications">Publications</button>
+  <button class="about-tab active" data-about-tab="about" data-i18n="aboutTabAbout">About</button>
+  <button class="about-tab" data-about-tab="methodology" data-i18n="aboutTabMethodology">Methodology</button>
+  <button class="about-tab" data-about-tab="publications" data-i18n="aboutTabPublications">Publications</button>
 </div>
 
 <!-- Tab panels -->
@@ -955,12 +997,25 @@ For more information on data sources, methodology, and citations, see <a href="#
 
   <!-- ===== ABOUT TAB (merged Project + Team) ===== -->
   <div class="about-panel active" id="about-panel-about">
-    <h2 style="font-size:22px;font-weight:700;color:var(--cd);margin-bottom:6px">About Cascorro Project</h2>
-    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:24px">
-    An interactive platform for exploring the long-run co-evolution of human societies and the environment. Cascorro integrates indicators of economic development (GDP), human development (HDI), greenhouse gas emissions, material flows, land use, and biodiversity across 199 countries, spanning from 1750 to the present.
+    <h2 style="font-size:22px;font-weight:700;color:var(--cd);margin-bottom:6px" data-i18n="aboutTitle">About Growth's Wake</h2>
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:18px" data-i18n="aboutLead">
+    Growth's Wake is a data website for historical comparison. It compiles country series on economic development, resource use, greenhouse gas emissions, material flows, land use, biodiversity, and other environmental impacts from the eighteenth century to the present.
     </p>
 
-    <div class="about-heading">Team</div>
+    <div class="about-heading" data-i18n="conceptHeading">Conceptual frame</div>
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:10px" data-i18n="conceptOne">
+    The wake metaphor starts from a historical intuition: there is no single road of development. Countries, regions, and the world economy leave multiple traces behind them. The future is uncertain from the deck of the ship, but looking backward we can see the direction of travel, the bends, the accelerations, and the points where the record becomes harder to reconstruct.
+    </p>
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:18px" data-i18n="conceptTwo">
+    This is why historical perspective matters. The farther back the wake extends, the more uncertain some estimates become, yet the retrospective pattern remains more visible than any path projected forward. The image is deliberately ambivalent: in the wake of growth we find longer lives and higher human development, but also greenhouse gas emissions, material extraction, land transformation, and biodiversity loss.
+    </p>
+
+    <div class="about-heading" data-i18n="viewerHeading">What the viewer shows</div>
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:24px" data-i18n="viewerText">
+    The viewer links country profiles, maps, rankings, time-series comparisons, decoupling patterns, and decomposition tools. Together they allow readers to follow how GDP, HDI, population, emissions, material flows, land use, and biodiversity indicators moved together or apart across two centuries of global change.
+    </p>
+
+    <div class="about-heading" data-i18n="teamHeading">Team</div>
     <div class="about-team-grid">
 
     <!-- Juan Infante-Amate -->
@@ -1007,25 +1062,25 @@ For more information on data sources, methodology, and citations, see <a href="#
 
     </div>
 
-    <div class="about-heading">Origins and future directions</div>
+    <div class="about-heading" data-i18n="originsHeading">Origins and future directions</div>
     <div class="about-story">
     <img class="about-story-img" src="img/cascorro.jpg" alt="Plaza de Cascorro, Madrid">
     <div>
-    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:10px">
-    The <strong>Cascorro</strong> project owes its name to the <em>Plaza de Cascorro</em>, a lively square in the historic centre of Madrid. Over the course of several research meetings held in Madrid, the three members of the team ended up &mdash;more often than not&mdash; wrapping up the day with a beer and conversation in this square. What began as an informal meeting point became the place where the project was conceived and gradually took shape. The <em>Plaza de Cascorro</em> witnessed the birth of this research endeavor &mdash;and the name stuck.
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:10px" data-i18n-html="originsOne">
+    The project began under the working name <strong>Cascorro</strong>, after the <em>Plaza de Cascorro</em>, a lively square in the historic centre of Madrid. Over the course of several research meetings held in Madrid, the three members of the team ended up &mdash;more often than not&mdash; wrapping up the day with a beer and conversation in this square. What began as an informal meeting point became the place where the project was conceived and gradually took shape.
     </p>
-    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:10px">
-    The Cascorro project is an ongoing research initiative. We plan to continue expanding the platform by incorporating <strong>new indicators</strong>, updated datasets, and additional dimensions of environmental and human change as they become available.
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:10px" data-i18n-html="originsTwo">
+    The current title, <strong>Growth's Wake</strong>, draws on the image of a wake on the sea: development has no single predefined road, but a plurality of paths that can be reconstructed historically. Looking back, those wakes reveal gains in human development as well as greenhouse gas emissions, material pressures, land-use change, and biodiversity losses.
     </p>
-    <p style="font-size:13px;color:var(--cg);line-height:1.8">
-    Future work will also include <strong>new research papers</strong> that analyze the interplay between environmental pressures and socioeconomic development in historical perspective, deepening our understanding of long-term decoupling patterns, regional trajectories, and the environmental costs of growth.
+    <p style="font-size:13px;color:var(--cg);line-height:1.8" data-i18n-html="originsThree">
+    Growth's Wake is an ongoing research initiative. Future work will expand the platform with <strong>new indicators</strong>, updated datasets, and papers that analyze the interplay between environmental pressures and socioeconomic development in historical perspective, deepening our understanding of long-term decoupling patterns, regional trajectories, and the environmental costs of growth.
     </p>
     </div>
     </div>
 
-    <div class="about-heading">Data sources</div>
-    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:32px">
-    All data displayed on this platform is derived from publicly available datasets. Each indicator page in the <strong>Methodology</strong> tab documents the original source, coverage, and required citation. If you use data or visualizations from Cascorro in your work, please cite both the original data providers and the relevant publications by Infante-Amate, Travieso &amp; Aguilera listed in the Methodology section.
+    <div class="about-heading" data-i18n="dataSourcesHeading">Data sources</div>
+    <p style="font-size:13px;color:var(--cg);line-height:1.8;margin-bottom:32px" data-i18n-html="dataSourcesText">
+    All data displayed on this platform is derived from publicly available datasets. Each indicator page in the <strong>Methodology</strong> tab documents the original source, coverage, and required citation. If you use data or visualizations from Growth's Wake in your work, please cite both the original data providers and the relevant publications by Infante-Amate, Travieso &amp; Aguilera listed in the Methodology section.
     </p>
   </div>
 
@@ -1521,7 +1576,7 @@ For more information on data sources, methodology, and citations, see <a href="#
 <img src="img/ugr.png" alt="UGR" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;opacity:.7">
 <img src="img/csic_logo.jpg" alt="CSIC" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;opacity:.7">
 <img src="img/uc3_logo.png" alt="UC3M" style="width:22px;height:22px;object-fit:contain;flex-shrink:0;opacity:.7">
-<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">Cascorro Explorer &middot; Infante-Amate, Aguilera &amp; Travieso &middot; <a href="#" onclick="document.querySelector('[data-section=about]').click();return false;" style="color:var(--c1);text-decoration:none;border-bottom:1px dotted var(--c1)">About &amp; sources</a></span>
+<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500"><span data-i18n="footerBrand">Growth's Wake &middot; Infante-Amate, Aguilera &amp; Travieso &middot;</span> <a href="#" onclick="document.querySelector('[data-section=about]').click();return false;" style="color:var(--c1);text-decoration:none;border-bottom:1px dotted var(--c1)" data-i18n="footerAbout">About &amp; sources</a></span>
 </div>
 <div class="footer-actions">
 <button class="footer-btn" id="footer-csv">CSV</button>

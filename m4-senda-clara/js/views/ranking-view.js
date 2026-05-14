@@ -35,6 +35,8 @@ const RankingView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'ranking') return;
+
         const indicator = State.get('activeIndicator');
         const level = State.get('geoLevel');
         const selected = State.get('selectedTerritories');

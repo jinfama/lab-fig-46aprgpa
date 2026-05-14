@@ -1,8 +1,8 @@
-﻿/* map-view.js — Choropleth map of Latin America */
+/* map-view.js - Choropleth map of Latin America */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { SEQ_COLORS, fmtUnit, COUNTRIES, REGIONS } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { SEQ_COLORS, fmtUnit, COUNTRIES, REGIONS } from '../utils.js?v=20260514-sidebar-gini-fix52';
 import { showTooltip, hideTooltip } from '../components/tooltip.js';
 
 let _svg, _g, _projection, _path, _colorFn;
@@ -22,7 +22,7 @@ function _showMapLoading(msg) {
         el.className = 'map-loading';
         c.appendChild(el);
     }
-    el.textContent = msg || 'Cargando…';
+    el.textContent = msg || 'Cargando-';
     el.style.display = '';
 }
 function _hideMapLoading() {
@@ -150,7 +150,7 @@ function _doUpdate() {
         _renderRegionLevel();
     } else {
         // Country level: always a choropleth of all 19 LATAM countries.
-        // (The previous "no selection → render LATAM as a single block" path
+        // (The previous "no selection ? render LATAM as a single block" path
         // confused users who picked "Países" expecting to see countries coloured.)
         _renderCountryLevel();
     }
@@ -166,6 +166,7 @@ function _renderCountryLevel() {
 
     // If switching back from other level, clear old elements and reset projection
     if (_lastGeoLevel === 'subnational') {
+        _g.selectAll('.subnational-base').remove();
         _g.selectAll('.admin1-path').remove();
         _g.selectAll('.admin1-border-mesh').remove();
         _g.selectAll('.admin1-outline-mesh').remove();
@@ -185,7 +186,7 @@ function _renderCountryLevel() {
     // Rebuild projection if needed (first time geo is available)
     if (!_path || !_projection) _resize();
 
-    // Get values for color scale (country level only — region level uses _renderRegionLevel)
+    // Get values for color scale (country level only - region level uses _renderRegionLevel)
     // Clone feature properties per render so compare mode tooltips do not share
     // mutable `_value` state between the current-year map and start-year map.
     const values = [];
@@ -210,7 +211,7 @@ function _renderCountryLevel() {
     // Check if we have a diverging scale (negative values present)
     const _hasDiverging = colorDomain.gMin < 0 && colorDomain.gMax > 0;
 
-    // --- Draw country fills (no per-path stroke — borders come from mesh) ---
+    // --- Draw country fills (no per-path stroke - borders come from mesh) ---
     // Remove and redraw to guarantee fill/stroke always reflect current indicator
     _g.selectAll('.country-path').remove();
 
@@ -249,7 +250,7 @@ function _renderCountryLevel() {
         .on('mousemove', (event) => showTooltip(event))
         .on('mouseleave', () => hideTooltip());
 
-    // --- Shared borders via topojson.mesh() — clean lines, no gaps ---
+    // --- Shared borders via topojson.mesh() - clean lines, no gaps ---
     const topo = DataLoader.getTopo();
     if (topo) {
         const borders = topojson.mesh(topo, topo.objects.countries,
@@ -309,6 +310,7 @@ function _renderLatamLevel() {
     _cachedLegendKey = '';
 
     if (_lastGeoLevel === 'subnational') {
+        _g.selectAll('.subnational-base').remove();
         _g.selectAll('.admin1-path').remove();
         _g.selectAll('.admin1-border-mesh').remove();
         _g.selectAll('.admin1-outline-mesh').remove();
@@ -396,7 +398,7 @@ function _renderLatamLevel() {
         legend.innerHTML = `
             <div class="map-legend-title">${indicatorLabel} (${unit})</div>
             <div style="font-size:18px;font-weight:700;color:#7A6A5A;margin-top:4px">${fmtUnit(val, unit)}</div>
-            <div style="font-size:10px;color:#A89888;margin-top:2px">América Latina — ${year}</div>
+            <div style="font-size:10px;color:#A89888;margin-top:2px">América Latina - ${year}</div>
         `;
     }
 }
@@ -411,6 +413,7 @@ function _renderRegionLevel() {
 
     // If switching back from other level, clear old elements
     if (_lastGeoLevel === 'subnational') {
+        _g.selectAll('.subnational-base').remove();
         _g.selectAll('.admin1-path').remove();
         _g.selectAll('.admin1-border-mesh').remove();
         _g.selectAll('.admin1-outline-mesh').remove();
@@ -574,10 +577,11 @@ function _renderSubnational() {
     if (!DataLoader.isSubnationalLoaded()) {
         // Clear stale country paths so user doesn't see old data
         _g.selectAll('.country-path').remove();
+        _g.selectAll('.subnational-base').remove();
         _g.selectAll('.border-mesh').remove();
         _g.selectAll('.outline-mesh').remove();
         _g.selectAll('.country-selection').remove();
-        _showMapLoading('Cargando datos subnacionales…');
+        _showMapLoading('Cargando datos subnacionales-');
         return;
     }
     _hideMapLoading();
@@ -588,6 +592,7 @@ function _renderSubnational() {
     // Clear country-level elements and reset zoom
     _svg.call(_zoom.transform, d3.zoomIdentity);
     _g.selectAll('.country-path').remove();
+    _g.selectAll('.subnational-base').remove();
     _g.selectAll('.border-mesh').remove();
     _g.selectAll('.outline-mesh').remove();
     _g.selectAll('.country-selection').remove();
@@ -605,8 +610,9 @@ function _renderSubnational() {
     const allSubGeo = DataLoader.getSubnationalGeo(null);
     const topoCountries = new Set((allSubGeo?.features || []).map(f => f.properties.iso3));
     const drawableSubCountries = new Set(subCountries.filter(iso3 => topoCountries.has(iso3)));
-    const activeIso = selected.length > 0 && drawableSubCountries.has(selected[0])
-        ? selected[0] : null;
+    const selectedIso = selected.length > 0 ? selected[0] : null;
+    const activeIso = selectedIso && drawableSubCountries.has(selectedIso) ? selectedIso : null;
+    const selectedNationalOnly = selectedIso && !activeIso ? selectedIso : null;
 
     // Get admin1 geo features. With no selected country, show all available
     // subnational units; with a selected drawable country, show that country
@@ -614,7 +620,9 @@ function _renderSubnational() {
     const adminFeatures = (allSubGeo?.features || []).filter(f => {
         const iso3 = f.properties.iso3;
         if (!drawableSubCountries.has(iso3)) return false;
-        return activeIso ? iso3 === activeIso : true;
+        if (activeIso) return iso3 === activeIso;
+        if (selectedNationalOnly) return false;
+        return true;
     });
     const subGeo = { type: 'FeatureCollection', features: adminFeatures };
     const adminFeatureCountries = new Set(adminFeatures.map(f => f.properties.iso3));
@@ -623,7 +631,12 @@ function _renderSubnational() {
     // Get country-level GeoJSON for countries WITHOUT drawn admin1 data
     const countryGeo = DataLoader.getGeo();
     const nonSubFeatures = countryGeo
-        ? countryGeo.features.filter(f => !adminFeatureCountries.has(f.properties.iso3))
+        ? countryGeo.features.filter(f => {
+            const iso3 = f.properties.iso3;
+            if (activeIso) return false;
+            if (selectedNationalOnly) return iso3 === selectedNationalOnly;
+            return !adminFeatureCountries.has(iso3);
+        })
         : [];
 
     // If no admin1 features and no fallback country features, bail out
@@ -637,7 +650,10 @@ function _renderSubnational() {
         return;
     }
 
-    // Fit projection to ALL of Latin America (admin1 + country-level features combined)
+    // Fit projection to the layer we actually draw. When a country is shown at
+    // admin1 level, do not include the coarser national polygon: those sources
+    // do not always share the same coastline and the national outline can peek
+    // out below the subnational layer.
     const allFeatures = [
         ...(hasAdmin1 ? subGeo.features : []),
         ...nonSubFeatures,
@@ -694,6 +710,9 @@ function _renderSubnational() {
     _colorFn = _buildColorScale(values, scaleType, colorDomain);
     const _hasDivergingSub = colorDomain.gMin < 0 && colorDomain.gMax > 0;
 
+    // --- No national base under admin1: avoid doubled/misaligned geometries.
+    _g.selectAll('.subnational-base').remove();
+
     // --- Draw country-level fills for countries WITHOUT admin1 data ---
     _g.selectAll('.country-path').remove();
 
@@ -732,6 +751,8 @@ function _renderSubnational() {
 
     // --- Draw admin1 fills ---
     _g.selectAll('.admin1-path').remove();
+    _g.selectAll('.admin1-border-mesh').remove();
+    _g.selectAll('.admin1-outline-mesh').remove();
 
     if (hasAdmin1) {
         _g.selectAll('.admin1-path')
@@ -775,7 +796,7 @@ function _renderSubnational() {
         // Draw borders only between the non-subnational countries
         const nonSubIsos = new Set(nonSubFeatures.map(f => f.properties.iso3));
         const borders = topojson.mesh(topo, topo.objects.countries,
-            (a, b) => a !== b && (nonSubIsos.has(a.properties.iso3) || nonSubIsos.has(b.properties.iso3)));
+            (a, b) => a !== b && nonSubIsos.has(a.properties.iso3) && nonSubIsos.has(b.properties.iso3));
         _g.selectAll('.border-mesh').remove();
         _g.append('path')
             .datum(borders)
@@ -791,10 +812,10 @@ function _renderSubnational() {
     // --- Admin1 borders using topojson.mesh ---
     const subTopo = DataLoader.getSubnationalTopo();
     if (subTopo && hasAdmin1) {
-        _g.selectAll('.admin1-border-mesh').remove();
-
         const borders = topojson.mesh(subTopo, subTopo.objects.admin1,
-            (a, b) => a !== b);
+            (a, b) => a !== b
+                && adminFeatureCountries.has(a.properties.iso3)
+                && adminFeatureCountries.has(b.properties.iso3));
         _g.append('path')
             .datum(borders)
             .attr('class', 'admin1-border-mesh')
@@ -805,9 +826,8 @@ function _renderSubnational() {
             .attr('stroke-linejoin', 'round')
             .attr('pointer-events', 'none');
 
-        _g.selectAll('.admin1-outline-mesh').remove();
         const outline = topojson.mesh(subTopo, subTopo.objects.admin1,
-            (a, b) => a === b);
+            (a, b) => a === b && adminFeatureCountries.has(a.properties.iso3));
         _g.append('path')
             .datum(outline)
             .attr('class', 'admin1-outline-mesh')
@@ -823,7 +843,7 @@ function _renderSubnational() {
     _updateLegend(values);
 }
 
-// Diverging palette: blood red (deficit) → beige neutral → forest green (surplus)
+// Diverging palette: blood red (deficit) ? beige neutral ? forest green (surplus)
 const DIV_COLORS = ['#8B2500', '#C4613E', '#E8E0D4', '#6B8E6B', '#2D5A2D'];
 
 function _buildColorScale(values, scaleType, domain = null) {
@@ -864,7 +884,7 @@ function _buildColorScale(values, scaleType, domain = null) {
             .clamp(true);
         return v => seqInterp(logScale(v));
     }
-    // Use scalePow(0.4) for better distribution — expands low values, compresses highs
+    // Use scalePow(0.4) for better distribution - expands low values, compresses highs
     const sqrtMin = Math.max(0, d3.min(values));
     const sqrtMax = d3.max(values);
     const powScale = d3.scalePow()
@@ -975,7 +995,7 @@ function _updateLegend(values) {
     const axisMode = State.get('axisMode');
     const activeUnit = State.get('activeUnit');
 
-    // Cache global min/max — recompute only when indicator/category/geoLevel/mode/unit changes
+    // Cache global min/max - recompute only when indicator/category/geoLevel/mode/unit changes
     const cacheKey = `${indicatorField}|${State.get('activeCategory')}|${geoLevel}|${scaleType}|${axisMode}|${activeUnit}`;
     if (cacheKey !== _cachedLegendKey) {
         _cachedGlobalMinMax = _getGlobalMinMax(indicatorField, geoLevel);
@@ -989,7 +1009,7 @@ function _updateLegend(values) {
     const legendColors = isDiverging ? DIV_COLORS : SEQ_COLORS.slice(1);
 
     const unitLabel = unit && unit !== 'index100' ? ` (${unit})` : '';
-    const scaleLabel = State.get('scaleType') === 'log' ? ' · log' : '';
+    const scaleLabel = State.get('scaleType') === 'log' ? ' - log' : '';
     legend.innerHTML = `
         <div class="map-legend-title">${indicatorLabel}${unitLabel}${scaleLabel}</div>
         <div class="map-legend-bar">
@@ -1060,7 +1080,7 @@ function _getActiveCategoryLabel() {
     return cat ? cat.label : '';
 }
 
-/** Build a complete tooltip for the map — always shows territory, value+unit, indicator, crop, category, year */
+/** Build a complete tooltip for the map - always shows territory, value+unit, indicator, crop, category, year */
 function _mapTooltip(event, entityName, val, year) {
     const unit = _getUnit();
     const indicatorLabel = _getActiveIndicatorLabel();
@@ -1068,10 +1088,10 @@ function _mapTooltip(event, entityName, val, year) {
     const cropItem = State.get('cropItem');
     const cropLabel = cropItem && cropItem !== 'all' ? cropItem : '';
 
-    // Sub line: Category · Indicator · Crop — Year
+    // Sub line: Category - Indicator - Crop - Year
     const parts = [categoryLabel, indicatorLabel];
     if (cropLabel) parts.push(cropLabel);
-    const sub = parts.join(' · ') + ` — ${year}`;
+    const sub = parts.join(' - ') + ` - ${year}`;
 
     showTooltip(event, {
         title: entityName,
@@ -1079,3 +1099,8 @@ function _mapTooltip(event, entityName, val, year) {
         sub,
     });
 }
+
+
+
+
+

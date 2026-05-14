@@ -52,6 +52,8 @@ const SpaghettiView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'spaghetti') return;
+
         const container = document.getElementById('spaghetti-container');
         if (!container) return;
         container.innerHTML = '';

@@ -1,8 +1,8 @@
-﻿/* treemap-view.js — Harvard Atlas-inspired composition treemap */
+/* treemap-view.js - Harvard Atlas-inspired composition treemap */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { COUNTRIES, REGIONS, CATEGORY_COLORS, CAT_COLORS, fmt, fmtUnit, shortItemLabel, shortEntityLabel } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { COUNTRIES, REGIONS, CATEGORY_COLORS, CAT_COLORS, fmt, fmtUnit, shortItemLabel, shortEntityLabel } from '../utils.js?v=20260514-sidebar-gini-fix52';
 import { showTooltip, hideTooltip } from '../components/tooltip.js';
 
 let _container, _chartEl;
@@ -133,10 +133,39 @@ function _renderBilateralComposition(year, topN) {
     const header = document.getElementById('treemap-header');
     if (header) {
         let modeLabel = 'por socio';
-        if (partnerNames.length > 0) modeLabel = `productos · ${partnerNames.map(shortEntityLabel).join(', ')}`;
-        else if (productNames.length > 0) modeLabel = `socios · ${productNames.map(shortItemLabel).join(', ')}`;
-        header.textContent = `${flowLabel} — ${shortEntityLabel(entityName)} — ${modeLabel} — ${year}`;
+        if (partnerNames.length > 0) modeLabel = `productos - ${partnerNames.map(shortEntityLabel).join(', ')}`;
+        else if (productNames.length > 0) modeLabel = `socios - ${productNames.map(shortItemLabel).join(', ')}`;
+        header.textContent = `${flowLabel} - ${shortEntityLabel(entityName)} - ${modeLabel} - ${year}`;
     }
+}
+
+function _itemSeries(item, dataField) {
+    if (!item || typeof item !== 'object') return null;
+    return item[dataField] || item.values || item.production || null;
+}
+
+function _itemYearIndexWithData(items, yi, dataField) {
+    if (!Array.isArray(items) || yi == null || yi < 0) return yi;
+    const hasValueAt = idx => items.some(item => {
+        const series = _itemSeries(item, dataField);
+        const value = Array.isArray(series) ? series[idx] : null;
+        return value != null && Number.isFinite(value) && value > 0;
+    });
+    if (hasValueAt(yi)) return yi;
+    for (let idx = yi - 1; idx >= 0; idx--) {
+        if (hasValueAt(idx)) return idx;
+    }
+    return yi;
+}
+
+function _seriesPointAtOrBefore(series, year) {
+    if (!Array.isArray(series) || !series.length) return null;
+    return [...series].reverse().find(d => d.year <= year && d.value != null && Number.isFinite(d.value)) || null;
+}
+
+function _yearFromIndex(yi, fallbackYear) {
+    const years = DataLoader.getYears ? DataLoader.getYears() : [];
+    return years[yi] || fallbackYear;
 }
 
 export function updateTreemapView() {
@@ -180,33 +209,45 @@ export function updateTreemapView() {
         }
         const header = document.getElementById('treemap-header');
         if (header) {
-            header.textContent = `${DataLoader.getCountryName(iso3)} — subnacional — ${year} — ${_getActiveIndicatorLabel()}`;
+            header.textContent = `${DataLoader.getCountryName(iso3)} - subnacional - ${year} - ${_getActiveIndicatorLabel()}`;
         }
         return;
     }
 
-    // ── When a specific crop is selected, show composition BY COUNTRIES ──
+    // -- When a specific item is selected, show composition by the active
+    // territory level. This avoids the confusing case where selected regions
+    // were ignored and the chart jumped back to all countries.
     const cropItem = State.get('cropItem');
-    if (cropItem && cropItem !== 'all' && selected.length <= 1) {
-        const yi = DataLoader.yearIndex(year);
-        // Gather value for this crop across all countries
-        const countryEntries = [];
-        for (const iso3 of Object.keys(COUNTRIES)) {
-            const val = DataLoader.getValue(iso3, year, dataField, 'country');
+    if (cropItem && cropItem !== 'all') {
+        const selectedEntities = selected.length > 0
+            ? selected.map(code => ({
+                code,
+                geo: (geoLevel === 'region' || REGIONS[code] || code === 'latin_america') ? 'region' : 'country',
+            }))
+            : (geoLevel === 'region'
+                ? Object.keys(REGIONS).map(code => ({ code, geo: 'region' }))
+                : Object.keys(COUNTRIES).map(code => ({ code, geo: 'country' })));
+
+        const entries = [];
+        let usedYear = null;
+        selectedEntities.forEach(({ code, geo }) => {
+            const series = DataLoader.getItemTimeSeries(code, cropItem, dataField, geo);
+            const point = _seriesPointAtOrBefore(series, year);
+            const val = point?.value;
             if (val != null && val > 0) {
-                countryEntries.push({
-                    name: DataLoader.getCountryName(iso3) || COUNTRIES[iso3].name,
+                usedYear = usedYear == null ? point.year : Math.min(usedYear, point.year);
+                entries.push({
+                    name: DataLoader.getCountryName(code) || code,
                     value: val,
                 });
             }
-        }
-        countryEntries.sort((a, b) => b.value - a.value);
+        });
+        entries.sort((a, b) => b.value - a.value);
 
-        if (countryEntries.length > 0) {
-            // Build top N + "Otros"
-            const topEntries = countryEntries.slice(0, topN);
+        if (entries.length > 0) {
+            const topEntries = selected.length > 0 ? entries : entries.slice(0, topN);
             const topTotal = topEntries.reduce((s, e) => s + e.value, 0);
-            const grandTotal = countryEntries.reduce((s, e) => s + e.value, 0);
+            const grandTotal = entries.reduce((s, e) => s + e.value, 0);
             const otrosVal = grandTotal - topTotal;
 
             const children = topEntries.map((e, i) => ({
@@ -214,7 +255,7 @@ export function updateTreemapView() {
                 value: e.value,
                 color: CAT_COLORS[i % CAT_COLORS.length],
             }));
-            if (otrosVal > 0) {
+            if (selected.length === 0 && otrosVal > 0) {
                 children.push({ name: 'Otros', value: otrosVal, color: '#C9BDA8' });
             }
 
@@ -222,10 +263,12 @@ export function updateTreemapView() {
 
             const header = document.getElementById('treemap-header');
             if (header) {
-                header.textContent = `${cropItem} — composición por país — ${year} — ${_getActiveIndicatorLabel()}`;
+                const levelLabel = geoLevel === 'region' ? 'región' : 'país';
+                const scopeLabel = selected.length > 0 ? 'territorios seleccionados' : levelLabel;
+                header.textContent = `${cropItem} - composición por ${scopeLabel} - ${usedYear || year} - ${_getActiveIndicatorLabel()}`;
             }
         } else {
-            _chartEl.innerHTML = '<div style="padding:20px;color:#A89888">Sin datos para este cultivo</div>';
+            _chartEl.innerHTML = '<div style="padding:20px;color:#A89888">Sin datos para esta selección</div>';
         }
         return;
     }
@@ -271,13 +314,15 @@ export function updateTreemapView() {
             wrapper.appendChild(inner);
             _chartEl.appendChild(wrapper);
 
-            // Render treemap into inner container
-            _renderTreemapInto(inner, items, yi, dataField, unit, topN, cellW, cellH - 20);
+            // Render treemap into inner container. If the item breakdown ends
+            // earlier than the total series, fall back to the latest item year.
+            const facetYi = _itemYearIndexWithData(items, yi, dataField);
+            _renderTreemapInto(inner, items, facetYi, dataField, unit, topN, cellW, cellH - 20);
         });
 
         const header = document.getElementById('treemap-header');
         if (header) {
-            header.textContent = `${selected.length} países — ${year} — ${_getActiveIndicatorLabel()}`;
+            header.textContent = `${selected.length} territorios - ${year} - ${_getActiveIndicatorLabel()}`;
         }
         return;
     }
@@ -300,7 +345,8 @@ export function updateTreemapView() {
             _chartEl.innerHTML = '<div style="padding:20px;color:#A89888">Sin datos de composición disponibles</div>';
             return;
         }
-        _renderTreemap(regionItems, yi, dataField, unit, topN, 'América Latina');
+        const fallbackYi = _itemYearIndexWithData(regionItems, yi, dataField);
+        _renderTreemap(regionItems, fallbackYi, dataField, unit, topN, 'América Latina');
         return;
     }
 
@@ -308,11 +354,13 @@ export function updateTreemapView() {
         ? (DataLoader.getCountryName(code) || code)
         : DataLoader.getCountryName(code);
 
-    _renderTreemap(items, yi, dataField, unit, topN, entityName);
+    const effectiveYi = _itemYearIndexWithData(items, yi, dataField);
+    const displayYear = _yearFromIndex(effectiveYi, year);
+    _renderTreemap(items, effectiveYi, dataField, unit, topN, entityName);
 
     const header = document.getElementById('treemap-header');
     if (header) {
-        header.textContent = `${entityName} — ${year} — ${_getActiveIndicatorLabel()}`;
+        header.textContent = `${entityName} - ${displayYear} - ${_getActiveIndicatorLabel()}`;
     }
 }
 
@@ -326,7 +374,7 @@ function _renderTreemap(items, yi, dataField, unit, topN, title, directValues = 
         if (directValues && item._directValue != null) {
             value = item._directValue;
         } else {
-            const series = item[dataField] || item.values || item.production;
+            const series = _itemSeries(item, dataField);
             value = series ? series[yi] : null;
         }
         if (value != null && value > 0) {
@@ -401,7 +449,7 @@ function _renderTreemapFromChildren(children, unit) {
             // Truncate long names for small cells
             const maxChars = Math.max(8, Math.floor(w / 6));
             const displayName = d.name.length > maxChars && w < 120
-                ? d.name.substring(0, maxChars) + '…'
+                ? d.name.substring(0, maxChars) + '-'
                 : d.name;
             label.textContent = displayName;
             label.title = d.name;
@@ -438,7 +486,7 @@ function _renderTreemapInto(container, items, yi, dataField, unit, topN, w, h) {
     // Collect ALL item values to compute "Otros"
     const allValues = [];
     items.forEach((item, i) => {
-        const series = item[dataField] || item.values || item.production;
+        const series = _itemSeries(item, dataField);
         const value = series ? series[yi] : null;
         if (value != null && value > 0) {
             allValues.push({ name: item.name, value, idx: i });
@@ -558,3 +606,8 @@ function _getActiveIndicatorLabel() {
     }
     return '';
 }
+
+
+
+
+

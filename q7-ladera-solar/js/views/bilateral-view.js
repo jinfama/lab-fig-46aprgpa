@@ -1,13 +1,13 @@
-﻿/* bilateral-view.js — World map with bilateral trade flow arcs */
+/* bilateral-view.js - World map with bilateral trade flow arcs */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { COUNTRIES, REGIONS, SEQ_COLORS, fmt } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { COUNTRIES, REGIONS, SEQ_COLORS, fmt } from '../utils.js?v=20260514-sidebar-gini-fix52';
 import { showTooltip, hideTooltip } from '../components/tooltip.js';
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Module state
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 let _svg, _g, _gWorld, _gArcs, _gLabels;
 let _projection, _path;
 let _worldTopo = null;
@@ -16,9 +16,9 @@ let _loadPromise = null;
 let _width = 0, _height = 0;
 let _zoom;
 let _ro;
-let _topN = 10;  // configurable: 5 or 10 (data file caps at 10 partners)
+let _topN = 5;  // configurable: 5 or 10 (data file caps at 10 partners)
 
-/* Map from bilateral partner names (FAO) → world-110m TopoJSON names */
+/* Map from bilateral partner names (FAO) ? world-110m TopoJSON names */
 const PARTNER_TO_GEO = {
     'China, mainland':                          'China',
     'China, Taiwan Province of':                'Taiwan',
@@ -30,13 +30,13 @@ const PARTNER_TO_GEO = {
     'Iran (Islamic Republic of)':               'Iran',
     'Republic of Korea':                        'South Korea',
     'Dominican Republic':                       'Dominican Rep.',
-    'Türkiye':                                  'Turkey',
+    'T-rkiye':                                  'Turkey',
     'Viet Nam':                                 'Vietnam',
     'Belgium-Luxembourg':                       'Belgium',
     'USSR':                                     'Russia',
 };
 
-/* ISO3 → world-110m name for LATAM countries */
+/* ISO3 ? world-110m name for LATAM countries */
 const ISO3_TO_GEO = {
     ARG: 'Argentina', BOL: 'Bolivia', BRA: 'Brazil', CHL: 'Chile',
     COL: 'Colombia', CRI: 'Costa Rica', CUB: 'Cuba', DOM: 'Dominican Rep.',
@@ -49,15 +49,15 @@ const ISO3_TO_GEO = {
 /* LATAM ISO3 set for highlight */
 const LATAM_ISO3 = new Set(Object.keys(COUNTRIES));
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    World TopoJSON loading
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 async function _loadWorld() {
     if (_worldTopo) return;
     if (_loadPromise) return _loadPromise;
     _loadPromise = (async () => {
         try {
-            const resp = await fetch('data/world-110m.json?v=20260513-trend-area-timeline-fix31');
+            const resp = await fetch('data/world-110m.json?v=20260514-sidebar-gini-fix52');
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             _worldTopo = await resp.json();
             _worldGeo = topojson.feature(_worldTopo, _worldTopo.objects.countries);
@@ -70,9 +70,9 @@ async function _loadWorld() {
     return _loadPromise;
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Helpers
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 
 /** Resolve FAO partner name to a GeoJSON feature from world-110m */
 function _findFeatureByPartner(partnerName) {
@@ -129,7 +129,7 @@ function _getSelectedCodeAndGeo() {
     return { code: 'latin_america', geo: 'region' };
 }
 
-/** Get selected LATAM country code (first selected, or null) — legacy compat */
+/** Get selected LATAM country code (first selected, or null) - legacy compat */
 function _getSelectedCode() {
     const { code, geo } = _getSelectedCodeAndGeo();
     return (geo === 'country' && code !== 'latin_america') ? code : null;
@@ -138,7 +138,7 @@ function _getSelectedCode() {
 /** Generate screen-space points for a curved arc between two [lon, lat] points.
  *  Returns an array of [x, y] screen coordinates.
  *  Uses a quadratic bezier curve in screen space with upward curvature. */
-function _arcScreenPoints(source, target) {
+function _arcScreenPoints(source, target, offset = 0) {
     if (!_projection) return [];
     const p0 = _projection(source);
     const p1 = _projection(target);
@@ -151,7 +151,12 @@ function _arcScreenPoints(source, target) {
     const dy = p1[1] - p0[1];
     const dist = Math.sqrt(dx * dx + dy * dy);
     const curvature = Math.min(dist * 0.25, 80); // max 80px curve height
-    const cp = [mx, Math.max(20, my - curvature)]; // raise upward, keep on screen
+    const nx = dist > 0 ? -dy / dist : 0;
+    const ny = dist > 0 ? dx / dist : 0;
+    const cp = [
+        mx + nx * offset,
+        Math.max(20, my - curvature + ny * offset),
+    ]; // raise upward, keep on screen
 
     // Sample quadratic bezier
     const nPoints = 40;
@@ -166,11 +171,11 @@ function _arcScreenPoints(source, target) {
     return pts;
 }
 
-// _arcGenerator removed — now using _arcScreenPoints for smooth bezier arcs
+// _arcGenerator removed - now using _arcScreenPoints for smooth bezier arcs
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Init / Resize
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 export function initBilateralView() {
     _svg = d3.select('#bilateral-svg');
     _g = _svg.append('g');
@@ -261,7 +266,7 @@ function _populateControls() {
         // LATAM aggregate option
         const latamOpt = document.createElement('option');
         latamOpt.value = 'latin_america';
-        latamOpt.textContent = '— América Latina —';
+        latamOpt.textContent = '- América Latina -';
         expSelect.appendChild(latamOpt);
 
         // Region options
@@ -310,9 +315,9 @@ function _resize() {
     _path = d3.geoPath(_projection);
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Update
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 export async function updateBilateralView() {
     if (State.get('activeView') !== 'bilateral') return;
 
@@ -365,7 +370,7 @@ export async function updateBilateralView() {
     }
 
     // Get partner data for the selected entity (country, region, or LATAM)
-    let partnerValues = {};  // partnerName → value for this year
+    let partnerValues = {};  // partnerName ? value for this year
     if (code && yearIdx >= 0) {
         if (hasProductFilter) {
             const itemPartners = DataLoader.getBilateralItemPartners(code, element, cropItem, geo);
@@ -387,10 +392,16 @@ export async function updateBilateralView() {
     // Sort partners by value descending
     const sortedPartners = Object.entries(partnerValues)
         .sort((a, b) => b[1] - a[1]);
-    const topN = Math.min(_topN, sortedPartners.length);
-    const topPartners = sortedPartners.slice(0, topN);
+    const selectedPartners = State.get('selectedPartners') || [];
+    const chosenPartners = selectedPartners.length > 0
+        ? selectedPartners
+            .map(name => [name, partnerValues[name]])
+            .filter(([, val]) => val != null && val > 0)
+            .sort((a, b) => b[1] - a[1])
+        : sortedPartners.slice(0, Math.min(_topN, sortedPartners.length));
+    const topPartners = chosenPartners;
 
-    // Build name → value map for all partners (for coloring)
+    // Build name ? value map for all partners (for coloring)
     const allValues = Object.values(partnerValues).filter(v => v > 0);
 
     // Color scale for partners
@@ -402,7 +413,7 @@ export async function updateBilateralView() {
             .clamp(true)
         : () => '#E8E0D4';
 
-    // ── Draw world countries (exclude Antarctica) ──
+    // -- Draw world countries (exclude Antarctica) --
     const features = _worldGeo.features.filter(f => {
         const n = f.properties.name;
         return n !== 'Antarctica' && n !== 'Fr. S. Antarctic Lands';
@@ -474,7 +485,7 @@ export async function updateBilateralView() {
                     code, element, pName, geo);
                 const elLabel = element === 'export' ? 'Exportaciones' : 'Importaciones';
                 let sub = hasProductFilter
-                    ? `${elLabel} — ${cropItem}`
+                    ? `${elLabel} - ${cropItem}`
                     : `${elLabel} ${year}`;
                 if (!hasProductFilter && partnerItems.length > 0) {
                     const top3 = partnerItems.slice(0, 3)
@@ -497,7 +508,7 @@ export async function updateBilateralView() {
         .on('mousemove', (event) => showTooltip(event))
         .on('mouseleave', () => hideTooltip());
 
-    // ── Draw border mesh ──
+    // -- Draw border mesh --
     _gWorld.selectAll('.bilateral-borders').remove();
     const _antarcticNames = new Set(['Antarctica', 'Fr. S. Antarctic Lands']);
     const borders = topojson.mesh(_worldTopo, _worldTopo.objects.countries,
@@ -514,7 +525,7 @@ export async function updateBilateralView() {
         .attr('stroke-linejoin', 'round')
         .attr('pointer-events', 'none');
 
-    // ── Draw arc lines and labels ──
+    // -- Draw arc lines and labels --
     _gArcs.selectAll('*').remove();
     _gLabels.selectAll('*').remove();
 
@@ -535,13 +546,17 @@ export async function updateBilateralView() {
         }
         if (sourceCenter) {
 
-            // Stroke width scale — sqrt so smaller flows are still visible
+            // Stroke width scale - keep small flows visible, but let large
+            // flows read clearly instead of all ribbons looking alike.
             const maxVal = topPartners[0][1];
             const minVal = topPartners[topPartners.length - 1][1];
-            const strokeScale = d3.scaleSqrt()
-                .domain([minVal, maxVal])
-                .range([1.5, 6])
+            const strokeScale = d3.scalePow()
+                .exponent(0.75)
+                .domain(minVal === maxVal ? [0, maxVal || 1] : [minVal, maxVal])
+                .range([1.2, 14])
                 .clamp(true);
+            const sourcePx = _projection(sourceCenter);
+            const labelData = [];
 
             topPartners.forEach(([pName, val], i) => {
                 const targetFeature = _findFeatureByPartner(pName);
@@ -550,17 +565,18 @@ export async function updateBilateralView() {
                 const targetCenter = d3.geoCentroid(targetFeature);
 
                 // Generate smooth screen-space bezier arc (no geo projection fragmentation)
-                const screenPts = _arcScreenPoints(sourceCenter, targetCenter);
+                const spreadOffset = (i - (topPartners.length - 1) / 2) * 11;
+                const screenPts = _arcScreenPoints(sourceCenter, targetCenter, spreadOffset);
                 if (screenPts.length < 3) return;
 
                 // Build tapered shape: thin at ends, thick in middle
-                const maxWidth = strokeScale(val) * 1.5;
+                const maxWidth = strokeScale(val);
                 const n = screenPts.length;
 
-                // Width profile: 0 → max → 0 (sine curve)
+                // Width profile: 0 ? max ? 0 (sine curve)
                 const widths = screenPts.map((_, idx) => {
                     const t = idx / (n - 1); // 0 to 1
-                    return maxWidth * Math.sin(t * Math.PI); // sine: 0→max→0
+                    return maxWidth * Math.sin(t * Math.PI); // sine: 0?max?0
                 });
 
                 // Compute normals and offset points for top/bottom edges
@@ -606,42 +622,41 @@ export async function updateBilateralView() {
                 // Partner label at target
                 const targetPx = _projection(targetCenter);
                 if (targetPx) {
-                    _gLabels.append('text')
-                        .attr('x', targetPx[0])
-                        .attr('y', targetPx[1] - 6)
-                        .attr('text-anchor', 'middle')
-                        .attr('font-size', '9px')
-                        .attr('font-weight', '600')
-                        .attr('fill', '#2D1B0E')
-                        .attr('pointer-events', 'none')
-                        .attr('opacity', 0)
-                        .text(_shortName(pName))
-                        .transition()
-                        .duration(400)
-                        .delay(i * 60 + 400)
-                        .attr('opacity', 0.85);
+                    const rightEdge = targetPx[0] > _width - 120;
+                    const leftEdge = targetPx[0] < 120;
+                    const side = rightEdge ? -1 : leftEdge ? 1 : (targetPx[0] >= (sourcePx?.[0] || 0) ? 1 : -1);
+                    labelData.push({
+                        text: _shortName(pName),
+                        x: Math.max(10, Math.min(_width - 10, targetPx[0] + side * 12)),
+                        y: targetPx[1] - 8 + ((i % 5) - 2) * 5,
+                        anchor: side > 0 ? 'start' : 'end',
+                        delay: i * 60 + 400,
+                    });
                 }
             });
+            _drawPartnerLabels(labelData);
         }
     }
 
-    // ── Top-N selector pills ──
+    // -- Top-N selector pills --
     _renderTopNPills();
 
-    // ── Year label ──
+    // -- Year label --
     document.getElementById('bilateral-year').textContent = year;
 
-    // ── Legend ──
+    // -- Legend --
     const entityName = _getEntityName(code, geo);
     _updateLegend(entityName, element, allValues, colorScale, hasProductFilter ? cropItem : null);
 
-    // ── Info panel ──
-    _updateInfoPanel(entityName, element, year, sortedPartners, hasProductFilter ? cropItem : null);
+    // -- Info panel --
+    _updateInfoPanel(entityName, element, year,
+        selectedPartners.length > 0 ? topPartners : sortedPartners,
+        hasProductFilter ? cropItem : null);
 }
 
-/* ═══════════════════════════════════════════════
-   Reverse lookup: geo name → partner name
-   ═══════════════════════════════════════════════ */
+/* -----------------------------------------------
+   Reverse lookup: geo name ? partner name
+   ----------------------------------------------- */
 function _geoNameToPartner(geoName, partnerValues) {
     // Direct match
     if (partnerValues[geoName]) return geoName;
@@ -652,9 +667,9 @@ function _geoNameToPartner(geoName, partnerValues) {
     return null;
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Short display name for arc labels
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _shortName(partnerName) {
     const shorts = {
         'United States of America': 'EE.UU.',
@@ -675,14 +690,57 @@ function _shortName(partnerName) {
         'Haiti': 'Haití',
         'Belgium-Luxembourg': 'Bélgica',
         'Viet Nam': 'Vietnam',
-        'Türkiye': 'Turquía',
+        'T-rkiye': 'Turquía',
     };
     return shorts[partnerName] || partnerName;
 }
 
-/* ═══════════════════════════════════════════════
+function _drawPartnerLabels(labels) {
+    const groups = d3.group(labels, d => d.anchor);
+    for (const groupLabels of groups.values()) {
+        groupLabels.sort((a, b) => a.y - b.y);
+        const minY = 24;
+        const maxY = Math.max(24, _height - 24);
+        const gap = 15;
+        for (let i = 0; i < groupLabels.length; i++) {
+            groupLabels[i].y = Math.max(minY, Math.min(maxY, groupLabels[i].y));
+            if (i > 0) groupLabels[i].y = Math.max(groupLabels[i].y, groupLabels[i - 1].y + gap);
+        }
+        const overflow = groupLabels[groupLabels.length - 1]?.y - maxY;
+        if (overflow > 0) groupLabels.forEach(label => { label.y -= overflow; });
+        groupLabels.forEach(label => {
+            const g = _gLabels.append('g')
+                .attr('opacity', 0)
+                .attr('pointer-events', 'none');
+            g.append('text')
+                .attr('x', label.x)
+                .attr('y', label.y)
+                .attr('text-anchor', label.anchor)
+                .attr('font-size', '11px')
+                .attr('font-weight', '800')
+                .attr('stroke', '#F5F0E6')
+                .attr('stroke-width', 4)
+                .attr('stroke-linejoin', 'round')
+                .text(label.text);
+            g.append('text')
+                .attr('x', label.x)
+                .attr('y', label.y)
+                .attr('text-anchor', label.anchor)
+                .attr('font-size', '11px')
+                .attr('font-weight', '800')
+                .attr('fill', '#2D1B0E')
+                .text(label.text);
+            g.transition()
+                .duration(400)
+                .delay(label.delay)
+                .attr('opacity', 0.94);
+        });
+    }
+}
+
+/* -----------------------------------------------
    Top-N pill selector
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _renderTopNPills() {
     const container = document.getElementById('bilateral-container');
     if (!container) return;
@@ -718,9 +776,9 @@ function _renderTopNPills() {
     });
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Legend
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _updateLegend(entityName, element, values, colorScale, productFilter) {
     const legend = document.getElementById('bilateral-legend');
     if (!legend) return;
@@ -736,7 +794,7 @@ function _updateLegend(entityName, element, values, colorScale, productFilter) {
     }
 
     const label = element === 'export' ? 'Exportaciones' : 'Importaciones';
-    const productLabel = productFilter ? ` — ${productFilter}` : '';
+    const productLabel = productFilter ? ` - ${productFilter}` : '';
     const legendColors = SEQ_COLORS.slice(1);
     const min = Math.max(1, d3.min(values));
     const max = d3.max(values);
@@ -753,9 +811,9 @@ function _updateLegend(entityName, element, values, colorScale, productFilter) {
     `;
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Info panel (top partners list)
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _updateInfoPanel(entityName, element, year, sortedPartners, productFilter) {
     const panel = document.getElementById('bilateral-info');
     if (!panel) return;
@@ -766,14 +824,14 @@ function _updateInfoPanel(entityName, element, year, sortedPartners, productFilt
         const productLabel = productFilter ? ` - ${productFilter}` : '';
         panel.innerHTML = `
             <div class="bilateral-info-title">${label}${entityName ? ` - ${entityName}` : ''}${productLabel} (${year})</div>
-            <div class="bilateral-empty">Sin datos de socios para la seleccion.</div>
+            <div class="bilateral-empty">Sin datos de socios para la selección.</div>
         `;
         return;
     }
 
     panel.style.display = '';
     const label = element === 'export' ? 'Destinos' : 'Orígenes';
-    const productLabel = productFilter ? ` — ${productFilter}` : '';
+    const productLabel = productFilter ? ` - ${productFilter}` : '';
     const top = sortedPartners.slice(0, _topN);
 
     const maxVal = top[0]?.[1] || 1;
@@ -792,12 +850,17 @@ function _updateInfoPanel(entityName, element, year, sortedPartners, productFilt
     }).join('');
 
     panel.innerHTML = `
-        <div class="bilateral-info-title">${label} — ${entityName}${productLabel} (${year})</div>
+        <div class="bilateral-info-title">${label} - ${entityName}${productLabel} (${year})</div>
         ${rows}
     `;
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Exports
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 export { _loadWorld as loadWorldTopo };
+
+
+
+
+

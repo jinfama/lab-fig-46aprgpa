@@ -4,6 +4,7 @@
 
 const ANDALUSIA_CENTER = [-4.5, 37.5]; // [lon, lat]
 const WORLD_ATLAS_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json';
+const WORLD_ATLAS_TIMEOUT_MS = 5000;
 
 // Andalusia bounding polygon (rough outline for highlight)
 const ANDALUSIA_BBOX = {
@@ -35,9 +36,22 @@ let _zooming = false;
 let _pCanvas, _pCtx;
 let _particles = [];
 let _pRaf = null;
-let _mouse = { x: -9999, y: -9999 };
-const NUM_LEAVES = 12;
-const MOUSE_R = 180;
+let _mouse = { x: -9999, y: -9999, px: -9999, py: -9999, vx: 0, vy: 0, active: false };
+let _pointerTrail = [];
+const NUM_LEAVES = 16;
+const MOUSE_R = 240;
+const TRAIL_MAX = 12;
+
+function _fetchJsonWithTimeout(url, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { signal: controller.signal })
+        .finally(() => clearTimeout(timer))
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        });
+}
 
 function _initParticles() {
     _pCanvas = document.getElementById('landing-particles');
@@ -47,14 +61,33 @@ function _initParticles() {
 
     for (let i = 0; i < NUM_LEAVES; i++) _particles.push(_createLeaf(true));
 
-    document.getElementById('landing').addEventListener('mousemove', e => {
-        _mouse.x = e.clientX; _mouse.y = e.clientY;
-    });
-    document.getElementById('landing').addEventListener('mouseleave', () => {
+    const landing = document.getElementById('landing');
+    landing.addEventListener('pointermove', _onPointerMove);
+    landing.addEventListener('pointerleave', () => {
+        _mouse.active = false;
         _mouse.x = -9999; _mouse.y = -9999;
     });
 
     _pLoop();
+}
+
+function _onPointerMove(e) {
+    _mouse.px = _mouse.x;
+    _mouse.py = _mouse.y;
+    _mouse.x = e.clientX;
+    _mouse.y = e.clientY;
+    _mouse.vx = (_mouse.px < -9000) ? 0 : _mouse.x - _mouse.px;
+    _mouse.vy = (_mouse.py < -9000) ? 0 : _mouse.y - _mouse.py;
+    _mouse.active = true;
+
+    const speed = Math.min(1, Math.hypot(_mouse.vx, _mouse.vy) / 42);
+    _pointerTrail.push({
+        x: _mouse.x,
+        y: _mouse.y,
+        r: 18 + speed * 18,
+        a: 0.18 + speed * 0.12,
+    });
+    if (_pointerTrail.length > TRAIL_MAX) _pointerTrail.shift();
 }
 
 function _resizeParticles() {
@@ -74,12 +107,13 @@ function _createLeaf(randomY) {
         y: randomY ? Math.random() * (_height || 600) : -size * 2,
         size,
         angle: Math.random() * Math.PI * 2,
-        spin: (Math.random() - 0.5) * 0.006,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: 0.08 + Math.random() * 0.12,
+        spin: (Math.random() - 0.5) * 0.0018,
+        vx: (Math.random() - 0.5) * 0.08,
+        vy: 0.045 + Math.random() * 0.065,
         opacity: 0.18 + Math.random() * 0.18,
         phase: Math.random() * Math.PI * 2,
         sway: 0.2 + Math.random() * 0.3,
+        glow: 0,
     };
 }
 
@@ -96,16 +130,21 @@ function _pUpdate() {
         p.angle += p.spin;
         p.phase += 0.005;
 
-        // Mouse repulsion
+        // Cursor attraction: leaves drift gently toward the pointer.
         const dx = p.x - _mouse.x;
         const dy = p.y - _mouse.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < MOUSE_R && dist > 0) {
-            const force = (1 - dist / MOUSE_R) * 0.5;
-            p.x += (dx / dist) * force;
-            p.y += (dy / dist) * force;
-            p.spin += (dx > 0 ? 0.001 : -0.001);
+        if (_mouse.active && dist < MOUSE_R && dist > 0) {
+            const force = Math.pow(1 - dist / MOUSE_R, 1.8);
+            p.x += (_mouse.x - p.x) * force * 0.012;
+            p.y += (_mouse.y - p.y) * force * 0.012;
+            p.x += _mouse.vx * force * 0.008;
+            p.y += _mouse.vy * force * 0.008;
+            p.spin += (_mouse.vx * 0.000035 - _mouse.vy * 0.000025) * force;
+            p.spin = Math.max(-0.004, Math.min(0.004, p.spin));
+            p.glow = Math.min(1, p.glow + force * 0.035);
         }
+        p.glow *= 0.96;
 
         // Recycle off-screen
         if (p.y > _height + p.size * 3 || p.x < -p.size * 4 || p.x > _width + p.size * 4) {
@@ -117,13 +156,34 @@ function _pUpdate() {
 
 function _pDraw() {
     _pCtx.clearRect(0, 0, _width, _height);
+    _drawPointerTrail();
+
     for (const p of _particles) {
         _pCtx.save();
-        _pCtx.globalAlpha = p.opacity;
+        _pCtx.globalAlpha = Math.min(0.48, p.opacity + p.glow * 0.16);
         _pCtx.translate(p.x, p.y);
         _pCtx.rotate(p.angle);
-        _drawOliveLeaf(_pCtx, p.size);
+        _drawOliveLeaf(_pCtx, p.size * (1 + p.glow * 0.04));
         _pCtx.restore();
+    }
+}
+
+function _drawPointerTrail() {
+    for (const t of _pointerTrail) {
+        t.a *= 0.84;
+        t.r *= 1.012;
+    }
+    _pointerTrail = _pointerTrail.filter(t => t.a > 0.015);
+
+    for (const t of _pointerTrail) {
+        const grd = _pCtx.createRadialGradient(t.x, t.y, 0, t.x, t.y, t.r);
+        grd.addColorStop(0, `rgba(154,190,126,${t.a * 0.11})`);
+        grd.addColorStop(0.45, `rgba(72,143,116,${t.a * 0.06})`);
+        grd.addColorStop(1, 'rgba(72,143,116,0)');
+        _pCtx.fillStyle = grd;
+        _pCtx.beginPath();
+        _pCtx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+        _pCtx.fill();
     }
 }
 
@@ -152,6 +212,7 @@ function _drawOliveLeaf(ctx, size) {
 function _destroyParticles() {
     if (_pRaf) cancelAnimationFrame(_pRaf);
     _particles = [];
+    _pointerTrail = [];
 }
 
 /* ═══════════════════════════════════════════════
@@ -177,7 +238,8 @@ function _destroyParticles() {
     // Start rotation immediately (sphere + graticule only)
     _startRotation();
 
-    // Load world data + app data in parallel
+    // Load world data for the animation only. App data is loaded after entry by
+    // app.js, otherwise the landing can block for a long time on large JSON files.
     const progressBar = document.querySelector('.landing-bar');
     let progress = 0;
     function tick(amount) {
@@ -185,8 +247,7 @@ function _destroyParticles() {
         if (progressBar) progressBar.style.width = progress + '%';
     }
 
-    const worldPromise = fetch(WORLD_ATLAS_URL)
-        .then(r => r.json())
+    const worldPromise = _fetchJsonWithTimeout(WORLD_ATLAS_URL, WORLD_ATLAS_TIMEOUT_MS)
         .then(topo => {
             _land = topojson.feature(topo, topo.objects.land);
             _globeReady = true;
@@ -198,23 +259,18 @@ function _destroyParticles() {
             tick(30);
         });
 
-    // Dynamic import of DataLoader for parallel init
-    const dataPromise = import('./data-loader.js')
-        .then(mod => mod.default.init())
-        .then(() => {
-            _dataReady = true;
-            tick(70);
-        })
-        .catch(err => {
-            console.error('Data load failed:', err);
-            _dataReady = true; // still allow entry
-            tick(70);
-        });
+    const dataPromise = Promise.resolve().then(() => {
+        _dataReady = true;
+        tick(70);
+    });
 
     Promise.all([worldPromise, dataPromise]).then(() => {
         // Zoom to Andalusia, then show CTA
         _zoomToAndalusia().then(_showCTA);
     });
+
+    // Hard fallback: never let the landing block access to the atlas.
+    setTimeout(_showCTA, 3000);
 
     // CTA click + keyboard enter
     document.getElementById('landing-cta').addEventListener('click', _enterApp);
@@ -283,16 +339,80 @@ function _drawGlobe() {
         _ctx.stroke();
     }
 
-    // Andalusia highlight (only visible when globe is oriented towards it)
+    // Andalusia highlight as a soft flag: green-white-green with a glow.
     if (_land) {
-        _ctx.beginPath();
-        _path(ANDALUSIA_BBOX);
-        _ctx.fillStyle = 'rgba(58,158,150,0.25)';
-        _ctx.fill();
-        _ctx.strokeStyle = 'rgba(58,158,150,0.5)';
-        _ctx.lineWidth = 1;
-        _ctx.stroke();
+        _drawAndalusiaFlagHighlight();
     }
+}
+
+function _drawAndalusiaFlagHighlight() {
+    const polygon = ANDALUSIA_BBOX.geometry.coordinates[0]
+        .map(coord => _projection(coord))
+        .filter(p => p && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+    if (polygon.length < 4) return;
+
+    const xs = polygon.map(p => p[0]);
+    const ys = polygon.map(p => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const w = maxX - minX;
+    const h = maxY - minY;
+    if (w <= 0 || h <= 0) return;
+
+    _ctx.save();
+    _ctx.beginPath();
+    _path(ANDALUSIA_BBOX);
+    _ctx.clip();
+
+    const green = 'rgba(0, 138, 69, 0.46)';
+    const white = 'rgba(255, 255, 255, 0.48)';
+    _ctx.fillStyle = green;
+    _ctx.fillRect(minX, minY, w, h / 3);
+    _ctx.fillStyle = white;
+    _ctx.fillRect(minX, minY + h / 3, w, h / 3);
+    _ctx.fillStyle = green;
+    _ctx.fillRect(minX, minY + h * 2 / 3, w, h / 3);
+
+    _ctx.strokeStyle = 'rgba(226, 255, 238, 0.34)';
+    _ctx.lineWidth = 1;
+    _ctx.beginPath();
+    _ctx.moveTo(minX, minY + h / 3);
+    _ctx.lineTo(maxX, minY + h / 3);
+    _ctx.moveTo(minX, minY + h * 2 / 3);
+    _ctx.lineTo(maxX, minY + h * 2 / 3);
+    _ctx.stroke();
+
+    const glow = _ctx.createRadialGradient(
+        minX + w * 0.52, minY + h * 0.48, 0,
+        minX + w * 0.52, minY + h * 0.48, Math.max(w, h) * 0.72
+    );
+    glow.addColorStop(0, 'rgba(255,255,255,0.20)');
+    glow.addColorStop(0.65, 'rgba(0,122,61,0.14)');
+    glow.addColorStop(1, 'rgba(0,122,61,0)');
+    _ctx.fillStyle = glow;
+    _ctx.fillRect(minX, minY, w, h);
+    _ctx.restore();
+
+    _ctx.save();
+    _ctx.beginPath();
+    _path(ANDALUSIA_BBOX);
+    _ctx.shadowColor = 'rgba(138, 255, 188, 0.90)';
+    _ctx.shadowBlur = 24;
+    _ctx.strokeStyle = 'rgba(103, 255, 171, 0.34)';
+    _ctx.lineWidth = 5;
+    _ctx.stroke();
+    _ctx.shadowBlur = 16;
+    _ctx.strokeStyle = 'rgba(205, 255, 224, 0.94)';
+    _ctx.lineWidth = 2.1;
+    _ctx.stroke();
+    _ctx.shadowBlur = 0;
+    _ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+    _ctx.lineWidth = 0.8;
+    _ctx.stroke();
+    _ctx.strokeStyle = 'rgba(0, 122, 61, 0.72)';
+    _ctx.lineWidth = 0.45;
+    _ctx.stroke();
+    _ctx.restore();
 }
 
 function _zoomToAndalusia() {

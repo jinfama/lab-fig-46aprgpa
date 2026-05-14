@@ -32,6 +32,8 @@ const TableView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'table') return;
+
         const year = State.get('currentYear');
         const indicator = State.get('activeIndicator');
         const level = State.get('geoLevel');

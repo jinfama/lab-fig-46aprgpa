@@ -309,9 +309,10 @@ const OLD_CATEGORY_ICONS = {
    ═══════════════════════════════════════════════ */
 export const CATEGORY_ICONS = {
     landuse: `
-        <path d="M14.5 4 9.5 2 4 4v16l5.5-2 5 2 5.5-2V2l-5.5 2v16" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M9.5 2v16" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M6.4 8.2 9.5 7l5 2 3.1-1.2" stroke="currentColor" stroke-width="1.4"/>`,
+        <path d="M4.2 6.6 9.4 4.4l5.2 2.2 5.2-2.2v13.3l-5.2 2.2-5.2-2.2-5.2 2.2V6.6z" stroke="currentColor" stroke-width="1.65"/>
+        <path d="M9.4 4.4v13.3M14.6 6.6v13.3" stroke="currentColor" stroke-width="1.45"/>
+        <path d="M5.9 10.1c1.5-.7 2.7-.7 4.1 0 1.5.7 2.7.7 4.1 0 1.4-.7 2.6-.7 4 0" stroke="currentColor" stroke-width="1.25"/>
+        <path d="M5.9 14.4c1.5-.7 2.7-.7 4.1 0 1.5.7 2.7.7 4.1 0 1.4-.7 2.6-.7 4 0" stroke="currentColor" stroke-width="1.25"/>`,
 
     agriculture: `
         <path d="M12 21V5" stroke="currentColor" stroke-width="1.8"/>
@@ -326,14 +327,22 @@ export const CATEGORY_ICONS = {
         <path d="M10 12h.01M14 12h.01M10.2 15.8c1.1.7 2.5.7 3.6 0" stroke="currentColor" stroke-width="1.8"/>`,
 
     trade: `
-        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M3.5 12h17M12 3.5c2.1 2.3 3.2 5.1 3.2 8.5S14.1 18.2 12 20.5M12 3.5C9.9 5.8 8.8 8.6 8.8 12s1.1 6.2 3.2 8.5" stroke="currentColor" stroke-width="1.45"/>
-        <path d="M6.4 7.5c1.9-1.3 3.8-2 5.6-2s3.7.7 5.6 2M6.4 16.5c1.9 1.3 3.8 2 5.6 2s3.7-.7 5.6-2" stroke="currentColor" stroke-width="1.35"/>`,
+        <path d="M4.2 7.4h7.3v5.8H4.2V7.4zM12.5 10.9h7.3v5.8h-7.3v-5.8z" stroke="currentColor" stroke-width="1.65"/>
+        <path d="M6.2 10.3h3.2M14.5 13.8h3.2" stroke="currentColor" stroke-width="1.25"/>
+        <path d="M7.5 6.1c1.1-1.3 2.8-2.1 4.7-2.1 2 0 3.7.8 4.8 2.2" stroke="currentColor" stroke-width="1.45"/>
+        <path d="m16.7 3.9.6 2.6-2.7.2" stroke="currentColor" stroke-width="1.45"/>
+        <path d="M16.5 18c-1.1 1.3-2.8 2.1-4.7 2.1-2 0-3.7-.8-4.8-2.2" stroke="currentColor" stroke-width="1.45"/>
+        <path d="m7.3 20.1-.6-2.6 2.7-.2" stroke="currentColor" stroke-width="1.45"/>`,
 
     labor: `
         <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8"/>
         <circle cx="9.5" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8"/>
         <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8"/>`,
+
+    footprints: `
+        <path d="M8.4 5.1c1.1-.3 2.4.4 2.8 1.8.5 1.8-.2 4.3-1.7 4.7-1.4.4-3.1-1.3-3.6-3.1-.4-1.5.5-3.1 2.5-3.4z" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M15.9 12.3c1.1-.3 2.4.4 2.8 1.8.5 1.8-.2 4.3-1.7 4.7-1.4.4-3.1-1.3-3.6-3.1-.4-1.5.5-3.1 2.5-3.4z" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M6.4 3.2h.01M9.1 2.6h.01M11.4 4.2h.01M13.8 10.4h.01M16.5 9.8h.01M18.9 11.4h.01" stroke="currentColor" stroke-width="1.9"/>`,
 
     socioeconomic: `
         <path d="M12 3v18M5 7h14M6 7l-3 6h6L6 7zM18 7l-3 6h6l-3-6z" stroke="currentColor" stroke-width="1.8"/>

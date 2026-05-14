@@ -16,6 +16,7 @@ const MapView = (() => {
     let _initialized = false;
     let _colorFn = null;
     let _allValues = null; // cached all-years values for stable legend
+    const _allValuesCache = new Map();
     let _legendKey = null; // guard: only rebuild legend when indicator/geoLevel change
     let _bubbleExtent = null; // cached min/max across all years for stable bubble sizing
     let _bubbleLegendKey = null; // guard for bubble legend
@@ -230,6 +231,11 @@ const MapView = (() => {
 
     /** Compute values across ALL years for a stable color scale/legend */
     function _computeAllValues(indicator) {
+        const level = State.get('geoLevel');
+        const displayLevel = level === 'region' ? 'provincia' : level;
+        const cacheKey = `${indicator}|${displayLevel}`;
+        if (_allValuesCache.has(cacheKey)) return _allValuesCache.get(cacheKey);
+
         const years = DataLoader.getYears();
         const isPct = indicator.startsWith('pct_');
         const isClimate = ['tmean', 'tmin', 'tmax', 'prec'].includes(indicator);
@@ -244,18 +250,19 @@ const MapView = (() => {
                 }
             }
         }
+        _allValuesCache.set(cacheKey, values);
         return values;
     }
 
-    /** Rebuild color scale and legend from all-years data (called on indicator/geoLevel change) */
+    /** Rebuild color scale and legend (called on indicator/geoLevel change) */
     function _rebuildScale() {
         const indicator = State.get('activeIndicator');
-        _allValues = _computeAllValues(indicator);
+        _allValues = _computeValues(State.get('currentYear'), indicator);
         _colorFn = buildColorScale(indicator, _allValues);
         // Stable bubble extent from all years
         const BUBBLE_IND = new Set(['habitantes', 'densidad', 'pob_agrupada', 'pob_dispersa']);
         if (BUBBLE_IND.has(indicator)) {
-            const pos = _allValues.filter(v => v > 0);
+            const pos = _computeAllValues(indicator).filter(v => v > 0);
             _bubbleExtent = pos.length > 0 ? d3.extent(pos) : null;
         } else {
             _bubbleExtent = null;
@@ -293,7 +300,7 @@ const MapView = (() => {
 
         // Use cached color scale (rebuilt on indicator/geoLevel change for stability)
         if (!_colorFn) {
-            _allValues = _computeAllValues(indicator);
+            _allValues = _computeValues(State.get('currentYear'), indicator);
             _colorFn = buildColorScale(indicator, _allValues);
         }
 
@@ -629,8 +636,8 @@ const MapView = (() => {
             return;
         }
 
-        // Use cached all-years values for stable legend across timelapse/dual mode
-        let values = _allValues ? [..._allValues] : _computeAllValues(indicator);
+        // Use the visible year for the legend to keep initial paint responsive.
+        let values = _computeValues(State.get('currentYear'), indicator);
         values.sort((a, b) => a - b);
 
         const isPct = indicator.startsWith('pct_');

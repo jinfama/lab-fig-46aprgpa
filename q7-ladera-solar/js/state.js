@@ -34,6 +34,7 @@ const State = (() => {
         // Viz settings
         mapMode: 'choropleth',
         chartLayout: 'overlay',        // overlay | facet
+        facetYMode: 'shared',          // shared | free
         chartType: 'lines',           // lines | stacked
         scaleType: 'linear',           // linear | log
         rankingTopN: 10,

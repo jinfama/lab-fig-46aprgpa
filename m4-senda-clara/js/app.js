@@ -67,9 +67,6 @@ function _getIndicatorGroup(indId) {
     try {
         // Ensure data for the default category is loaded (init() only loads the first enabled category)
         await DataLoader.loadCategory(defaultCat);
-        if (catDef && catDef.dataFiles && catDef.dataFiles.monthly) {
-            await DataLoader.loadMonthlyData(defaultCat);
-        }
         DataLoader.setActiveCategory(defaultCat);
     } catch (err) {
         console.error('Failed to load default category:', defaultCat, err);
@@ -514,6 +511,22 @@ function _syncActiveView(view) {
 }
 
 function _renderView(view) {
+    if (['climogram', 'spaghetti', 'ridge'].includes(view) && !DataLoader.hasMonthlyData('clima')) {
+        const loading = document.getElementById('loading');
+        loading.style.display = '';
+        loading.querySelector('.loading-sub').textContent = 'Cargando datos mensuales...';
+        DataLoader.loadMonthlyData('clima')
+            .then(() => {
+                loading.style.display = 'none';
+                _renderView(view);
+            })
+            .catch(err => {
+                console.error('Failed to load monthly climate data:', err);
+                loading.style.display = 'none';
+            });
+        return;
+    }
+
     if (view === 'map') MapView.render();
     else if (view === 'chart') {
         const chartType = State.get('chartType');
@@ -595,10 +608,6 @@ async function _onCategoryChange(catId) {
         await DataLoader.loadCategory(catId);
         DataLoader.setActiveCategory(catId);
 
-        // Load monthly data if available (for climogram/spaghetti)
-        if (cat && cat.dataFiles && cat.dataFiles.monthly) {
-            await DataLoader.loadMonthlyData(catId);
-        }
     } catch (err) {
         console.error('Failed to load category:', catId, err);
         loading.style.display = 'none';

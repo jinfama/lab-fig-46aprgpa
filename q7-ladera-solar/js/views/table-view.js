@@ -1,8 +1,8 @@
-﻿/* table-view.js — Sortable data table */
+/* table-view.js - Sortable data table */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { fmtUnit } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { fmtUnit } from '../utils.js?v=20260514-sidebar-gini-fix52';
 
 let _container;
 let _sortCol = 'value';
@@ -64,7 +64,7 @@ export function updateTableView() {
         th.textContent = col.label;
         th.style.cursor = 'pointer';
         if (_sortCol === col.id) {
-            th.textContent += _sortAsc ? ' ▲' : ' ▼';
+            th.textContent += _sortAsc ? ' ?' : ' ?';
         }
         th.addEventListener('click', () => {
             if (_sortCol === col.id) _sortAsc = !_sortAsc;
@@ -148,3 +148,8 @@ function _getActiveIndicatorLabel() {
     }
     return '';
 }
+
+
+
+
+

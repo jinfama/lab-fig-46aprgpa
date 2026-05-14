@@ -19,6 +19,8 @@ const StripesView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'stripes') return;
+
         const container = document.getElementById('stripes-wrapper');
         if (!container) return;
         container.innerHTML = '';

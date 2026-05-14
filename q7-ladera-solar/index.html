@@ -1,13 +1,13 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow,noarchive">
 <title>Atlas Agrario de Am&eacute;rica Latina</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23D4A032'/%3E%3Cpath d='M12 4v16M8 12c0-2 2-4 4-4M16 12c0-2-2-4-4-4M8 8c0-2 2-4 4-4M16 8c0-2-2-4-4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260513-trend-area-timeline-fix31">
+<link rel="stylesheet" href="css/styles.css?v=20260514-sidebar-gini-fix52">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script type="importmap">
@@ -21,6 +21,7 @@
     <canvas class="landing-globe" id="landing-globe"></canvas>
     <canvas class="landing-particles" id="landing-particles"></canvas>
     <div class="landing-retro-map" id="landing-retro-map"></div>
+    <div class="landing-cursor" id="landing-cursor" aria-hidden="true"></div>
     <div class="landing-content" id="landing-content">
         <div class="landing-top">
             <div class="landing-atlas">ATLAS</div>
@@ -71,6 +72,7 @@
             <!-- Selection chips (inline inside query bar) -->
             <div class="selection-bar" id="selection-bar"></div>
             <div class="query-spacer"></div>
+            <button class="query-icon-btn indicator-info-btn" id="btn-indicator-info" type="button" title="QuÃ© mide este indicador" aria-label="InformaciÃ³n del indicador">i</button>
             <button class="query-icon-btn" id="btn-toggle-panel" title="Mostrar/ocultar panel">
                 <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
             </button>
@@ -89,7 +91,7 @@
                 <div class="map-container" id="map-container-2" style="flex:1; display:none; position:relative;">
                     <div class="map-year" id="map-year-2"></div>
                     <svg class="map-svg" id="map-svg-2"></svg>
-                    <button id="btn-close-compare" style="position:absolute; top:12px; right:16px; padding:4px 10px; background:var(--c-bg); border:1px solid var(--c-border); cursor:pointer; border-radius:4px; font-size:11px; z-index:10; opacity:0.7;" title="Cerrar comparación">✕</button>
+                    <button id="btn-close-compare" style="position:absolute; top:12px; right:16px; padding:4px 10px; background:var(--c-bg); border:1px solid var(--c-border); cursor:pointer; border-radius:4px; font-size:11px; z-index:10; opacity:0.7;" title="Cerrar comparaciÃ³n">&times;</button>
                 </div>
             </div>
             <div class="viz-panel" id="panel-trend">
@@ -138,25 +140,67 @@
                         <p class="about-lead">Plataforma de datos hist&oacute;ricos sobre producci&oacute;n agr&iacute;cola, comercio, ganader&iacute;a y trabajo agrario en Am&eacute;rica Latina.</p>
                         <div class="about-nav" id="about-nav">
                             <button class="about-nav-btn active" data-section="metodologia">Metodolog&iacute;a</button>
+                            <button class="about-nav-btn" data-section="cobertura">Cobertura</button>
                             <button class="about-nav-btn" data-section="equipo">Equipo</button>
                             <button class="about-nav-btn" data-section="publicaciones">Publicaciones</button>
                         </div>
                         <div class="about-section active" id="about-metodologia">
-                            <div class="method-cards" id="method-cards">
-                                <section class="method-card">
-                                    <h2>Base agraria</h2>
-                                    <p>Cultivos, comercio, ganader&iacute;a y uso del suelo se armonizan en paneles pa&iacute;s-a&ntilde;o, con observaciones originales preservadas y rellenos trazables.</p>
-                                </section>
-                                <section class="method-card">
-                                    <h2>Subnacional</h2>
-                                    <p>El desglose admin1 se usa cuando existen datos y geometr&iacute;a. Si no hay detalle real para un indicador, el visor muestra el valor nacional.</p>
-                                </section>
-                                <section class="method-card">
-                                    <h2>Desigualdad</h2>
-                                    <p>El bloque socioecon&oacute;mico empieza con Gini de la tierra, Gini de ingreso y reforma agraria, citando las fuentes externas originales.</p>
-                                </section>
-                                <a class="method-link" href="docs/metodologia.md" target="_blank" rel="noopener">Documento metodol&oacute;gico completo</a>
+                            <div class="method-accordion" id="method-cards">
+                                <details class="method-card method-detail" open>
+                                    <summary>
+                                        <span>
+                                            <span class="method-kicker">Base principal</span>
+                                            <strong>Series agrarias nacionales</strong>
+                                        </span>
+                                    </summary>
+                                    <div class="method-detail-body">
+                                        <p>Cultivos, uso del suelo, ganader&iacute;a y comercio directo se organizan como paneles pa&iacute;s-a&ntilde;o comparables. El criterio del visor es separar observaci&oacute;n, armonizaci&oacute;n y estimaci&oacute;n: las series originales se preservan en la base de trabajo y el visor presenta las variables finales ya normalizadas.</p>
+                                        <p>El documento general del proyecto cubrir&aacute; esta base agraria completa, excepto los m&oacute;dulos de trabajo y desigualdad, que necesitan notas y citas propias.</p>
+                                    </div>
+                                </details>
+                                <details class="method-card method-detail">
+                                    <summary>
+                                        <span>
+                                            <span class="method-kicker">Comercio</span>
+                                            <strong>Comercio directo y bilateral</strong>
+                                        </span>
+                                    </summary>
+                                    <div class="method-detail-body">
+                                        <p>El comercio directo resume exportaciones, importaciones y balanza por territorio y producto. El comercio bilateral a&ntilde;ade socios comerciales y permite consultar flujos origen-destino, productos y rankings de socios cuando la matriz bilateral existe.</p>
+                                        <p>Cuando el visor muestra agregados regionales, estos proceden de la suma o agregaci&oacute;n regional definida en la base procesada. Las futuras notas de descarga deber&iacute;an distinguir dato observado, agregado regional y estimaci&oacute;n.</p>
+                                    </div>
+                                </details>
+                                <details class="method-card method-detail">
+                                    <summary>
+                                        <span>
+                                            <span class="method-kicker">Territorio</span>
+                                            <strong>Cobertura subnacional</strong>
+                                        </span>
+                                    </summary>
+                                    <div class="method-detail-body">
+                                        <p>El nivel subnacional se activa s&oacute;lo cuando existen geometr&iacute;as y datos admin1. Si no hay dato subnacional real para un indicador, el visor debe evitar mezclarlo con detalle provincial y mostrar con claridad el dato nacional o bloquear el nivel, seg&uacute;n el caso.</p>
+                                        <p>La cobertura var&iacute;a por pa&iacute;s, a&ntilde;o e indicador. Por eso se a&ntilde;ade una pesta&ntilde;a espec&iacute;fica de cobertura calculada desde los JSON actuales del visor.</p>
+                                    </div>
+                                </details>
+                                <details class="method-card method-detail">
+                                    <summary>
+                                        <span>
+                                            <span class="method-kicker">M&oacute;dulos externos</span>
+                                            <strong>Trabajo y desigualdad</strong>
+                                        </span>
+                                    </summary>
+                                    <div class="method-detail-body">
+                                        <p>Trabajo y desigualdad se tratar&aacute;n como secciones metodol&oacute;gicas separadas porque proceden de fuentes externas y criterios espec&iacute;ficos. En desigualdad, las observaciones originales de Gini y reforma agraria deben citarse por autor y fuente; las interpolaciones o agregaciones regionales deben marcarse como elaboraci&oacute;n propia.</p>
+                                    </div>
+                                </details>
+                                <div class="method-footer-link">
+                                    <a class="method-link" href="docs/metodologia.md" target="_blank" rel="noopener">Abrir borrador metodol&oacute;gico general</a>
+                                </div>
                             </div>
+                        </div>
+                        <div class="about-section" id="about-cobertura">
+                            <div class="coverage-summary" id="coverage-summary">Pulsa esta pesta&ntilde;a para calcular la cobertura desde los datos cargados por el visor.</div>
+                            <div class="coverage-grid" id="coverage-grid"></div>
                         </div>
                         <div class="about-section" id="about-equipo">
                             <div class="about-team-grid">
@@ -238,7 +282,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <span>Fuente: FAO &middot; FAOSTAT &middot; IIA &middot; Estad&iacute;sticas nacionales</span>
+            <span id="footer-source">Fuente: FAO &middot; FAOSTAT &middot; IIA &middot; Estad&iacute;sticas nacionales</span>
             <div class="footer-actions">
                 <button class="footer-btn" id="btn-csv" title="Descargar datos, fuentes y cita del panel actual">Descargar</button>
                 <button class="footer-btn" id="btn-fs">Pantalla completa</button>
@@ -250,25 +294,25 @@
     <aside class="right-panel" id="right-panel">
       <div class="right-panel-resizer" id="right-panel-resizer" title="Cambiar ancho del panel"></div>
       <div class="rp-section" id="rp-options">
-        <div class="rp-section-header">OPCIONES</div>
+        <button class="rp-section-header" type="button">OPCIONES</button>
         <div class="rp-section-body" id="rp-options-body"></div>
       </div>
       <div class="rp-section" id="rp-products" style="display:none">
-        <div class="rp-section-header" id="rp-products-header">PRODUCTOS</div>
+        <button class="rp-section-header" id="rp-products-header" type="button">PRODUCTOS</button>
         <div class="rp-section-body rp-scrollable" id="rp-products-body">
           <div class="rp-search"><input type="text" id="rp-product-search" placeholder="Buscar..."></div>
           <div id="rp-product-list"></div>
         </div>
       </div>
       <div class="rp-section" id="rp-partners" style="display:none">
-        <div class="rp-section-header" id="rp-partners-header">SOCIOS</div>
+        <button class="rp-section-header" id="rp-partners-header" type="button">SOCIOS</button>
         <div class="rp-section-body rp-scrollable" id="rp-partners-body">
           <div class="rp-search"><input type="text" id="rp-partner-search" placeholder="Buscar socio..."></div>
           <div id="rp-partner-list"></div>
         </div>
       </div>
       <div class="rp-section" id="rp-territories">
-        <div class="rp-section-header">TERRITORIOS</div>
+        <button class="rp-section-header" type="button">TERRITORIOS</button>
         <div class="rp-section-body rp-scrollable" id="rp-territories-body">
           <div id="rp-level-pills"></div>
           <div class="rp-search"><input type="text" id="rp-territory-search" placeholder="Buscar pa&iacute;s..."></div>
@@ -283,14 +327,14 @@
     <div class="download-header">
       <div>
         <div class="download-eyebrow">Panel actual</div>
-        <h2 id="download-title">Descarga y documentación</h2>
+        <h2 id="download-title">Descarga y documentaciÃ³n</h2>
       </div>
       <button class="download-close" id="download-close" type="button" aria-label="Cerrar">&times;</button>
     </div>
     <div class="download-tabs" role="tablist">
       <button class="download-tab active" type="button" data-download-tab="data">Datos</button>
-      <button class="download-tab" type="button" data-download-tab="sources">Fuentes y método</button>
-      <button class="download-tab" type="button" data-download-tab="citation">Cita y créditos</button>
+      <button class="download-tab" type="button" data-download-tab="sources">Fuentes y mÃ©todo</button>
+      <button class="download-tab" type="button" data-download-tab="citation">Cita y crÃ©ditos</button>
     </div>
     <div class="download-body" id="download-body"></div>
     <div class="download-actions">
@@ -300,6 +344,11 @@
   </div>
 </div>
 
-<script type="module" src="js/landing.js?v=20260513-trend-area-timeline-fix31"></script>
+<script type="module" src="js/landing.js?v=20260514-sidebar-gini-fix52"></script>
 </body>
 </html>
+
+
+
+
+

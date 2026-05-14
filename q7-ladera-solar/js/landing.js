@@ -1,4 +1,4 @@
-﻿/* landing.js — Three.js realistic globe → zoom to LATAM → retro map → app.
+/* landing.js - Three.js realistic globe ? zoom to LATAM ? retro map ? app.
    Blue Marble Earth texture, smooth camera zoom, clean transition. */
 
 import * as THREE from 'three';
@@ -6,13 +6,22 @@ import * as THREE from 'three';
 let _width, _height;
 let _scene, _camera, _renderer, _globe, _animFrame;
 let _dataReady = false;
+let _dataPromise = null;
+let _appStarting = false;
 
-/* ═══════════════════════════════════════════════
-   Particles — floating grain/seed shapes
-   ═══════════════════════════════════════════════ */
+/* -----------------------------------------------
+   Particles - floating grain/seed shapes
+   ----------------------------------------------- */
 let _pCanvas, _pCtx, _particles = [], _pRaf = null;
 let _mouse = { x: -9999, y: -9999 };
 const NUM_P = 14, MOUSE_R = 160;
+let _cursorEl = null;
+let _cursorRaf = null;
+let _cursorVisible = false;
+let _cursorTarget = { x: innerWidth / 2, y: innerHeight / 2 };
+let _cursorPos = { x: innerWidth / 2, y: innerHeight / 2 };
+let _cursorPrev = { x: innerWidth / 2, y: innerHeight / 2 };
+let _cursorAngle = 180;
 
 function _initParticles() {
     _pCanvas = document.getElementById('landing-particles');
@@ -63,16 +72,152 @@ function _pDrw() {
 }
 function _destroyP() { if(_pRaf)cancelAnimationFrame(_pRaf); _particles=[]; }
 
-/* ═══════════════════════════════════════════════
-   Three.js Globe — realistic Earth
-   ═══════════════════════════════════════════════ */
+/* -----------------------------------------------
+   Landing cursor - inverted LATAM silhouette
+   ----------------------------------------------- */
+function _initLatamCursor() {
+    const landing = document.getElementById('landing');
+    _cursorEl = document.getElementById('landing-cursor');
+    const canUseCursor = matchMedia('(pointer: fine)').matches
+        && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!landing || !_cursorEl || !canUseCursor) return;
+
+    _cursorEl.innerHTML = '';
+    fetch('data/latam.topo.json?v=20260514-sidebar-gini-fix52')
+        .then(r => r.json())
+        .then(topo => {
+            if (!_cursorEl || !document.body.contains(_cursorEl)) return;
+            const geo = topojson.feature(topo, topo.objects.countries);
+            const width = 54;
+            const height = 82;
+            const proj = d3.geoMercator().fitExtent([[6, 5], [width - 6, height - 8]], geo);
+            const path = d3.geoPath(proj);
+            const borders = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+
+            const svg = d3.select(_cursorEl)
+                .append('svg')
+                .attr('viewBox', `0 0 ${width} ${height}`)
+                .attr('aria-hidden', 'true');
+
+            svg.append('ellipse')
+                .attr('class', 'latam-cursor-halo')
+                .attr('cx', width / 2)
+                .attr('cy', height / 2)
+                .attr('rx', 22)
+                .attr('ry', 35);
+
+            const g = svg.append('g')
+                .attr('transform', `translate(${width / 2} ${height / 2}) rotate(180) translate(${-width / 2} ${-height / 2})`);
+
+            g.selectAll('path.latam-cursor-land')
+                .data(geo.features)
+                .join('path')
+                .attr('class', 'latam-cursor-land')
+                .attr('d', path);
+
+            g.append('path')
+                .datum(borders)
+                .attr('class', 'latam-cursor-border')
+                .attr('d', path);
+
+            svg.append('circle')
+                .attr('class', 'latam-cursor-pin')
+                .attr('cx', width / 2)
+                .attr('cy', height / 2)
+                .attr('r', 2.2);
+
+            landing.classList.add('latam-cursor-ready');
+            _cursorLoop();
+        })
+        .catch(e => console.warn('LATAM cursor failed:', e));
+
+    landing.addEventListener('pointerenter', _onCursorEnter);
+    landing.addEventListener('pointermove', _onCursorMove);
+    landing.addEventListener('pointerleave', _onCursorLeave);
+    landing.addEventListener('pointerdown', _onCursorDown);
+    landing.addEventListener('pointerup', _onCursorUp);
+}
+
+function _onCursorEnter(event) {
+    _cursorVisible = true;
+    _onCursorMove(event);
+    if (_cursorEl) _cursorEl.classList.add('visible');
+}
+
+function _onCursorMove(event) {
+    _cursorVisible = true;
+    if (_cursorEl) _cursorEl.classList.add('visible');
+    _cursorTarget.x = event.clientX;
+    _cursorTarget.y = event.clientY;
+}
+
+function _onCursorLeave() {
+    _cursorVisible = false;
+    if (_cursorEl) _cursorEl.classList.remove('visible', 'pressed');
+}
+
+function _onCursorDown() {
+    if (_cursorEl) _cursorEl.classList.add('pressed');
+}
+
+function _onCursorUp() {
+    if (_cursorEl) _cursorEl.classList.remove('pressed');
+}
+
+function _cursorLoop() {
+    if (!_cursorEl) return;
+    _cursorPos.x += (_cursorTarget.x - _cursorPos.x) * 0.22;
+    _cursorPos.y += (_cursorTarget.y - _cursorPos.y) * 0.22;
+    const dx = _cursorTarget.x - _cursorPrev.x;
+    const dy = _cursorTarget.y - _cursorPrev.y;
+    _cursorPrev.x += dx * 0.35;
+    _cursorPrev.y += dy * 0.35;
+
+    const cx = innerWidth / 2;
+    const cy = innerHeight / 2;
+    const vx = _cursorTarget.x - cx;
+    const vy = _cursorTarget.y - cy;
+    const dist = Math.min(1, Math.hypot(vx, vy) / Math.max(1, Math.hypot(cx, cy)));
+    const targetAngle = Math.atan2(vy, vx) * 180 / Math.PI + 90;
+    let delta = ((targetAngle - _cursorAngle + 540) % 360) - 180;
+    _cursorAngle += delta * 0.10;
+
+    const tilt = Math.max(-18, Math.min(18, dx * 0.18));
+    const rotateX = Math.max(-16, Math.min(16, -vy / Math.max(1, cy) * 14));
+    const rotateY = Math.max(-18, Math.min(18, vx / Math.max(1, cx) * 16));
+    const stretch = 1 + Math.min(0.09, Math.abs(dx + dy) * 0.0009) + dist * 0.025;
+    _cursorEl.style.transform = `translate3d(${_cursorPos.x}px, ${_cursorPos.y}px, 0) translate(-50%, -50%) perspective(240px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotate(${_cursorAngle + tilt}deg) scale(${stretch})`;
+    _cursorEl.classList.toggle('visible', _cursorVisible);
+    _cursorRaf = requestAnimationFrame(_cursorLoop);
+}
+
+function _destroyLatamCursor() {
+    if (_cursorRaf) cancelAnimationFrame(_cursorRaf);
+    _cursorRaf = null;
+    const landing = document.getElementById('landing');
+    if (landing) {
+        landing.classList.remove('latam-cursor-ready');
+        landing.removeEventListener('pointerenter', _onCursorEnter);
+        landing.removeEventListener('pointermove', _onCursorMove);
+        landing.removeEventListener('pointerleave', _onCursorLeave);
+        landing.removeEventListener('pointerdown', _onCursorDown);
+        landing.removeEventListener('pointerup', _onCursorUp);
+    }
+    if (_cursorEl) _cursorEl.remove();
+    _cursorEl = null;
+    _cursorVisible = false;
+}
+
+/* -----------------------------------------------
+   Three.js Globe - realistic Earth
+   ----------------------------------------------- */
 function _initGlobe() {
     const canvas = document.getElementById('landing-globe');
     if (!canvas) return;
 
     _scene = new THREE.Scene();
     _camera = new THREE.PerspectiveCamera(45, _width / _height, 0.1, 100);
-    // Start very far away — deep space view of the whole globe
+    // Start very far away - deep space view of the whole globe
     _camera.position.set(0, 1.7, 8.8);
     _camera.lookAt(0, 0, 0);
 
@@ -99,7 +244,7 @@ function _initGlobe() {
 
     _globe = new THREE.Mesh(geo, mat);
     // At rotation.y=0, Three.js SphereGeometry + equirectangular texture
-    // shows lon -90° (western Americas) centered on camera → perfect start
+    // shows lon -90- (western Americas) centered on camera ? perfect start
     _globe.rotation.y = 0;
     _scene.add(_globe);
 
@@ -169,14 +314,14 @@ function _getTargetMapFrame() {
     };
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Zoom to Latin America
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _zoomToLatam() {
     return new Promise(resolve => {
         if (_animFrame) cancelAnimationFrame(_animFrame);
 
-        // ── Normalize current globe rotation to [-Ï€, Ï€] ──
+        // -- Normalize current globe rotation to [-Ï€, Ï€] --
         let startRotY = _globe.rotation.y % (2 * Math.PI);
         if (startRotY > Math.PI) startRotY -= 2 * Math.PI;
         if (startRotY < -Math.PI) startRotY += 2 * Math.PI;
@@ -192,12 +337,12 @@ function _zoomToLatam() {
         const targetRotY = -((targetLon + 90) * Math.PI) / 180;
         const targetRotX = -targetLat * Math.PI / 180; // Removing the 0.82 modifier to match exact lat
 
-        // Shortest angular path — avoid spinning the long way around
+        // Shortest angular path - avoid spinning the long way around
         let deltaRotY = targetRotY - startRotY;
         if (deltaRotY > Math.PI) deltaRotY -= 2 * Math.PI;
         if (deltaRotY < -Math.PI) deltaRotY += 2 * Math.PI;
 
-        // ── Camera: descend from deep space into LATAM ──
+        // -- Camera: descend from deep space into LATAM --
         const frame = _getTargetMapFrame();
         const dyNorm = (frame.cy - (_height / 2)) / _height;
 
@@ -235,7 +380,7 @@ function _zoomToLatam() {
             if (t < 1) {
                 requestAnimationFrame(animate);
             } else {
-                // Zoom complete — fade out globe, show retro map
+                // Zoom complete - fade out globe, show retro map
                 _fadeOutGlobe().then(() => {
                     _showRetroMap();
                     setTimeout(resolve, 800);
@@ -264,19 +409,19 @@ function _fadeOutGlobe() {
     });
 }
 
-/* ═══════════════════════════════════════════════
-   Retro map overlay — D3 SVG smooth borders
+/* -----------------------------------------------
+   Retro map overlay - D3 SVG smooth borders
    Shows on clean dark background after globe fades out
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 function _showRetroMap() {
     const el = document.getElementById('landing-retro-map');
     if (!el) return;
     el.innerHTML = '';
 
-    fetch('data/latam.topo.json?v=20260513-trend-area-timeline-fix31')
+    fetch('data/latam.topo.json?v=20260514-sidebar-gini-fix52')
         .then(r => r.json())
         .then(topo => {
-            // Convert TopoJSON → GeoJSON for fills & centroids
+            // Convert TopoJSON ? GeoJSON for fills & centroids
             const geo = topojson.feature(topo, topo.objects.countries);
 
             const svg = d3.select(el).append('svg')
@@ -297,7 +442,7 @@ function _showRetroMap() {
                 .transition().duration(1500).ease(d3.easeCubicOut)
                 .attr('fill', 'rgba(196,145,62,0.05)');
 
-            // Shared borders via topojson.mesh — gap-free
+            // Shared borders via topojson.mesh - gap-free
             const borders = topojson.mesh(topo, topo.objects.countries,
                 (a, b) => a !== b);
             svg.append('path')
@@ -333,9 +478,9 @@ function _showRetroMap() {
         .catch(e => console.warn('Retro map failed:', e));
 }
 
-/* ═══════════════════════════════════════════════
+/* -----------------------------------------------
    Init
-   ═══════════════════════════════════════════════ */
+   ----------------------------------------------- */
 (async function main() {
     _width = innerWidth; _height = innerHeight;
 
@@ -345,6 +490,7 @@ function _showRetroMap() {
 
     // Three.js globe
     _initGlobe();
+    _initLatamCursor();
     tick(15);
 
     window.addEventListener('resize', () => {
@@ -353,18 +499,26 @@ function _showRetroMap() {
     });
 
     // Data
-    const dataP = import('./data-loader.js?v=20260513-trend-area-timeline-fix31')
+    const dataP = import('./data-loader.js?v=20260514-sidebar-gini-fix52')
         .then(m => m.default.init())
         .then(() => { _dataReady = true; tick(85); })
         .catch(e => { console.error('Data load failed:', e); _dataReady = true; tick(85); });
+    _dataPromise = dataP;
 
-    const ctaFallback = setTimeout(_showCTA, 3200);
-    dataP.then(() => _zoomToLatam())
-        .catch(e => console.warn('Landing animation skipped:', e))
-        .then(() => {
-            clearTimeout(ctaFallback);
-            _showCTA();
-        });
+    const autoEnter = new URLSearchParams(location.search).has('v')
+        && new URLSearchParams(location.search).get('landing') !== '1';
+
+    if (autoEnter) {
+        dataP.finally(() => _enterApp());
+    } else {
+        const ctaFallback = setTimeout(_showCTA, 3200);
+        dataP.then(() => _zoomToLatam())
+            .catch(e => console.warn('Landing animation skipped:', e))
+            .then(() => {
+                clearTimeout(ctaFallback);
+                _showCTA();
+            });
+    }
 
     document.getElementById('landing-cta').addEventListener('click', _enterApp);
     document.addEventListener('keydown', e => {
@@ -387,19 +541,31 @@ function _showCTA() {
 }
 
 function _enterApp() {
+    if (_appStarting) return;
+    if (!_dataReady && _dataPromise) {
+        _appStarting = true;
+        _dataPromise.finally(() => {
+            _appStarting = false;
+            _enterApp();
+        });
+        return;
+    }
+
     const landing = document.getElementById('landing');
     if (!landing) return;
+    _appStarting = true;
 
     if (_animFrame) cancelAnimationFrame(_animFrame);
     _destroyP();
+    _destroyLatamCursor();
 
-    landing.classList.add('hidden');
-
-    import('./app.js?v=20260513-trend-area-timeline-fix31').then(mod => {
+    import('./app.js?v=20260514-sidebar-gini-fix52').then(mod => {
         console.log('App module loaded');
+        landing.classList.add('hidden');
         setTimeout(() => landing.remove(), 800);
     }).catch(err => {
         console.error('Failed to load app:', err);
+        _appStarting = false;
         landing.classList.remove('hidden');
         landing.innerHTML = `<div style="color:#F5F0E6;text-align:center;padding:40px;max-width:600px;margin:auto">
             <h2 style="font-weight:300;letter-spacing:2px;margin-bottom:16px">Error al cargar</h2>
@@ -409,3 +575,8 @@ function _enterApp() {
         </div>`;
     });
 }
+
+
+
+
+

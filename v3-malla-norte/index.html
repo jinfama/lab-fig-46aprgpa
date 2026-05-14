@@ -1,15 +1,30 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
 <head>
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow,noarchive">
 <title>Atlas HistÃ³rico Municipal de EspaÃ±a</title>
 <link rel="stylesheet" href="css/styles.css">
 <script src="vendor/d3.v7.min.js"></script>
 <script src="vendor/topojson-client.min.js"></script>
 </head>
 <body>
+
+<section class="intro-view" id="intro-view" aria-label="Entrada del atlas">
+    <div class="intro-map-stage">
+        <svg class="intro-map" id="intro-map" aria-hidden="true"></svg>
+    </div>
+
+    <div class="intro-copy">
+        <div class="intro-kicker">Atlas hist&oacute;rico digital</div>
+        <h1>Espa&ntilde;a, municipio a municipio</h1>
+        <p>Recurso docente, divulgativo y de an&aacute;lisis cuantitativo hist&oacute;rico con alta resoluci&oacute;n espacial. En progreso: se ir&aacute;n a&ntilde;adiendo fuentes, indicadores y correcciones.</p>
+        <div class="intro-actions">
+            <button class="intro-enter" id="intro-enter" type="button">Entrar al atlas</button>
+        </div>
+    </div>
+</section>
 
 <!-- Top bar with category tabs -->
 <header class="topbar">
@@ -25,10 +40,13 @@
         <div class="cat-tabs" id="cat-tabs"></div>
     </div>
 
-    <nav class="topbar-nav">
+    <nav class="topbar-nav" aria-label="Vistas del atlas">
         <button class="nav-btn active" data-tab="map">Mapa</button>
-        <button class="nav-btn" data-tab="about">Sobre</button>
+        <button class="nav-btn" data-tab="trends">Tendencias</button>
+        <button class="nav-btn" data-tab="ranking">Ranking</button>
+        <button class="nav-btn" data-tab="table">Tabla</button>
     </nav>
+    <button class="info-btn" data-tab="about" type="button" aria-label="Informacion" title="Informacion">i</button>
 </header>
 
 <!-- Main layout: sidebar + map -->
@@ -38,11 +56,20 @@
     <aside class="sidebar">
 
         <!-- Indicator list (dynamic per category) -->
-        <div class="sidebar-section">
-            <div class="kicker">Indicador</div>
-            <div class="indicator-list" id="indicator-list"></div>
+        <div class="sidebar-section indicator-section">
             <div class="indicator-name" id="indicator-name">PoblaciÃ³n total</div>
             <div class="indicator-desc" id="indicator-desc">Habitantes por municipio segÃºn censo decenal.</div>
+            <div class="kicker">Indicador</div>
+            <div class="indicator-list" id="indicator-list"></div>
+        </div>
+
+        <div class="sidebar-section search-section">
+            <div class="kicker">Buscar municipio</div>
+            <div class="muni-search-box">
+                <input id="muni-search" type="search" placeholder="Nombre del municipio" autocomplete="off">
+                <button id="muni-search-clear" type="button" aria-label="Limpiar busqueda">&times;</button>
+            </div>
+            <div class="muni-search-results" id="muni-search-results"></div>
         </div>
 
         <!-- Legend -->
@@ -87,6 +114,10 @@
         </div>
 
         <div class="tooltip" id="tooltip"></div>
+        <div class="map-source-trigger" id="map-source-trigger" tabindex="0">
+            <span>Fuente</span>
+            <div class="map-source-panel" id="map-source-panel"></div>
+        </div>
 
         <!-- Map level toggles (bottom-right) -->
         <div class="map-controls">
@@ -96,6 +127,32 @@
         </div>
     </main>
 </div>
+
+<section class="data-view" id="data-view" aria-label="Vistas analiticas">
+    <div class="data-shell">
+        <div class="data-head">
+            <div>
+                <div class="kicker" id="data-view-kicker">Vista</div>
+                <h1 id="data-view-title">Tendencias</h1>
+                <p id="data-view-desc">Selecciona uno o varios municipios para comparar su evoluci&oacute;n hist&oacute;rica.</p>
+            </div>
+            <div class="data-selection-summary" id="data-selection-summary">Sin municipios seleccionados</div>
+        </div>
+
+        <div class="data-panel active" id="panel-trends">
+            <svg class="trend-chart" id="trend-chart"></svg>
+            <div class="data-empty" id="trend-empty">Busca o selecciona municipios en el mapa para ver su evoluci&oacute;n hist&oacute;rica.</div>
+        </div>
+
+        <div class="data-panel" id="panel-ranking">
+            <div class="data-table-wrap" id="ranking-table"></div>
+        </div>
+
+        <div class="data-panel" id="panel-table">
+            <div class="data-table-wrap" id="series-table"></div>
+        </div>
+    </div>
+</section>
 
 <!-- Time bar at bottom -->
 <footer class="timebar">
@@ -120,13 +177,13 @@
             <div>
                 <div class="kicker">Sobre el visor</div>
                 <h1>Atlas Hist&oacute;rico Municipal de Espa&ntilde;a</h1>
-                <p>Visor local de indicadores municipales, provinciales y auton&oacute;micos armonizados para explorar cambios demogr&aacute;ficos, ambientales, territoriales y de infraestructura hist&oacute;rica.</p>
+                <p>Recurso docente y divulgativo, en construcci&oacute;n, para explorar cambios demogr&aacute;ficos, ambientales, territoriales y de infraestructura hist&oacute;rica con alta resoluci&oacute;n espacial. Tambi&eacute;n sirve como laboratorio de an&aacute;lisis cuantitativo hist&oacute;rico y revisi&oacute;n visual de fuentes municipales.</p>
             </div>
             <button class="about-back" type="button" data-tab="map">Volver al mapa</button>
         </div>
 
         <div class="about-note">
-            <strong>Herramienta desarrollada por Juan Infante-Amate</strong>, Departamento de Historia Econ&oacute;mica, Universidad de Granada. El visor est&aacute; pensado para docencia, investigaci&oacute;n exploratoria y revisi&oacute;n visual de series municipales de largo plazo.
+            <strong>Recurso docente y divulgativo desarrollado por Juan Infante-Amate</strong>, Departamento de Historia Econ&oacute;mica, Universidad de Granada. El objetivo original es docente: facilitar la lectura territorial de largo plazo sin sustituir la consulta cr&iacute;tica de las fuentes originales. Si detectas errores, lagunas o quieres proponer nuevos datos municipales, contacta con el autor para incorporarlos a futuras versiones.
         </div>
 
         <div class="method-panel">
@@ -145,8 +202,13 @@
             </div>
             <div class="method-row">
                 <strong>Infraestructuras</strong>
-                <span>Transporte separa los <strong>trazados</strong> visibles de calzadas romanas y ferrocarriles de los <strong>indicadores de distancia</strong> a esas redes. En estos casos los municipios, provincias y CCAA act&uacute;an como fondo administrativo.</span>
+                <span>Transporte separa los <strong>trazados</strong> visibles de calzadas romanas y ferrocarriles de los <strong>indicadores de distancia</strong> a esas redes. Los trazados se leen de <strong>calzadas_romanas.geojson</strong>, <strong>ferrocarril_iberico.geojson</strong>, <strong>ferrocarril_estrecho.geojson</strong> y <strong>ferrocarril_ave.geojson</strong>.</span>
             </div>
+        </div>
+
+        <div class="method-panel">
+            <div class="method-heading">InformaciÃ³n por indicador</div>
+            <div class="indicator-info-grid" id="about-indicator-grid"></div>
         </div>
 
         <div class="about-grid">
@@ -177,4 +239,3 @@
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
-

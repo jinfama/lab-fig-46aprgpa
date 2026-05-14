@@ -331,23 +331,23 @@
       ],
       "units": [
         "personas",
-        "%"
+        "M horas/año"
       ],
       "defaultUnit": "personas",
       "unitMap": {
         "personas": {
           "dataField": "workers",
-          "label": "Trabajadores agrícolas"
+          "label": "Trabajadores"
         },
-        "%": {
-          "dataField": "share_economy",
-          "label": "% del empleo total"
+        "M horas/año": {
+          "dataField": "hours",
+          "label": "Horas"
         }
       },
       "indicatorGroups": [
         {
-          "id": "employment",
-          "label": "Empleo agrícola",
+          "id": "labor",
+          "label": "Trabajo agrario",
           "indicators": [
             {
               "id": "workers",
@@ -357,45 +357,10 @@
               "enabled": true
             },
             {
-              "id": "workers_forestry",
-              "label": "Trab. agric. y forest.",
-              "unit": "personas",
-              "dataField": "workers_forestry",
-              "enabled": true
-            },
-            {
-              "id": "workers_livestock",
-              "label": "Trab. ganadero",
-              "unit": "personas",
-              "dataField": "workers_livestock",
-              "enabled": true
-            },
-            {
               "id": "hours",
-              "label": "Horas (total)",
+              "label": "Horas",
               "unit": "M horas/año",
               "dataField": "hours",
-              "enabled": true
-            },
-            {
-              "id": "hours_forestry",
-              "label": "Horas agric. y forest.",
-              "unit": "M horas/año",
-              "dataField": "hours_forestry",
-              "enabled": true
-            },
-            {
-              "id": "hours_livestock",
-              "label": "Horas ganaderas",
-              "unit": "M horas/año",
-              "dataField": "hours_livestock",
-              "enabled": true
-            },
-            {
-              "id": "share",
-              "label": "% del empleo total",
-              "unit": "%",
-              "dataField": "share_economy",
               "enabled": true
             }
           ]
@@ -449,14 +414,14 @@
               "label": "Gini ingreso disp.",
               "unit": "índice",
               "dataField": "gini_disp",
-              "enabled": true
+              "enabled": false
             },
             {
               "id": "gini_mkt",
               "label": "Gini ingreso mercado",
               "unit": "índice",
               "dataField": "gini_mkt",
-              "enabled": true
+              "enabled": false
             }
           ]
         },

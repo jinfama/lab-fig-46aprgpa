@@ -60,6 +60,8 @@ const ClimogramView = (() => {
     }
 
     function render() {
+        if (State.get('activeView') !== 'climogram') return;
+
         const container = document.getElementById('climogram-container');
         if (!container) return;
 

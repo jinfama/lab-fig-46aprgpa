@@ -19,6 +19,7 @@ const state = {
     yearIdx: 0,    // index into the active indicator's years array
     category: "poblacion",
     indicator: "pob",
+    mainTab: "map",
     activeOverlays: new Set(),// overlays activos en transporte
     viewLevel: "mun",         // mun | prov | ccaa
     selectedInes: [],
@@ -64,10 +65,10 @@ const DERIVED_INDICATORS = {
 
 // Geo overlays (lines, points). Belong to category 'transporte'.
 const OVERLAY_INDICATORS = [
-    { id: 'calzadas',    name: 'Calzadas romanas',     desc: 'Red viaria romana en Hispania (ss. I a.C. – V d.C.).', file: 'data/calzadas_romanas.geojson', style: 'ov-roman' },
-    { id: 'fc_iberico',  name: 'Ferrocarril ibérico',  desc: 'Red de vía ibérica histórica (1848 en adelante).',      file: 'data/ferrocarril_iberico.geojson',  style: 'ov-rail-iberian' },
-    { id: 'fc_estrecho', name: 'Ferrocarril estrecho', desc: 'Red de vía estrecha (FEVE, FGV, etc.).',                 file: 'data/ferrocarril_estrecho.geojson', style: 'ov-rail-narrow' },
-    { id: 'fc_ave',      name: 'AVE / Alta velocidad', desc: 'Red ferroviaria de alta velocidad (desde 1992).',        file: 'data/ferrocarril_ave.geojson',     style: 'ov-rail-hsr' },
+    { id: 'calzadas',    name: 'Calzadas romanas',     desc: 'Red viaria romana en Hispania (ss. I a.C. - V d.C.).', file: 'data/calzadas_romanas.geojson', style: 'ov-roman', temporal: false },
+    { id: 'fc_iberico',  name: 'Ferrocarril iberico',  desc: 'Red de via iberica historica.',                         file: 'data/ferrocarril_iberico.geojson',  style: 'ov-rail-iberian', temporal: true, startYear: 1855 },
+    { id: 'fc_estrecho', name: 'Ferrocarril estrecho', desc: 'Red de via estrecha historica.',                         file: 'data/ferrocarril_estrecho.geojson', style: 'ov-rail-narrow', temporal: true, startYear: 1880 },
+    { id: 'fc_ave',      name: 'AVE / Alta velocidad', desc: 'Red ferroviaria de alta velocidad.',                     file: 'data/ferrocarril_ave.geojson',     style: 'ov-rail-hsr', temporal: true, startYear: 1992 },
 ];
 
 let CATEGORIES = {};  // populated by buildCategoriesFromCatalog()
@@ -93,8 +94,9 @@ function buildCategoriesFromCatalog() {
     };
     // The rest of the categories come straight from the catalog
     for (const ind of state.catalog.indicators) {
-        const cat = ind.category;
+        let cat = ind.category;
         if (cat === 'poblacion') continue;       // already handled
+        if (cat === 'demografia') cat = 'poblacion';
         if (!out[cat]) {
             out[cat] = {
                 label: CATEGORY_DEF.find(d => d.id === cat)?.label || cat,
@@ -105,8 +107,9 @@ function buildCategoriesFromCatalog() {
         }
         out[cat].indicators.push({
             id: ind.id,
-            name: ind.name,
-            desc: `${ind.name} (${ind.unit}). Fuente: ${ind.source_file.replace('.json', '')}.`,
+            name: displayIndicatorName(ind.name),
+            rawName: ind.name,
+            desc: `${displayIndicatorName(ind.name)} (${ind.unit}). Fuente: ${ind.source_file.replace('.json', '')}.`,
             unit: ind.unit,
             sourceFile: ind.source_file,
             kind: cat === 'transporte' ? 'distance' : undefined,
@@ -127,6 +130,13 @@ const tooltip = $("#tooltip");
 let projection, pathGen, pathGenMain, pathGenCanarias;
 let mapSize = { w: 0, h: 0 };
 let insetFrames = [];
+
+function displayIndicatorName(name = "") {
+    return String(name)
+        .replace(/\s*\([^)]*\b(?:18|19|20)\d{2}\b[^)]*\)/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+}
 
 // ───────── Loading helpers ─────────
 function setLoading(status, pct) {
@@ -473,13 +483,15 @@ function setupProjection() {
     const canarias = state.municipios.features.filter(f => ["35", "38"].includes(provinceCode(f)));
 
     const pad = Math.min(26, Math.max(12, w * 0.02));
-    projection = fitMercatorByBounds(mainFeatures, [[pad, pad], [w - pad, h - pad]]);
-    pathGenMain = (feature) => featurePath(feature, projection);
-
     const canaryW = Math.min(250, Math.max(150, w * 0.22));
     const canaryH = Math.min(110, Math.max(76, h * 0.18));
     const canaryX = pad;
     const canaryY = h - pad - canaryH;
+    const reservedBottom = canarias.length ? Math.min(canaryH * 0.75, h * 0.16) : 0;
+    const mainBottom = Math.max(pad + 90, h - pad - reservedBottom);
+    projection = fitMercatorByBounds(mainFeatures, [[pad, pad], [w - pad, mainBottom]]);
+    pathGenMain = (feature) => featurePath(feature, projection);
+
     pathGenCanarias = fitPath(canarias, [[canaryX + 10, canaryY + 18], [canaryX + canaryW - 10, canaryY + canaryH - 10]]);
 
     insetFrames = [
@@ -512,6 +524,184 @@ function renderInsetFrames() {
         .attr("x", d => d.x + 8)
         .attr("y", d => d.y + 13)
         .text(d => d.label);
+}
+
+function setupIntro() {
+    const intro = $("#intro-view");
+    if (!intro) return;
+    const enter = $("#intro-enter");
+    let introMotionFrame = null;
+    let introPointer = { x: 0, y: 0 };
+
+    const moveIntroCompass = () => {
+        introMotionFrame = null;
+        const orbit = intro.querySelector(".intro-compass-orbit");
+        if (!orbit) return;
+        const strength = Math.min(intro.clientWidth, intro.clientHeight) < 700 ? 10 : 18;
+        orbit.setAttribute("transform", `translate(${introPointer.x * strength},${introPointer.y * strength})`);
+    };
+
+    const queueIntroCompassMove = (event) => {
+        const rect = intro.getBoundingClientRect();
+        introPointer = {
+            x: ((event.clientX - rect.left) / rect.width - 0.5) * 2,
+            y: ((event.clientY - rect.top) / rect.height - 0.5) * 2,
+        };
+        if (!introMotionFrame) introMotionFrame = requestAnimationFrame(moveIntroCompass);
+    };
+
+    const resetIntroCompass = () => {
+        introPointer = { x: 0, y: 0 };
+        if (!introMotionFrame) introMotionFrame = requestAnimationFrame(moveIntroCompass);
+    };
+
+    const closeIntro = () => {
+        intro.classList.add("hidden");
+        document.body.classList.add("intro-dismissed");
+    };
+    enter?.addEventListener("click", closeIntro);
+    intro.addEventListener("pointermove", queueIntroCompassMove);
+    intro.addEventListener("pointerleave", resetIntroCompass);
+}
+
+function renderIntroMap() {
+    const introSvg = d3.select("#intro-map");
+    if (introSvg.empty() || !state.municipios || !state.provincias || !state.comunidades) return;
+    const node = introSvg.node();
+    const rect = node.getBoundingClientRect();
+    const w = Math.max(rect.width, 640);
+    const h = Math.max(rect.height, 420);
+    introSvg.attr("viewBox", `0 0 ${w} ${h}`).selectAll("*").remove();
+
+    const isCanariasFeature = (feature) => feature.properties?.inset === "canarias" || ["35", "38"].includes(provinceCode(feature)) || feature.properties?.code === "05";
+    const introMunicipios = state.municipios.features.filter(f => !isCanariasFeature(f));
+    const introProvincias = state.provincias.features.filter(f => !isCanariasFeature(f));
+    const introComunidades = state.comunidades.features.filter(f => !isCanariasFeature(f));
+    const compactIntro = rect.width < 760 || rect.height < 620;
+    const mapBounds = compactIntro
+        ? [[w * 0.1, h * 0.08], [w * 0.9, h * 0.6]]
+        : [[w * 0.22, h * 0.05], [w * 0.78, h * 0.68]];
+    const projMain = fitMercatorByBounds(introMunicipios, mapBounds);
+    const introPath = (feature) => featurePath(feature, projMain);
+
+    const defs = introSvg.append("defs");
+    const glow = defs.append("filter")
+        .attr("id", "intro-glow")
+        .attr("x", "-40%")
+        .attr("y", "-40%")
+        .attr("width", "180%")
+        .attr("height", "180%");
+    glow.append("feGaussianBlur").attr("stdDeviation", 2.4).attr("result", "blur");
+    glow.append("feColorMatrix")
+        .attr("in", "blur")
+        .attr("type", "matrix")
+        .attr("values", "1 0 0 0 0.96  0 1 0 0 0.62  0 0 1 0 0.18  0 0 0 0.9 0")
+        .attr("result", "glow");
+    const merge = glow.append("feMerge");
+    merge.append("feMergeNode").attr("in", "glow");
+    merge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    introSvg.append("rect")
+        .attr("class", "intro-sea")
+        .attr("width", w)
+        .attr("height", h);
+
+    const scan = introSvg.append("g").attr("class", "intro-scan");
+    for (let x = -w; x < w * 2; x += 34) {
+        scan.append("line")
+            .attr("x1", x)
+            .attr("x2", x + h * 0.45)
+            .attr("y1", 0)
+            .attr("y2", h)
+            .attr("stroke", "rgba(255,248,234,0.055)")
+            .attr("stroke-width", 1);
+    }
+
+    const old1 = introSvg.append("g").attr("class", "intro-plate intro-plate-1");
+    old1.selectAll("path")
+        .data(introComunidades)
+        .enter().append("path")
+        .attr("class", "intro-old-fill")
+        .attr("d", introPath);
+
+    const old2 = introSvg.append("g").attr("class", "intro-plate intro-plate-2");
+    old2.selectAll("path")
+        .data(introProvincias)
+        .enter().append("path")
+        .attr("class", "intro-old-line")
+        .attr("d", introPath);
+
+    const modern = introSvg.append("g").attr("class", "intro-modern");
+    modern.selectAll("path.intro-modern-fill")
+        .data(introMunicipios)
+        .enter().append("path")
+        .attr("class", "intro-modern-fill")
+        .attr("d", introPath);
+    modern.selectAll("path.intro-modern-border")
+        .data(introComunidades)
+        .enter().append("path")
+        .attr("class", "intro-modern-border")
+        .attr("d", introPath);
+    modern.selectAll("path.intro-coast")
+        .data(introComunidades)
+        .enter().append("path")
+        .attr("class", "intro-coast")
+        .attr("d", introPath);
+
+    renderIntroCompass(introSvg, w, h, mapBounds);
+}
+
+function renderIntroCompass(svg, w, h, mapBounds) {
+    const [[x0, y0], [x1, y1]] = mapBounds;
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + y1) / 2;
+    const r = Math.min(x1 - x0, y1 - y0, Math.min(w, h) * 0.52) * 0.43;
+    const compass = svg.append("g")
+        .attr("class", "intro-time-compass")
+        .attr("transform", `translate(${cx},${cy})`);
+    const orbit = compass.append("g").attr("class", "intro-compass-orbit");
+    orbit.append("circle").attr("class", "intro-compass-ring").attr("r", r);
+    orbit.append("circle").attr("class", "intro-compass-ring inner").attr("r", r * 0.72);
+    orbit.append("circle").attr("class", "intro-compass-ring inner").attr("r", r * 0.43);
+
+    const rotor = compass.append("g").attr("class", "intro-compass-rotor");
+    rotor.append("animateTransform")
+        .attr("attributeName", "transform")
+        .attr("type", "rotate")
+        .attr("from", "0")
+        .attr("to", "360")
+        .attr("dur", "10s")
+        .attr("repeatCount", "indefinite");
+    rotor.append("path")
+        .attr("class", "intro-compass-sweep")
+        .attr("d", d3.arc()
+            .innerRadius(r * 0.1)
+            .outerRadius(r * 0.92)
+            .startAngle(-0.2)
+            .endAngle(0.2)());
+    rotor.append("line").attr("class", "intro-compass-hand").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", -r * 0.92);
+    rotor.append("line").attr("class", "intro-compass-hand alt").attr("x1", 0).attr("y1", 0).attr("x2", r * 0.6).attr("y2", 0);
+    rotor.append("circle").attr("r", 5).attr("fill", "#f7d46f");
+
+    const eras = [
+        { year: "1570", a: -120 },
+        { year: "1788", a: -52 },
+        { year: "1857", a: 14 },
+        { year: "1900", a: 82 },
+        { year: "2025", a: 148 },
+    ];
+    eras.forEach((era, i) => {
+        const a = era.a * Math.PI / 180;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        const g = orbit.append("g").attr("class", "intro-era-mark").attr("transform", `translate(${x},${y})`);
+        g.append("circle")
+            .attr("r", 3)
+            .style("animation-delay", `${i * 1.4}s`);
+        g.append("text")
+            .attr("y", y < 0 ? -16 : 16)
+            .text(era.year);
+    });
 }
 
 // Render municipios en chunks para no bloquear el hilo principal
@@ -818,6 +1008,8 @@ function activeMapSelector() {
 function paintMunicipios() {
     const cat = CATEGORIES[state.category];
     const year = currentYear();
+    const routeMode = state.category === "transporte" && !isPaintableIndicator(state.indicator);
+    map.classed("route-mode", routeMode);
     map.selectAll("path.municipio,path.provincia-fill,path.ccaa-fill").attr("fill", NO_DATA_COLOR);
 
     if (isPaintableIndicator(state.indicator) && cat?.type !== 'placeholder') {
@@ -834,9 +1026,11 @@ function paintMunicipios() {
     } else {
         $("#legend").innerHTML = '';
     }
+    updateOverlayVisibility(year);
     $("#timebar-year").textContent = Math.round(year);
     $("#legend-year").textContent = Math.round(year);
     updateSourceFooter();
+    renderDataView();
 }
 
 // Look up an indicator's metadata (for unit, name) regardless of whether it's
@@ -845,36 +1039,97 @@ function indicatorMeta(indId) {
     if (DERIVED_INDICATORS[indId]) {
         const m = DERIVED_INDICATORS[indId];
         const unitMap = { pop: 'hab.', pop_log: 'hab. (log)', densidad: 'hab/km²', cambio: '%' };
-        return { name: m.name, unit: unitMap[m.kind] || '', desc: m.desc };
+        return { name: m.name, rawName: m.name, unit: unitMap[m.kind] || '', desc: m.desc };
     }
     const ind = state.catalog?.indicators.find(i => i.id === indId);
     if (!ind) return { name: indId, unit: '', desc: '' };
-    return { name: ind.name, unit: ind.unit, desc: `${ind.name} (${ind.unit})` };
+    return { name: displayIndicatorName(ind.name), rawName: ind.name, unit: ind.unit, desc: `${displayIndicatorName(ind.name)} (${ind.unit})` };
+}
+
+function sourceDetailsForIndicator(indId = state.indicator) {
+    const meta = indicatorMeta(indId);
+    const name = meta.name || CATEGORIES[state.category]?.label || "Indicador";
+    if ((state.category === "transporte" && !isPaintableIndicator(indId)) || OVERLAY_INDICATORS.some(o => o.id === indId)) {
+        return {
+            title: name,
+            source: "Trazados locales: calzadas_romanas.geojson; ferrocarril_iberico.geojson; ferrocarril_estrecho.geojson; ferrocarril_ave.geojson.",
+            method: "Las rutas se dibujan como capas vectoriales. Los ferrocarriles usan OPENING, CLOSURE y REOPENING para adaptar el avance temporal; las distancias a redes son indicadores separados.",
+            citation: "Citar el Atlas Historico Municipal de Espana y la fuente original de cada trazado cuando se use la capa.",
+        };
+    }
+    if (DERIVED_INDICATORS[indId]) {
+        return {
+            title: name,
+            source: "Goerlich & Mas / BBVA-Ivie para series homogeneas 1900-2011; INE Padron continuo para 1996-2025; area municipal desde geometria IGN curada.",
+            method: "Series armonizadas a limites municipales actuales. La densidad se recalcula como poblacion/area; el cambio compara cada ano con 1900.",
+            citation: "Infante-Amate, J. (2026), Atlas Historico Municipal de Espana. Citar tambien Goerlich & Mas / BBVA-Ivie e INE.",
+        };
+    }
+    const src = indicatorSourceFile(indId);
+    const id = (indId || "").toLowerCase();
+    const rawName = meta.rawName || meta.name || "";
+    const isColonization = id.includes("coloniz") || rawName.toLowerCase().includes("coloniz");
+    if (isColonization) {
+        return {
+            title: name,
+            source: "Fuente pendiente de verificacion. En el catalogo local figura como indicador de pueblos de colonizacion dentro de historeco.json; no hay metadato suficiente aqui para atribuirlo con seguridad a Albertus.",
+            method: "Variable discreta que identifica la decada asociada a pueblos de colonizacion. Conviene interpretarla como capa historica de localizacion, no como serie continua.",
+            citation: "No citar como Albertus hasta verificar la fuente original. Citar provisionalmente el Atlas Historico Municipal de Espana como visor/elaboracion y revisar la fuente primaria antes de usar la variable.",
+        };
+    }
+    if (src === "historeco.json") {
+        return {
+            title: name,
+            source: "HistoReCo y elaboraciones municipales asociadas.",
+            method: "Variables climaticas, geograficas, hidrologicas, agrarias y de distancia agregadas o asignadas a la malla municipal actual.",
+            citation: "Citar la fuente original del indicador y el Atlas Historico Municipal de Espana como visor/elaboracion.",
+        };
+    }
+    if (src === "usos_suelo.json") {
+        return {
+            title: name,
+            source: "HYDE + LUH2, agregadas a municipio.",
+            method: "Superficies historicas de cultivos, pastos, urbano, bosque y otros usos. Al pasar a provincia o CCAA se suman superficies.",
+            citation: "Citar HYDE/LUH2 y el Atlas Historico Municipal de Espana como visor/elaboracion.",
+        };
+    }
+    if (src === "calzada.json") {
+        return {
+            title: name,
+            source: "DARMC Roman Roads of Hispania y calculos municipales de distancia.",
+            method: "Indicador de distancia municipal a la red de calzadas. La ruta visible se activa como trazado en Transporte.",
+            citation: "Citar DARMC / fuente original de calzadas y el Atlas Historico Municipal de Espana.",
+        };
+    }
+    return {
+        title: name,
+        source: "Compilacion local del atlas municipal.",
+        method: "Indicador armonizado para visualizacion municipal y agregacion territorial.",
+        citation: "Citar el Atlas Historico Municipal de Espana y la fuente original del indicador.",
+    };
 }
 
 function sourceInfoForIndicator(indId = state.indicator) {
-    if (state.category === "transporte" && !isPaintableIndicator(indId)) {
-        return "Trazados: calzadas romanas y ferrocarriles historicos.<br>Distancias: indicadores separados en la lista.";
-    }
-    if (DERIVED_INDICATORS[indId]) {
-        return "Fuente: Goerlich &amp; Mas / BBVA-Ivie 1900-2011; INE Padron continuo 1996-2025.<br>Base municipal armonizada a limites actuales.";
-    }
-    const src = indicatorSourceFile(indId);
-    if (src === "historeco.json") {
-        return "Fuente: HistoReCo y elaboraciones municipales asociadas.<br>Variables climaticas, geograficas, hidrologicas, agrarias y distancias.";
-    }
-    if (src === "usos_suelo.json") {
-        return "Fuente: HYDE + LUH2, agregadas a municipio.<br>Superficies historicas de cultivos, pastos, urbano, bosque y otros usos.";
-    }
-    if (src === "calzada.json") {
-        return "Fuente: distancias calculadas a la red de calzadas romanas.<br>La ruta visible se activa en Transporte.";
-    }
-    return "Fuente: compilacion local del atlas municipal.<br>Consulta Sobre para metodologia y citas.";
+    const d = sourceDetailsForIndicator(indId);
+    return `<strong>${d.title}</strong>
+        <div class="detail-kicker">Fuente</div>
+        <div>${d.source}</div>
+        <div class="detail-kicker">Metodo</div>
+        <div>${d.method}</div>
+        <div class="detail-kicker">Referencia para citar</div>
+        <div>${d.citation}</div>
+        <button class="source-about-link" type="button" id="map-source-about">Metodos y fuentes</button>`;
 }
 
 function updateSourceFooter() {
-    const el = $("#source-footer");
-    if (el) el.innerHTML = sourceInfoForIndicator();
+    const panel = $("#map-source-panel");
+    if (panel) {
+        panel.innerHTML = sourceInfoForIndicator();
+        $("#map-source-about")?.addEventListener("click", (event) => {
+            event.stopPropagation();
+            document.querySelector('[data-tab="about"]')?.click();
+        });
+    }
 }
 
 // Per-indicator scale cache: keys = `${indicator}|<scale-version>`.
@@ -1061,6 +1316,7 @@ function renderOverlayLegend() {
 
 // ───────── Tooltip & selection ─────────
 function onMuniHover(ev, d) {
+    if (state.category === "transporte" && !isPaintableIndicator(state.indicator)) return;
     const ine = d.properties.ine;
     state.hoveredIne = ine || featureGroupKey(d, state.viewLevel);
     const year = currentYear();
@@ -1119,6 +1375,7 @@ function onMuniClick(ev, d) {
     }
     refreshSelectionStyles();
     renderSelectionSidebar();
+    renderDataView();
 }
 function moveTooltip(ev) {
     const mapEl = $(".map-area").getBoundingClientRect();
@@ -1176,6 +1433,7 @@ function renderSelectionSidebar() {
             state.selectedInes = state.selectedInes.filter(i => i !== ine);
             refreshSelectionStyles();
             renderSelectionSidebar();
+            renderDataView();
         });
     });
 
@@ -1189,7 +1447,7 @@ function drawMultiChart() {
 
     const w = svg.node().clientWidth || 280;
     const h = 130;
-    const margin = { top: 10, right: 10, bottom: 18, left: 42 };
+    const margin = { top: 10, right: 12, bottom: 18, left: 42 };
     const iw = w - margin.left - margin.right;
     const ih = h - margin.top - margin.bottom;
 
@@ -1202,24 +1460,39 @@ function drawMultiChart() {
             const v = indicatorValue(ine, layer, y);
             return { year: y, v };
         }).filter(d => d.v != null && Number.isFinite(d.v));
+        if (!points.length) return null;
         return { ine, name: m.name, color: LINE_COLORS[i % LINE_COLORS.length], points };
     }).filter(Boolean);
     if (series.length === 0) return;
 
-    const x = d3.scaleLinear().domain([YEAR_MIN, YEAR_MAX]).range([0, iw]);
+    const yearExtent = d3.extent(yrs);
+    const x = d3.scaleLinear().domain(yearExtent).range([0, iw]);
     const allValues = series.flatMap(s => s.points.map(p => p.v));
-    const yMin = layer === "cambio" ? Math.min(0, d3.min(allValues)) : 0;
-    const yMax = d3.max(allValues) * 1.05;
+    const rawMin = d3.min(allValues) ?? 0;
+    const rawMax = d3.max(allValues) ?? 1;
+    const yBaseMin = layer === "cambio" ? Math.min(0, rawMin) : 0;
+    const yBaseMax = layer === "cambio" ? Math.max(0, rawMax) : Math.max(rawMax, 1);
+    const yPad = Math.max((yBaseMax - yBaseMin) * 0.05, 1e-9);
+    const yMin = layer === "cambio" ? yBaseMin - yPad : yBaseMin;
+    const yMax = yBaseMax + yPad;
     const y = d3.scaleLinear().domain([yMin, yMax]).range([ih, 0]);
+    const fmtY = indicatorFormat(layer);
 
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    y.ticks(3).forEach(t => {
+        g.append("line").attr("class", "axis-grid")
+            .attr("x1", 0).attr("x2", iw).attr("y1", y(t)).attr("y2", y(t));
+        g.append("text").attr("class", "axis-label")
+            .attr("x", -6).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmtY(t));
+    });
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", ih);
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", iw).attr("y1", ih).attr("y2", ih);
     if (layer === "cambio") {
         g.append("line").attr("class", "axis-line")
             .attr("x1", 0).attr("x2", iw)
             .attr("y1", y(0)).attr("y2", y(0));
-    } else {
-        g.append("line").attr("class", "axis-line")
-            .attr("x1", 0).attr("x2", iw).attr("y1", ih).attr("y2", ih);
     }
     const lineGen = d3.line().x(d => x(d.year)).y(d => y(d.v)).curve(d3.curveMonotoneX);
     series.forEach(s => {
@@ -1230,24 +1503,392 @@ function drawMultiChart() {
             .attr("cx", d => x(d.year)).attr("cy", d => y(d.v));
     });
     const cy = currentYear();
-    g.append("line").attr("class", "year-marker")
-        .attr("x1", x(cy)).attr("x2", x(cy)).attr("y1", 0).attr("y2", ih);
-    [YEAR_MIN, 1950, 2000, YEAR_MAX].forEach(yr => {
-        if (yr < YEAR_MIN || yr > YEAR_MAX) return;
+    if (cy >= yearExtent[0] && cy <= yearExtent[1]) {
+        g.append("line").attr("class", "year-marker")
+            .attr("x1", x(cy)).attr("x2", x(cy)).attr("y1", 0).attr("y2", ih);
+    }
+    [yearExtent[0], 1950, 2000, yearExtent[1]].forEach(yr => {
+        if (yr == null || yr < yearExtent[0] || yr > yearExtent[1]) return;
         g.append("text").attr("class", "axis-label")
             .attr("x", x(yr)).attr("y", ih + 12).attr("text-anchor", "middle").text(yr);
     });
-    const fmtY = layer === "cambio" ? d3.format("+,.0f") : d3.format(",.0f");
-    const ySuffix = layer === "cambio" ? "%" : "";
-    g.append("text").attr("class", "axis-label")
-        .attr("x", -4).attr("y", y(yMax) + 3).attr("text-anchor", "end")
-        .text(fmtY(yMax) + ySuffix);
-    g.append("text").attr("class", "axis-label")
-        .attr("x", -4).attr("y", y(yMin) + 3).attr("text-anchor", "end")
-        .text(fmtY(yMin) + ySuffix);
+    const hoverLine = g.append("line").attr("class", "chart-hover-line")
+        .attr("y1", 0).attr("y2", ih).style("display", "none");
+    g.append("rect")
+        .attr("class", "chart-hit-area")
+        .attr("x", 0).attr("y", 0).attr("width", iw).attr("height", ih)
+        .on("mousemove", (event) => {
+            const [mx] = d3.pointer(event, g.node());
+            const targetYear = x.invert(Math.max(0, Math.min(iw, mx)));
+            const nearestYear = nearestYearFrom(yrs, targetYear);
+            hoverLine.attr("x1", x(nearestYear)).attr("x2", x(nearestYear)).style("display", null);
+            showChartTooltip(event, chartTooltipHtml(nearestYear, series, fmtY));
+        })
+        .on("mouseleave", () => {
+            hoverLine.style("display", "none");
+            hideChartTooltip();
+        });
 }
 
 // ───────── Categories & indicators ─────────
+function analysisLayer() {
+    return isPaintableIndicator(state.indicator) ? state.indicator : "pob";
+}
+
+function analysisYears(layer = analysisLayer()) {
+    return indicatorYears(layer) || state.data?.years || [];
+}
+
+function selectedMunicipios() {
+    return state.selectedInes
+        .map((ine, i) => {
+            const m = state.data?.municipios?.[ine];
+            return m ? { ine, index: i, ...m } : null;
+        })
+        .filter(Boolean);
+}
+
+function indicatorFormat(layer = analysisLayer()) {
+    const meta = indicatorMeta(layer);
+    const unit = meta.unit || "";
+    const lower = unit.toLowerCase();
+    const suffix = unit === "%" ? "%" : "";
+    const fmt = layer === "cambio" || unit === "%"
+        ? d3.format("+,.1f")
+        : lower.includes("km") || lower.includes("mm") || lower.includes("c")
+            ? d3.format(",.2f")
+            : d3.format(",.0f");
+    return (v) => v == null || !Number.isFinite(v) ? "—" : `${fmt(v)}${suffix}`;
+}
+
+function nearestYearFrom(years, target) {
+    if (!years?.length) return target;
+    return years.reduce((best, year) => (
+        Math.abs(year - target) < Math.abs(best - target) ? year : best
+    ), years[0]);
+}
+
+function nearestPoint(points, year) {
+    if (!points?.length) return null;
+    return points.reduce((best, point) => (
+        Math.abs(point.year - year) < Math.abs(best.year - year) ? point : best
+    ), points[0]);
+}
+
+function chartTooltipHtml(year, series, fmt) {
+    const rows = series.map(s => {
+        const point = nearestPoint(s.points, year);
+        if (!point) return "";
+        return `
+            <div class="chart-tip-row">
+                <span class="chart-tip-name" style="border-left:3px solid ${s.color};padding-left:6px">${s.name}</span>
+                <span>${fmt(point.v)}</span>
+            </div>
+        `;
+    }).join("");
+    return `<strong>${Math.round(year)}</strong>${rows}`;
+}
+
+function chartTooltipNode() {
+    let el = $("#chart-tooltip");
+    if (!el) {
+        el = document.createElement("div");
+        el.id = "chart-tooltip";
+        el.className = "chart-tooltip";
+        document.body.appendChild(el);
+    }
+    return el;
+}
+
+function showChartTooltip(event, html) {
+    const el = chartTooltipNode();
+    el.innerHTML = html;
+    el.classList.add("visible");
+    const pad = 14;
+    const rect = el.getBoundingClientRect();
+    let left = event.clientX + pad;
+    let top = event.clientY + pad;
+    if (left + rect.width > window.innerWidth - pad) left = event.clientX - rect.width - pad;
+    if (top + rect.height > window.innerHeight - pad) top = event.clientY - rect.height - pad;
+    el.style.left = `${Math.max(pad, left)}px`;
+    el.style.top = `${Math.max(pad, top)}px`;
+}
+
+function hideChartTooltip() {
+    $("#chart-tooltip")?.classList.remove("visible");
+}
+
+function drawTrendChart(selector, chartHeight = 430) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    if (state.selectedInes.length === 0) return false;
+
+    const w = svg.node().clientWidth || 720;
+    const h = chartHeight;
+    svg.attr("viewBox", `0 0 ${w} ${h}`);
+    const margin = { top: 20, right: 120, bottom: 42, left: 74 };
+    const iw = w - margin.left - margin.right;
+    const ih = h - margin.top - margin.bottom;
+    const layer = analysisLayer();
+    const yrs = analysisYears(layer);
+    const series = state.selectedInes.map((ine, i) => {
+        const m = state.data.municipios[ine];
+        if (!m) return null;
+        const points = yrs.map((y) => ({ year: y, v: indicatorValue(ine, layer, y) }))
+            .filter(d => d.v != null && Number.isFinite(d.v));
+        if (!points.length) return null;
+        return { ine, name: m.name, color: LINE_COLORS[i % LINE_COLORS.length], points };
+    }).filter(Boolean);
+    if (!series.length) return false;
+
+    const yearExtent = d3.extent(yrs);
+    const values = series.flatMap(s => s.points.map(p => p.v));
+    const rawMin = d3.min(values) ?? 0;
+    const rawMax = d3.max(values) ?? 1;
+    const yBaseMin = layer === "cambio" ? Math.min(0, rawMin) : 0;
+    const yBaseMax = layer === "cambio" ? Math.max(0, rawMax) : Math.max(rawMax, 1);
+    const yPad = Math.max((yBaseMax - yBaseMin) * 0.06, 1e-9);
+    const yMin = layer === "cambio" ? yBaseMin - yPad : yBaseMin;
+    const yMax = yBaseMax + yPad;
+    const x = d3.scaleLinear().domain(yearExtent).range([0, iw]);
+    const y = d3.scaleLinear().domain([yMin, yMax]).range([ih, 0]);
+    const fmt = indicatorFormat(layer);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    y.ticks(5).forEach(t => {
+        g.append("line").attr("class", "axis-grid")
+            .attr("x1", 0).attr("x2", iw).attr("y1", y(t)).attr("y2", y(t));
+        g.append("text").attr("class", "axis-label")
+            .attr("x", -8).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmt(t));
+    });
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", ih);
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", iw).attr("y1", ih).attr("y2", ih);
+    if (layer === "cambio") {
+        g.append("line").attr("class", "axis-line")
+            .attr("x1", 0).attr("x2", iw)
+            .attr("y1", y(0)).attr("y2", y(0));
+    }
+    const lineGen = d3.line().x(d => x(d.year)).y(d => y(d.v)).curve(d3.curveMonotoneX);
+    series.forEach(s => {
+        g.append("path").datum(s.points)
+            .attr("class", "data-line").attr("stroke", s.color).attr("d", lineGen);
+        g.selectAll(`circle.trend-dot-${s.ine}`).data(s.points).enter().append("circle")
+            .attr("class", "data-dot").attr("fill", s.color)
+            .attr("cx", d => x(d.year)).attr("cy", d => y(d.v));
+        const last = s.points[s.points.length - 1];
+        if (last) {
+            g.append("text").attr("class", "series-label")
+                .attr("x", x(last.year) + 6)
+                .attr("y", y(last.v) + 3)
+                .attr("fill", s.color)
+                .text(s.name);
+        }
+    });
+    const cy = currentYear();
+    if (cy >= yearExtent[0] && cy <= yearExtent[1]) {
+        g.append("line").attr("class", "year-marker")
+            .attr("x1", x(cy)).attr("x2", x(cy)).attr("y1", 0).attr("y2", ih);
+    }
+    [yearExtent[0], 1950, 2000, yearExtent[1]].forEach(yr => {
+        if (yr == null || yr < yearExtent[0] || yr > yearExtent[1]) return;
+        g.append("text").attr("class", "axis-label")
+            .attr("x", x(yr)).attr("y", ih + 18).attr("text-anchor", "middle").text(yr);
+    });
+    const hoverLine = g.append("line").attr("class", "chart-hover-line")
+        .attr("y1", 0).attr("y2", ih).style("display", "none");
+    g.append("rect")
+        .attr("class", "chart-hit-area")
+        .attr("x", 0).attr("y", 0).attr("width", iw).attr("height", ih)
+        .on("mousemove", (event) => {
+            const [mx] = d3.pointer(event, g.node());
+            const targetYear = x.invert(Math.max(0, Math.min(iw, mx)));
+            const nearestYear = nearestYearFrom(yrs, targetYear);
+            hoverLine.attr("x1", x(nearestYear)).attr("x2", x(nearestYear)).style("display", null);
+            showChartTooltip(event, chartTooltipHtml(nearestYear, series, fmt));
+        })
+        .on("mouseleave", () => {
+            hoverLine.style("display", "none");
+            hideChartTooltip();
+        });
+    return true;
+}
+
+function selectMunicipio(ine, additive = true) {
+    if (!ine || !state.data?.municipios?.[ine]) return;
+    if (additive) {
+        if (!state.selectedInes.includes(ine)) state.selectedInes.push(ine);
+    } else {
+        state.selectedInes = [ine];
+    }
+    refreshSelectionStyles();
+    renderSelectionSidebar();
+    renderDataView();
+}
+
+function setupMunicipioSearch() {
+    const input = $("#muni-search");
+    const clear = $("#muni-search-clear");
+    if (!input) return;
+    input.addEventListener("input", renderMuniSearchResults);
+    clear?.addEventListener("click", () => {
+        input.value = "";
+        $("#muni-search-results").innerHTML = "";
+        input.focus();
+    });
+}
+
+function renderMuniSearchResults() {
+    const input = $("#muni-search");
+    const out = $("#muni-search-results");
+    if (!input || !out || !state.data?.municipios) return;
+    const q = input.value.trim().toLowerCase();
+    out.innerHTML = "";
+    if (q.length < 2) return;
+    const rows = Object.entries(state.data.municipios)
+        .filter(([, m]) => isMuniIncluded(m) && m.name?.toLowerCase().includes(q))
+        .slice(0, 8);
+    rows.forEach(([ine, m]) => {
+        const prov = state.data.provincias?.[m.prov]?.name || "";
+        const btn = document.createElement("button");
+        btn.className = "muni-search-result";
+        btn.type = "button";
+        btn.innerHTML = `<strong>${m.name}</strong><span>${prov}</span>`;
+        btn.addEventListener("click", () => {
+            selectMunicipio(ine, true);
+            input.value = "";
+            out.innerHTML = "";
+        });
+        out.appendChild(btn);
+    });
+}
+
+function lowerIsBetter(layer) {
+    const id = (layer || "").toLowerCase();
+    const name = (indicatorMeta(layer).name || "").toLowerCase();
+    return id.includes("dist") || id.startsWith("to_") || name.includes("distancia");
+}
+
+function currentMunicipioRows(layer = analysisLayer()) {
+    const year = currentYear();
+    const fmt = indicatorFormat(layer);
+    const rows = Object.entries(state.data?.municipios || {})
+        .filter(([, m]) => isMuniIncluded(m))
+        .map(([ine, m]) => {
+            const value = indicatorValue(ine, layer, year);
+            return { ine, name: m.name, prov: state.data.provincias?.[m.prov]?.name || "", value, formatted: fmt(value) };
+        })
+        .filter(d => d.value != null && Number.isFinite(d.value));
+    rows.sort((a, b) => lowerIsBetter(layer) ? a.value - b.value : b.value - a.value);
+    rows.forEach((d, i) => d.rank = i + 1);
+    return rows;
+}
+
+function renderDataView() {
+    if (!document.body.classList.contains("show-data")) return;
+    const tab = state.mainTab;
+    document.querySelectorAll(".data-panel").forEach(panel => panel.classList.remove("active"));
+    $(`#panel-${tab}`)?.classList.add("active");
+    const selected = selectedMunicipios();
+    $("#data-selection-summary").textContent = selected.length
+        ? selected.map(m => m.name).join(", ")
+        : "Sin municipios seleccionados";
+    if (tab === "trends") renderTrendsView();
+    if (tab === "ranking") renderRankingView();
+    if (tab === "table") renderSeriesTableView();
+}
+
+function renderTrendsView() {
+    const meta = indicatorMeta(analysisLayer());
+    $("#data-view-kicker").textContent = "Evolucion historica";
+    $("#data-view-title").textContent = meta.name;
+    $("#data-view-desc").textContent = "Series historicas para los municipios seleccionados.";
+    const hasChart = drawTrendChart("#trend-chart", 430);
+    $("#trend-empty").classList.toggle("visible", !hasChart);
+}
+
+function renderRankingView() {
+    const layer = analysisLayer();
+    const meta = indicatorMeta(layer);
+    $("#data-view-kicker").textContent = `Ranking ${Math.round(currentYear())}`;
+    $("#data-view-title").textContent = "Ranking municipal";
+    $("#data-view-desc").textContent = `${meta.name}. ${lowerIsBetter(layer) ? "Menor valor aparece primero." : "Mayor valor aparece primero."}`;
+    const selectedSet = new Set(state.selectedInes);
+    const rows = currentMunicipioRows(layer).slice(0, 100);
+    $("#ranking-table").innerHTML = `
+        <table class="analysis-table">
+            <thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th class="num">${meta.unit || "Valor"}</th></tr></thead>
+            <tbody>${rows.map(d => `
+                <tr class="${selectedSet.has(d.ine) ? "selected-row" : ""}">
+                    <td class="rank">${d.rank}</td>
+                    <td>${d.name}</td>
+                    <td>${d.prov}</td>
+                    <td class="num">${d.formatted}</td>
+                </tr>`).join("")}</tbody>
+        </table>`;
+}
+
+function renderSeriesTableView() {
+    const layer = analysisLayer();
+    const meta = indicatorMeta(layer);
+    const fmt = indicatorFormat(layer);
+    const selected = selectedMunicipios();
+    $("#data-view-kicker").textContent = "Serie historica";
+    $("#data-view-title").textContent = "Tabla";
+    $("#data-view-desc").textContent = selected.length
+        ? `Valores historicos de ${meta.name} para los municipios seleccionados.`
+        : `Top municipal en ${Math.round(currentYear())}. Selecciona municipios para ver una tabla historica por anio.`;
+    if (!selected.length) {
+        const rows = currentMunicipioRows(layer).slice(0, 100);
+        $("#series-table").innerHTML = `
+            <table class="analysis-table">
+                <thead><tr><th>#</th><th>Municipio</th><th>Provincia</th><th class="num">${meta.unit || "Valor"}</th></tr></thead>
+                <tbody>${rows.map(d => `
+                    <tr><td class="rank">${d.rank}</td><td>${d.name}</td><td>${d.prov}</td><td class="num">${d.formatted}</td></tr>`).join("")}</tbody>
+            </table>`;
+        return;
+    }
+    const yrs = analysisYears(layer);
+    $("#series-table").innerHTML = `
+        <table class="analysis-table">
+            <thead><tr><th>Anio</th>${selected.map(m => `<th class="num">${m.name}</th>`).join("")}</tr></thead>
+            <tbody>${yrs.map(y => `
+                <tr>
+                    <td class="rank">${y}</td>
+                    ${selected.map(m => `<td class="num">${fmt(indicatorValue(m.ine, layer, y))}</td>`).join("")}
+                </tr>`).join("")}</tbody>
+        </table>`;
+}
+
+function renderAboutIndicatorCards() {
+    const grid = $("#about-indicator-grid");
+    if (!grid || !CATEGORIES) return;
+    grid.innerHTML = "";
+    const entries = [];
+    for (const [catId, cat] of Object.entries(CATEGORIES)) {
+        for (const ind of cat.indicators || []) {
+            entries.push({ ...ind, catId, catLabel: cat.label || catId });
+        }
+    }
+    entries.forEach(ind => {
+        const d = sourceDetailsForIndicator(ind.id);
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "about-indicator-card";
+        card.innerHTML = `
+            <div class="card-kicker">${ind.catLabel}</div>
+            <h3>${ind.name}</h3>
+            <p>${d.source}</p>
+            <div class="card-more">
+                <p><strong>Metodo.</strong> ${d.method}</p>
+                <p><strong>Cita.</strong> ${d.citation}</p>
+            </div>
+        `;
+        card.addEventListener("click", () => card.classList.toggle("open"));
+        grid.appendChild(card);
+    });
+}
+
 function buildCategoryTabs() {
     const wrap = $("#cat-tabs");
     if (!wrap) return;
@@ -1312,24 +1953,36 @@ async function ensureIndicatorLoaded(indId) {
     }
 }
 
+function setTimelineYears(years, preferredYear = currentYear()) {
+    CENSUS = years && years.length ? years : [2025];
+    YEAR_MIN = CENSUS[0];
+    YEAR_MAX = CENSUS[CENSUS.length - 1];
+    let bestI = 0;
+    let bestD = Infinity;
+    CENSUS.forEach((y, i) => {
+        const d = Math.abs(y - preferredYear);
+        if (d < bestD) {
+            bestD = d;
+            bestI = i;
+        }
+    });
+    state.yearIdx = bestI;
+    state.animFrameYear = null;
+}
+
 // Re-aim CENSUS / YEAR_MIN / YEAR_MAX at the active indicator's years.
 function syncCensusToIndicator() {
+    const preferredYear = currentYear();
+    const overlayYears = overlayTimelineYears();
+    if (overlayYears && overlayYears.length > 0) {
+        setTimelineYears(overlayYears, preferredYear);
+        return;
+    }
     const yrs = indicatorYears(state.indicator);
     if (yrs && yrs.length > 0) {
-        CENSUS = yrs;
-        YEAR_MIN = yrs[0];
-        YEAR_MAX = yrs[yrs.length - 1];
-        // Clamp current yearIdx
-        if (state.yearIdx >= CENSUS.length) state.yearIdx = CENSUS.length - 1;
-        state.animFrameYear = null;
+        setTimelineYears(yrs, preferredYear);
     } else {
-        // Static indicator (no time): pin to first/last
-        const yrsPob = state.data.years;
-        CENSUS = yrsPob;
-        YEAR_MIN = yrsPob[0];
-        YEAR_MAX = yrsPob[yrsPob.length - 1];
-        state.yearIdx = yrsPob.length - 1;
-        state.animFrameYear = null;
+        setTimelineYears([2025], preferredYear);
     }
 }
 
@@ -1349,59 +2002,81 @@ function renderIndicatorList() {
     }
 
     const indList = cat.indicators;
+    const select = document.createElement("select");
+    select.className = "indicator-select";
+    if (state.category === "transporte" && indList.some(i => i.kind === "overlay")) {
+        const allOpt = document.createElement("option");
+        allOpt.value = "__all_routes";
+        allOpt.textContent = "Todos los trazados";
+        select.appendChild(allOpt);
+    }
     indList.forEach(ind => {
-        const isOverlay = ind.kind === 'overlay';
-        const isActive = isOverlay ? state.activeOverlays.has(ind.id) : state.indicator === ind.id;
-        const row = document.createElement("div");
-        row.className = "ind-row" + (isActive ? " active" : "");
-        const widget = isOverlay ? `<span class="ind-checkbox"></span>` : `<span class="ind-radio"></span>`;
-        row.innerHTML = `${widget}<span>${ind.name}</span>`;
-        row.addEventListener("click", async () => {
-            if (isOverlay) {
-                if (state.activeOverlays.has(ind.id)) {
-                    state.activeOverlays.delete(ind.id);
-                    removeOverlay(ind.id);
-                } else {
-                    state.activeOverlays.add(ind.id);
-                    await addOverlay(ind);
-                }
-                renderIndicatorList();
-                renderOverlayLegend();
-            } else {
-                state.indicator = ind.id;
-                $("#indicator-name").textContent = ind.name;
-                $("#indicator-desc").textContent = ind.desc;
-                renderIndicatorList();
-                paintMunicipios();
-                renderSelectionSidebar();
-                try {
-                    await ensureIndicatorLoaded(ind.id);
-                } catch (e) {
-                    console.warn("No se pudo cargar indicador", ind.id, e);
-                    $("#legend").innerHTML = `<div style="font-size:11px;color:var(--ink-mute);font-style:italic">No se pudo cargar este indicador.</div>`;
-                    return;
-                }
-                syncCensusToIndicator();
-                setupTimeline();
-                $("#indicator-name").textContent = ind.name;
-                $("#indicator-desc").textContent = ind.desc;
-                renderIndicatorList();
-                paintMunicipios();
-                renderSelectionSidebar();
-            }
-        });
-        list.appendChild(row);
+        const opt = document.createElement("option");
+        opt.value = ind.id;
+        opt.textContent = ind.name;
+        select.appendChild(opt);
     });
+    if (state.category === "transporte" && state.activeOverlays.size > 1) {
+        select.value = "__all_routes";
+    } else if (state.category === "transporte" && state.activeOverlays.size === 1) {
+        select.value = [...state.activeOverlays][0];
+    } else {
+        select.value = state.indicator || indList[0]?.id || "";
+    }
+    select.addEventListener("change", () => selectIndicatorFromDropdown(select.value));
+    list.appendChild(select);
 
-    // Active indicator name/desc
-    const cur = indList.find(i => i.kind !== 'overlay' && i.id === state.indicator);
+    const cur = indList.find(i => i.id === select.value) || indList.find(i => i.kind !== 'overlay' && i.id === state.indicator);
     if (cur) {
         $("#indicator-name").textContent = cur.name;
         $("#indicator-desc").textContent = cur.desc;
-    } else if (state.category === 'transporte' || indList.every(i => i.kind === 'overlay')) {
+    } else if (select.value === "__all_routes" || state.category === 'transporte' || indList.every(i => i.kind === 'overlay')) {
         $("#indicator-name").textContent = cat.label;
-        $("#indicator-desc").textContent = "Activa una o varias capas para superponerlas al mapa base.";
+        $("#indicator-desc").textContent = "Trazados historicos superpuestos sobre el mapa base.";
     }
+}
+
+async function selectIndicatorFromDropdown(value) {
+    const cat = CATEGORIES[state.category];
+    const ind = cat?.indicators.find(i => i.id === value);
+    if (value === "__all_routes") {
+        state.indicator = null;
+        state.activeOverlays = new Set(OVERLAY_INDICATORS.map(o => o.id));
+        await renderActiveOverlays();
+        syncCensusToIndicator();
+        setupTimeline();
+        renderIndicatorList();
+        paintMunicipios();
+        renderSelectionSidebar();
+        return;
+    }
+    if (!ind) return;
+    if (ind.kind === "overlay") {
+        state.indicator = ind.id;
+        state.activeOverlays = new Set([ind.id]);
+        await renderActiveOverlays();
+        syncCensusToIndicator();
+        setupTimeline();
+        renderIndicatorList();
+        paintMunicipios();
+        renderSelectionSidebar();
+        return;
+    }
+    state.indicator = ind.id;
+    $("#indicator-name").textContent = ind.name;
+    $("#indicator-desc").textContent = ind.desc;
+    try {
+        await ensureIndicatorLoaded(ind.id);
+    } catch (e) {
+        console.warn("No se pudo cargar indicador", ind.id, e);
+        $("#legend").innerHTML = `<div style="font-size:11px;color:var(--ink-mute);font-style:italic">No se pudo cargar este indicador.</div>`;
+        return;
+    }
+    syncCensusToIndicator();
+    setupTimeline();
+    renderIndicatorList();
+    paintMunicipios();
+    renderSelectionSidebar();
 }
 
 async function renderActiveOverlays() {
@@ -1412,6 +2087,79 @@ async function renderActiveOverlays() {
         const ind = OVERLAY_INDICATORS.find(o => o.id === id);
         if (ind) await addOverlay(ind);
     }
+}
+
+function overlayFeatureVisibleAtYear(ind, feature, year) {
+    if (!ind?.temporal) return true;
+    const p = feature.properties || {};
+    const opening = Number(p.OPENING) || ind.startYear || YEAR_MIN;
+    const closure = Number(p.CLOSURE) || 0;
+    const reopening = Number(p.REOPENING) || 0;
+    if (year < opening) return false;
+    if (closure > 0 && year >= closure && (!reopening || year < reopening)) return false;
+    return true;
+}
+
+function updateOverlayVisibility(year = currentYear()) {
+    for (const id of state.activeOverlays) {
+        const ind = OVERLAY_INDICATORS.find(o => o.id === id);
+        if (!ind) continue;
+        map.select(`g.overlay-${id}`).selectAll("path")
+            .style("display", d => overlayFeatureVisibleAtYear(ind, d, year) ? null : "none");
+    }
+}
+
+function overlayTimelineYears() {
+    if (state.category !== "transporte" || isPaintableIndicator(state.indicator)) return null;
+    const starts = [];
+    for (const id of state.activeOverlays) {
+        const ind = OVERLAY_INDICATORS.find(o => o.id === id);
+        if (!ind?.temporal) continue;
+        const data = state.overlays[ind.id];
+        const years = data?.features
+            ?.map(f => Number(f.properties?.OPENING))
+            .filter(y => Number.isFinite(y) && y > 0);
+        starts.push(...(years?.length ? years : [ind.startYear || 1850]));
+    }
+    if (!starts.length) return null;
+    const minYear = Math.min(...starts);
+    const maxYear = 2025;
+    return d3.range(minYear, maxYear + 1);
+}
+
+function overlayLabel(ind, feature) {
+    const p = feature.properties || {};
+    if (!ind?.temporal) {
+        const meta = [p.clase, p.certeza].filter(Boolean).join(" · ");
+        return {
+            title: ind.name,
+            meta: meta || "Trazado historico",
+            value: Number.isFinite(+p.longitud_km) ? `${d3.format(",.1f")(+p.longitud_km)} km` : "",
+        };
+    }
+    const opening = Number(p.OPENING) || null;
+    const closure = Number(p.CLOSURE) || 0;
+    const reopening = Number(p.REOPENING) || 0;
+    const parts = [];
+    if (opening) parts.push(`apertura ${opening}`);
+    if (closure) parts.push(`cierre ${closure}`);
+    if (reopening) parts.push(`reapertura ${reopening}`);
+    return {
+        title: ind.name,
+        meta: parts.join(" · ") || "Trazado ferroviario",
+        value: overlayFeatureVisibleAtYear(ind, feature, currentYear()) ? "visible en este ano" : "fuera del ano activo",
+    };
+}
+
+function onOverlayHover(ev, d, ind) {
+    const info = overlayLabel(ind, d);
+    tooltip.innerHTML = `
+        <div class="tooltip-name">${info.title}</div>
+        <div class="tooltip-meta">${info.meta}</div>
+        ${info.value ? `<div class="tooltip-value"><span>trazado</span><strong>${info.value}</strong></div>` : ""}
+    `;
+    tooltip.classList.add("visible");
+    moveTooltip(ev);
 }
 
 async function addOverlay(ind) {
@@ -1431,7 +2179,10 @@ async function addOverlay(ind) {
         .data(data.features)
         .enter().append("path")
         .attr("class", ind.style)
-        .attr("d", pathGen);
+        .attr("d", pathGen)
+        .style("display", d => overlayFeatureVisibleAtYear(ind, d, currentYear()) ? null : "none")
+        .on("mouseover", (ev, d) => onOverlayHover(ev, d, ind))
+        .on("mouseleave", onMuniLeave);
 }
 function removeOverlay(id) {
     map.select(`g.layer-overlays > g.overlay-${id}`).remove();
@@ -1443,6 +2194,22 @@ function setupTimeline() {
     const ticks = $("#timeline-ticks");
     ticks.innerHTML = "";
     const tl = $("#timeline");
+    const timebar = $(".timebar");
+    const isStatic = CENSUS.length <= 1 || YEAR_MAX === YEAR_MIN;
+    timebar?.classList.toggle("disabled", isStatic);
+    if (isStatic) {
+        const tick = document.createElement("div");
+        tick.className = "timeline-tick";
+        tick.style.left = "100%";
+        ticks.appendChild(tick);
+        const lbl = document.createElement("div");
+        lbl.className = "timeline-tick-label";
+        lbl.style.left = "100%";
+        lbl.textContent = CENSUS[0] ?? "";
+        ticks.appendChild(lbl);
+        updateTimelineHandle();
+        return;
+    }
     // Etiquetas en años clave (cada ~25 años, ajustado al rango disponible)
     const labelYears = new Set();
     const span = YEAR_MAX - YEAR_MIN;
@@ -1475,6 +2242,7 @@ function setupTimeline() {
 }
 
 function onTimelineClick(ev) {
+    if (CENSUS.length <= 1 || YEAR_MAX === YEAR_MIN) return;
     const tl = $("#timeline").getBoundingClientRect();
     const t = Math.max(0, Math.min(1, (ev.clientX - tl.left) / tl.width));
     const year = YEAR_MIN + t * (YEAR_MAX - YEAR_MIN);
@@ -1489,7 +2257,8 @@ function onTimelineClick(ev) {
 }
 function updateTimelineHandle() {
     let pct;
-    if (state.animFrameYear != null) pct = (state.animFrameYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN);
+    if (YEAR_MAX === YEAR_MIN) pct = 1;
+    else if (state.animFrameYear != null) pct = (state.animFrameYear - YEAR_MIN) / (YEAR_MAX - YEAR_MIN);
     else pct = (CENSUS[state.yearIdx] - YEAR_MIN) / (YEAR_MAX - YEAR_MIN);
     $("#timeline-handle").style.left = (pct * 100) + "%";
     $("#timeline-fill").style.width = (pct * 100) + "%";
@@ -1497,6 +2266,7 @@ function updateTimelineHandle() {
 
 // ───────── Play / pause ─────────
 function startPlay() {
+    if (CENSUS.length <= 1 || YEAR_MAX === YEAR_MIN) return;
     state.playing = true;
     $("#play-btn").innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>';
     let startY = state.animFrameYear ?? CENSUS[state.yearIdx];
@@ -1583,10 +2353,16 @@ function setupSidebarResize() {
 
 function setupNavTabs() {
     const setMainTab = (tab) => {
+        state.mainTab = tab;
         document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+        document.querySelectorAll(".info-btn").forEach(b => b.classList.toggle("active", tab === "about"));
         document.body.classList.toggle("show-about", tab === "about");
+        document.body.classList.toggle("show-data", ["trends", "ranking", "table"].includes(tab));
         if (tab === "map" && state.municipios) {
             setTimeout(() => renderMapProgressive(), 60);
+        }
+        if (["trends", "ranking", "table"].includes(tab)) {
+            setTimeout(renderDataView, 0);
         }
     };
 
@@ -1599,13 +2375,17 @@ function setupNavTabs() {
 
 // ───────── Init ─────────
 async function init() {
+    setupIntro();
     setupNavTabs();
     setupSidebarResize();
     await loadData();
+    setupMunicipioSearch();
     syncCensusToIndicator();
     await renderMapProgressive();
+    renderIntroMap();
     setupTimeline();
     buildCategoryTabs();
+    renderAboutIndicatorCards();
     renderIndicatorList();
     paintMunicipios();
     renderSelectionSidebar();
@@ -1618,6 +2398,7 @@ async function init() {
         state.selectedInes = [];
         refreshSelectionStyles();
         renderSelectionSidebar();
+        renderDataView();
     });
     $(".map-area").addEventListener("mousemove", e => {
         if (tooltip.classList.contains("visible")) moveTooltip(e);
@@ -1625,7 +2406,10 @@ async function init() {
     let resizeTimer;
     window.addEventListener("resize", () => {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => renderMapProgressive(), 200);
+        resizeTimer = setTimeout(() => {
+            renderMapProgressive();
+            renderIntroMap();
+        }, 200);
     });
 }
 

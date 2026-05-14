@@ -1,8 +1,8 @@
-﻿/* trend-view.js — Multi-line time series chart with facet support */
+/* trend-view.js - Multi-line time series chart with facet support */
 
-import State from '../state.js?v=20260513-trend-area-timeline-fix31';
-import DataLoader from '../data-loader.js?v=20260513-trend-area-timeline-fix31';
-import { CAT_COLORS, REGIONS, fmt, fmtUnit, smartXTicks, shortItemLabel, shortEntityLabel } from '../utils.js?v=20260513-trend-area-timeline-fix31';
+import State from '../state.js?v=20260514-sidebar-gini-fix52';
+import DataLoader from '../data-loader.js?v=20260514-sidebar-gini-fix52';
+import { CAT_COLORS, REGIONS, fmt, fmtUnit, smartXTicks, shortItemLabel, shortEntityLabel } from '../utils.js?v=20260514-sidebar-gini-fix52';
 import { showTooltip, hideTooltip } from '../components/tooltip.js';
 
 let _svg, _width, _height;
@@ -52,7 +52,7 @@ function _resize() {
     if (!container) return;
     _width = container.clientWidth;
     _height = container.clientHeight;
-    // Don't set viewBox here for facets — we may need to expand
+    // Don't set viewBox here for facets - we may need to expand
 }
 
 export function updateTrendView() {
@@ -86,9 +86,9 @@ export function updateTrendView() {
     }
 }
 
-/* ═══════════════════════════════════════════
+/* -------------------------------------------
    Gap detection: break lines at gaps > 2 years
-   ═══════════════════════════════════════════ */
+   ------------------------------------------- */
 function splitSegments(data) {
     const valid = data.filter(d => d.value != null);
     if (valid.length === 0) return [];
@@ -109,9 +109,9 @@ function _rightLabelMargin() {
 
 function _displaySeriesName(name = '') {
     return String(name || '')
-        .split(/\s*·\s*/)
+        .split(/\s*-\s*/)
         .map(part => shortEntityLabel(shortItemLabel(part.trim())))
-        .join(' · ');
+        .join(' - ');
 }
 
 function _layoutSeriesLabels(labels, h) {
@@ -189,7 +189,7 @@ function _formatYAxisTick(value, unit) {
     const abs = Math.abs(value);
     const unitText = String(unit || '').toLowerCase();
     if (abs > 0 && abs < 10) {
-        const decimals = unitText.includes('índice') || unitText.includes('indice') ? 2 : 1;
+        const decimals = unitText.includes('Índice') || unitText.includes('indice') ? 2 : 1;
         return d3.format(`.${decimals}f`)(value).replace(/\.?0+$/, '');
     }
     return fmt(value);
@@ -203,6 +203,39 @@ function _stackedYScale(yMax, h) {
             .clamp(true);
     }
     return d3.scaleLinear().domain([0, yMax * 1.05]).range([h, 0]).nice();
+}
+
+function _facetYIsFree() {
+    return (State.get('facetYMode') || 'shared') === 'free';
+}
+
+function _lineYScale(data, h) {
+    const vals = (data || [])
+        .map(d => Number(d?.value))
+        .filter(v => Number.isFinite(v));
+    if (vals.length === 0) {
+        return d3.scaleLinear().domain([0, 1]).range([h, 0]);
+    }
+
+    const vMin = d3.min(vals);
+    const vMax = d3.max(vals);
+    if (State.get('scaleType') === 'log') {
+        const positives = vals.filter(v => v > 0);
+        if (positives.length === 0) {
+            return d3.scaleLinear().domain([0, 1]).range([h, 0]);
+        }
+        const minPos = Math.max(1, d3.min(positives) || 1);
+        const maxPos = Math.max(minPos * 1.1, d3.max(positives) || minPos);
+        return d3.scaleLog().domain([minPos, maxPos]).range([h, 0]).clamp(true);
+    }
+
+    const span = Math.max((vMax ?? 1) - (vMin ?? 0), Math.abs(vMax ?? 1) * 0.03, 0.01);
+    const yPad = span * 0.1;
+    const yBase = _usesTightYDomain()
+        ? Math.max(0, (vMin ?? 0) - yPad)
+        : Math.min(0, vMin ?? 0);
+    const yTop = (vMax ?? 1) + yPad;
+    return d3.scaleLinear().domain([yBase, yTop <= yBase ? yBase + 1 : yTop]).range([h, 0]).nice();
 }
 
 function _stackedYValue(y, value, h) {
@@ -351,7 +384,7 @@ function _buildBilateralTrendSeries() {
             const data = _bilateralSeriesData(partnerName, code, geo, element, productName, years, yearRange);
             if (data.length === 0) return;
             const name = productName
-                ? `${shortEntityLabel(partnerName)} · ${shortItemLabel(productName)}`
+                ? `${shortEntityLabel(partnerName)} - ${shortItemLabel(productName)}`
                 : shortEntityLabel(partnerName);
             series.push({
                 code: `${partnerName}__${productName || 'total'}`,
@@ -507,15 +540,15 @@ function _renderBilateralOverlay() {
     }
 
     const productNames = _selectedProductNames();
-    const productText = productNames.length === 1 ? ` · ${shortItemLabel(productNames[0])}`
-        : productNames.length > 1 ? ` · ${productNames.length} productos` : '';
+    const productText = productNames.length === 1 ? ` - ${shortItemLabel(productNames[0])}`
+        : productNames.length > 1 ? ` - ${productNames.length} productos` : '';
     g.append('text')
         .attr('x', 0)
         .attr('y', -4)
         .attr('font-size', '11px')
         .attr('font-weight', '700')
         .attr('fill', '#7A4A22')
-        .text(`${flowLabel} · ${shortEntityLabel(entityName)}${productText} · socios`);
+        .text(`${flowLabel} - ${shortEntityLabel(entityName)}${productText} - socios`);
 
     g.append('text')
         .attr('transform', 'rotate(-90)')
@@ -558,14 +591,14 @@ function _renderBilateralOverlay() {
                 const d = s.data.find(point => point.year === year);
                 if (d && d.value != null) {
                     hoverDots[i].attr('cx', x(year)).attr('cy', y(d.value)).style('display', null);
-                    entries.push(`<span style="color:${s.color}">■</span> ${s.name}: <b>${fmtUnit(d.value, 'toneladas')}</b>`);
+                    entries.push(`<span style="color:${s.color}">-</span> ${s.name}: <b>${fmtUnit(d.value, 'toneladas')}</b>`);
                 } else {
                     hoverDots[i].style('display', 'none');
                 }
             });
             if (entries.length) {
                 showTooltip(event, {
-                    title: `${flowLabel} · ${entityName} — ${year}`,
+                    title: `${flowLabel} - ${entityName} - ${year}`,
                     value: entries.join('<br>'),
                 });
             }
@@ -627,9 +660,9 @@ function _obsoleteSelectedProductItems(topItems) {
     return found ? [found] : [{ code: cropItem, name: cropItem, value: null }];
 }
 
-/* ═══════════════════════════════════════════
+/* -------------------------------------------
    Overlay mode (original behavior)
-   ═══════════════════════════════════════════ */
+   ------------------------------------------- */
 function _renderOverlay() {
     _svg.style('height', null);  // reset to flex sizing
     _svg.attr('viewBox', `0 0 ${_width} ${_height}`);
@@ -656,7 +689,7 @@ function _renderOverlay() {
         effectiveSelected = ['mexico', 'central_caribbean', 'andean', 'brazil', 'southern_cone'];
     } else if (geoLevel === 'subnational') {
         if (emptyEl) {
-            emptyEl.textContent = 'Selecciona un país (ARG, BRA o MEX) para ver tendencias subnacionales';
+            emptyEl.textContent = 'Selecciona un país para ver sus unidades subnacionales';
             emptyEl.style.display = '';
         }
         return;
@@ -695,7 +728,7 @@ function _renderOverlay() {
                 const entityName = shortEntityLabel(DataLoader.getCountryName(code));
                 return productNames.map((itemName, itemIdx) => ({
                     code: `${code}__${itemName}`,
-                    name: effectiveSelected.length > 1 ? `${entityName} · ${shortItemLabel(itemName)}` : shortItemLabel(itemName),
+                    name: effectiveSelected.length > 1 ? `${entityName} - ${shortItemLabel(itemName)}` : shortItemLabel(itemName),
                     geoLevel: seriesGeoLevel,
                     color: productNames.length > 1 ? CAT_COLORS[itemIdx % CAT_COLORS.length] : CAT_COLORS[entityIdx % CAT_COLORS.length],
                     data: DataLoader.getItemTimeSeries(code, itemName, indicator, seriesGeoLevel)
@@ -801,7 +834,7 @@ function _renderOverlay() {
             }
         });
 
-        // Draw future (faded) — only when NOT playing
+        // Draw future (faded) - only when NOT playing
         if (!isPlaying && dataFuture.length > 0) {
             // Connect last past point to first future point
             const bridge = dataPast.length > 0 ? [dataPast[dataPast.length - 1], ...dataFuture] : dataFuture;
@@ -891,7 +924,7 @@ function _renderOverlay() {
         .attr('fill', '#A89888')
         .text(_getActiveIndicatorLabel() + (unit ? ` (${unit})` : ''));
 
-    // Hover overlay — Maddison-style: dashed line + colored dots per series
+    // Hover overlay - Maddison-style: dashed line + colored dots per series
     const overlay = g.append('rect')
         .attr('width', w)
         .attr('height', h)
@@ -931,7 +964,7 @@ function _renderOverlay() {
                         .attr('cx', x(year))
                         .attr('cy', y(d.value))
                         .style('display', null);
-                    entries.push(`<span style="color:${s.color}">■</span> ${s.name}: <b>${fmtUnit(d.value, unit)}</b>`);
+                    entries.push(`<span style="color:${s.color}">-</span> ${s.name}: <b>${fmtUnit(d.value, unit)}</b>`);
                 } else {
                     hoverDots[i].style('display', 'none');
                 }
@@ -939,10 +972,10 @@ function _renderOverlay() {
 
             if (entries.length) {
                 const cropItem = State.get('cropItem');
-                const cropLabel = cropItem !== 'all' ? `${cropItem} · ` : '';
+                const cropLabel = cropItem !== 'all' ? `${cropItem} - ` : '';
                 const indLabel = _getActiveIndicatorLabel();
                 showTooltip(event, {
-                    title: `${cropLabel}${indLabel} — ${year}`,
+                    title: `${cropLabel}${indLabel} - ${year}`,
                     value: entries.join('<br>'),
                 });
             }
@@ -953,9 +986,9 @@ function _renderOverlay() {
         });
 }
 
-/* ═══════════════════════════════════════════
-   Facet by Country — one small chart per selected country
-   ═══════════════════════════════════════════ */
+/* -------------------------------------------
+   Facet by Country - one small chart per selected country
+   ------------------------------------------- */
 function _renderFacetByCountry() {
     _svg.selectAll('*').remove();
     const emptyEl = document.getElementById('trend-empty');
@@ -968,7 +1001,7 @@ function _renderFacetByCountry() {
     const yearRange = State.get('yearRange');
 
     if (selected.length < 2) {
-        // Fall back to overlay — facet needs ≥2 countries
+        // Fall back to overlay - facet needs =2 countries
         _renderOverlay();
         return;
     }
@@ -1012,8 +1045,6 @@ function _renderFacetByCountry() {
     if (allData.length === 0) return;
 
     const xDomain = _xDomainForRange(yearRange, allData);
-    const yMax = d3.max(allData, d => d.value) || 1;
-
     panels.forEach((panel, idx) => {
         const col = idx % cols;
         const row = Math.floor(idx / cols);
@@ -1035,9 +1066,10 @@ function _renderFacetByCountry() {
             .attr('fill', panel.color)
             .text(panel.name);
 
-        // Shared scales
+        // Shared or free scales
         const x = d3.scaleLinear().domain(xDomain).range([0, w]);
-        const y = _stackedYScale(yMax, h);
+        const yData = _facetYIsFree() ? panel.series.flatMap(s => s.data) : allData;
+        const y = _lineYScale(yData, h);
 
         _drawFacetAxes(g, x, y, w, h, xDomain, unit);
 
@@ -1064,9 +1096,9 @@ function _renderFacetByCountry() {
     });
 }
 
-/* ═══════════════════════════════════════════
-   Facet by Product — one small chart per top item within a country
-   ═══════════════════════════════════════════ */
+/* -------------------------------------------
+   Facet by Product - one small chart per top item within a country
+   ------------------------------------------- */
 function _renderFacetByProduct() {
     _svg.selectAll('*').remove();
     const emptyEl = document.getElementById('trend-empty');
@@ -1125,8 +1157,6 @@ function _renderFacetByProduct() {
     if (allData.length === 0) return;
 
     const xDomain = _xDomainForRange(yearRange, allData);
-    const yMax = d3.max(allData, d => d.value) || 1;
-
     const entityName = entities.length > 1 ? `${entities.length} territorios` : entities[0].name;
 
     panels.forEach((panel, idx) => {
@@ -1151,9 +1181,10 @@ function _renderFacetByProduct() {
             .attr('fill', panel.color)
             .text(label);
 
-        // Shared scales
+        // Shared or free scales
         const x = d3.scaleLinear().domain(xDomain).range([0, w]);
-        const y = d3.scaleLinear().domain([0, yMax * 1.05]).range([h, 0]).nice();
+        const yData = _facetYIsFree() ? panel.series.flatMap(s => s.data) : allData;
+        const y = _lineYScale(yData, h);
 
         _drawFacetAxes(g, x, y, w, h, xDomain, unit);
 
@@ -1209,12 +1240,12 @@ function _renderFacetByProduct() {
         .attr('font-size', '11px')
         .attr('fill', '#7A6A5A')
         .attr('font-weight', '600')
-        .text(`${entityName} — ${_getActiveIndicatorLabel()} — Top ${topItems.length} ${_itemPluralName()}`);
+        .text(`${entityName} - ${_getActiveIndicatorLabel()} - Top ${topItems.length} ${_itemPluralName()}`);
 }
 
-/* ═══════════════════════════════════════════
-   Stacked Area mode (overlay — stacks countries or single-country products)
-   ═══════════════════════════════════════════ */
+/* -------------------------------------------
+   Stacked Area mode (overlay - stacks countries or single-country products)
+   ------------------------------------------- */
 function _renderStacked() {
     _svg.style('height', null);
     _svg.attr('viewBox', `0 0 ${_width} ${_height}`);
@@ -1273,7 +1304,7 @@ function _renderStacked() {
                 const entityName = shortEntityLabel(DataLoader.getCountryName(code));
                 return productNames.map((itemName, itemIdx) => ({
                     code: `${code}__${itemName}`,
-                    name: effectiveSelected.length > 1 ? `${entityName} · ${shortItemLabel(itemName)}` : shortItemLabel(itemName),
+                    name: effectiveSelected.length > 1 ? `${entityName} - ${shortItemLabel(itemName)}` : shortItemLabel(itemName),
                     color: productNames.length > 1 ? CAT_COLORS[itemIdx % CAT_COLORS.length] : CAT_COLORS[entityIdx % CAT_COLORS.length],
                     data: DataLoader.getItemTimeSeries(code, itemName, indicator, seriesGeoLevel)
                         .filter(d => d.year >= yearRange[0] && d.year <= yearRange[1]),
@@ -1385,7 +1416,7 @@ function _renderStacked() {
     // End labels, aligned with the right side like line charts.
     _drawStackedEndLabels(g, allSeries, stacked, x, y, w, h, currentYear);
 
-    // Hover overlay — Maddison-style: dashed line + colored dots at top of each layer
+    // Hover overlay - Maddison-style: dashed line + colored dots at top of each layer
     const overlay = g.append('rect')
         .attr('width', w).attr('height', h)
         .attr('fill', 'transparent')
@@ -1437,8 +1468,8 @@ function _renderStacked() {
                 entries.push(`Total: ${fmtUnit(total, unit)}`);
 
                 const cropItem2 = State.get('cropItem');
-                const cropLabel2 = cropItem2 !== 'all' ? `${cropItem2} · ` : '';
-                showTooltip(event, { title: `${cropLabel2}${_getActiveIndicatorLabel()} — ${year}`, value: entries.join('<br>') });
+                const cropLabel2 = cropItem2 !== 'all' ? `${cropItem2} - ` : '';
+                showTooltip(event, { title: `${cropLabel2}${_getActiveIndicatorLabel()} - ${year}`, value: entries.join('<br>') });
             }
         })
         .on('mouseleave', () => {
@@ -1447,9 +1478,9 @@ function _renderStacked() {
         });
 }
 
-/* ═══════════════════════════════════════════
-   Stacked Area — Facet by Country
-   ═══════════════════════════════════════════ */
+/* -------------------------------------------
+   Stacked Area - Facet by Country
+   ------------------------------------------- */
 function _renderStackedFacetByCountry() {
     _svg.selectAll('*').remove();
     const emptyEl = document.getElementById('trend-empty');
@@ -1558,7 +1589,7 @@ function _renderStackedFacetByCountry() {
             .text(panel.name);
 
         const x = d3.scaleLinear().domain(xDomain).range([0, w]);
-        const y = d3.scaleLinear().domain([0, yMax * 1.05]).range([h, 0]).nice();
+        const y = _stackedYScale(_facetYIsFree() ? panel.stackMax : yMax, h);
 
         _drawFacetAxes(g, x, y, w, h, xDomain, unit);
 
@@ -1587,9 +1618,9 @@ function _renderStackedFacetByCountry() {
     });
 }
 
-/* ═══════════════════════════════════════════
-   Stacked Area — Facet by Product (stacked countries per product)
-   ═══════════════════════════════════════════ */
+/* -------------------------------------------
+   Stacked Area - Facet by Product (stacked countries per product)
+   ------------------------------------------- */
 function _renderStackedFacetByProduct() {
     _svg.selectAll('*').remove();
     const emptyEl = document.getElementById('trend-empty');
@@ -1708,7 +1739,7 @@ function _renderStackedFacetByProduct() {
             .text(label);
 
         const x = d3.scaleLinear().domain(xDomain).range([0, w]);
-        const y = _stackedYScale(yMax, h);
+        const y = _stackedYScale(_facetYIsFree() ? panel.stackMax : yMax, h);
 
         _drawFacetAxes(g, x, y, w, h, xDomain, unit);
 
@@ -1745,9 +1776,9 @@ function _renderStackedFacetByProduct() {
         .text(`${entityName} \u2014 ${_getActiveIndicatorLabel()} \u2014 Top ${topItems.length} ${_itemPluralName()} (apilado)`);
 }
 
-/* ═══════════════════════════════════════════
+/* -------------------------------------------
    Stacked legend helper
-   ═══════════════════════════════════════════ */
+   ------------------------------------------- */
 function _drawStackedEndLabels(g, allSeries, stacked, x, y, w, h, currentYear) {
     const labels = [];
     stacked.forEach((layer, i) => {
@@ -1786,9 +1817,9 @@ function _drawStackedLegend(g, allSeries, chartWidth) {
     });
 }
 
-/* ═══════════════════════════════════════════
+/* -------------------------------------------
    Shared facet helpers
-   ═══════════════════════════════════════════ */
+   ------------------------------------------- */
 function _drawFacetAxes(g, x, y, w, h, xDomain, unit = '') {
     // X axis (simplified)
     const xTicks = smartXTicks(xDomain, w);
@@ -1868,7 +1899,7 @@ function _usesTightYDomain() {
     const field = String(ind.dataField || '').toLowerCase();
     const text = `${id} ${field}`;
 
-    if (unit.includes('%') || unit.includes('índice') || unit.includes('indice')) return true;
+    if (unit.includes('%') || unit.includes('Índice') || unit.includes('indice')) return true;
     if (unit === '0-2' || unit === '0/1' || unit.includes('/')) return true;
     return /(gini|share|yield|intensity|binary|ratio|rate|_pc\b)/.test(text);
 }
@@ -1906,3 +1937,8 @@ function _getActiveIndicatorLabel() {
     }
     return '';
 }
+
+
+
+
+
