@@ -635,7 +635,13 @@ applyLanguage(document);
 
 // ---- HEADER ACTIONS ---- //
 document.getElementById('btn-home').addEventListener('click', () => {
-    // Recreate intro overlay with static wake trajectories.
+    // Embedded inside the landing iframe → ask the parent to close us instead
+    // of rebuilding codex's intro overlay (which would feel like a second portada).
+    if (window !== window.parent) {
+        try { window.parent.postMessage({ type: 'gw-back-to-cover' }, '*'); } catch(_) {}
+        return;
+    }
+    // Standalone explorer build — keep the original behaviour.
     const overlay = document.createElement('div');
     overlay.className = 'intro-overlay';
     overlay.id = 'intro-overlay';
@@ -705,8 +711,21 @@ async function init() {
         loadingScreen.classList.add('hidden');
         setTimeout(() => loadingScreen.remove(), 500);
 
-        // Launch animated wake intro now that data is available
-        animateWakeIntro();
+        // The single-document landing (index.html) gates entry via its own CTA;
+        // when explorer.html is loaded inside that landing's iframe we want to
+        // arrive directly on the globe, skipping codex's wake-intro overlay.
+        // animateWakeIntro() is preserved for the standalone explorer build.
+        if (window !== window.parent) {
+            // Embedded inside the landing iframe → go straight to the app.
+            if (introOverlay) introOverlay.classList.add('hidden');
+            appEl.style.display = 'flex';
+            setTimeout(() => {
+                import('./globe/globe-renderer.js').then(m => m.retryGlobe());
+            }, 100);
+            setTimeout(() => introOverlay && introOverlay.remove(), 600);
+        } else {
+            animateWakeIntro();
+        }
 
         console.log("Growth's Wake initialized successfully");
 
