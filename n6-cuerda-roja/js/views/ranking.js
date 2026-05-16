@@ -1,0 +1,87 @@
+// Ranking view — horizontal bars top-N for the active indicator at currentYear.
+
+import { State } from '../state.js';
+import { DataLoader } from '../data-loader.js';
+import { getIndicator } from '../indicators.js';
+
+let _aggregates = null;
+let _countryNames = null;
+
+export async function initRankingView() {
+  try {
+    const agg = await DataLoader.loadCountryYearIndicators();
+    _aggregates = agg.data;
+    _countryNames = agg.country_names || {};
+  } catch (e) {
+    console.warn('[ranking] failed to load aggregates', e);
+  }
+  refresh();
+  State.subscribe('activeCategory',  refresh);
+  State.subscribe('activeIndicator', refresh);
+  State.subscribe('currentYear',     refresh);
+  State.subscribe('selectedCountries', highlight);
+  State.subscribe('language',        refresh);
+}
+
+function refresh() {
+  const ind = getIndicator(State.get('activeCategory'), State.get('activeIndicator'));
+  const container = document.getElementById('ranking-container');
+  if (!container || !ind) return;
+
+  if (ind.source && ind.source !== 'regions') {
+    container.innerHTML = `<div style="color:var(--c-text-3); padding:24px;">
+      Ranking de <em>${ind.label[State.get('language')]}</em> próximamente.
+    </div>`;
+    return;
+  }
+
+  const year = State.get('currentYear');
+  const rows = [];
+  for (const iso in (_aggregates || {})) {
+    const yr = _aggregates[iso][year];
+    if (!yr) continue;
+    const v = yr[ind.field];
+    if (v == null || !isFinite(v)) continue;
+    rows.push({ iso, country: _countryNames[iso] || iso, value: v });
+  }
+  rows.sort((a, b) => b.value - a.value);
+
+  const top = rows.slice(0, 40);
+  const max = top[0] && top[0].value;
+  if (!max) {
+    container.innerHTML = `<div style="color:var(--c-text-3); padding:24px;">Sin datos para ${year}.</div>`;
+    return;
+  }
+
+  const sel = State.get('selectedCountries');
+  container.innerHTML = `
+    <div style="margin-bottom:14px; color:var(--c-text-2); font-size:12px;">
+      Ranking de países por <strong>${ind.label[State.get('language')]}</strong> en ${year} · top 40
+    </div>
+    ${top.map((r, i) => `
+      <div class="rk-row" data-iso="${r.iso}">
+        <div class="rk-rank">${i + 1}</div>
+        <div class="rk-name">${r.country} <span style="color:var(--c-text-3); font-size:10px;">${r.iso}</span></div>
+        <div class="rk-bar-wrap"><div class="rk-bar" style="width:${(r.value / max) * 100}%; background:${sel.includes(r.iso) ? '#8B2500' : '#6B4226'};"></div></div>
+        <div class="rk-val">${formatVal(r.value)} ${ind.unit}</div>
+      </div>
+    `).join('')}
+  `;
+
+  container.querySelectorAll('.rk-row').forEach(el => {
+    el.addEventListener('click', () => State.toggleCountry(el.dataset.iso));
+  });
+}
+
+function highlight() {
+  refresh();
+}
+
+function formatVal(v) {
+  if (v == null || !isFinite(v)) return '—';
+  if (Math.abs(v) >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+  if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return (v / 1e3).toFixed(1) + 'k';
+  if (Number.isInteger(v)) return v.toString();
+  return v.toFixed(2);
+}

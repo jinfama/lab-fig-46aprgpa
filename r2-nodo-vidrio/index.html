@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Estelas — Growth's Wake</title>
+<title>Estelas â€” Growth's Wake</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,11 +26,11 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{background:var(--paper);color:var(--ink);font-family:var(--ff-sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 
-/* ---------- Backgrounds — switched by body.mode-* ----------
+/* ---------- Backgrounds â€” switched by body.mode-* ----------
    Three different portadas:
-     mode-mar       — painting + spotlight, no dashed lines.
-     mode-estelas   — cream paper + dashed wake-lines.
-     mode-huellas — painting + dashed wake-lines overlaid (hybrid). */
+     mode-mar       â€” painting + spotlight, no dashed lines.
+     mode-estelas   â€” cream paper + dashed wake-lines.
+     mode-huellas â€” painting + dashed wake-lines overlaid (hybrid). */
 body.mode-mar,
 body.mode-huellas{
   background-image:
@@ -59,13 +60,13 @@ body.mode-estelas{
 a{color:var(--ink);text-decoration:none}
 a:hover{color:var(--warm)}
 
-/* Custom cursor — a small warm-red ring with a centred dot. Always visible,
+/* Custom cursor â€” a small warm-red ring with a centred dot. Always visible,
    reads over the painting and the cream paper alike. Falls back to crosshair
    if the browser can't render the SVG cursor. */
 body{
   cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'><circle cx='14' cy='14' r='8' fill='none' stroke='%23c93324' stroke-width='2'/><circle cx='14' cy='14' r='1.6' fill='%23c93324'/></svg>") 14 14, crosshair;
 }
-/* But standard pointer over buttons / links — UI affordance wins over aesthetics. */
+/* But standard pointer over buttons / links â€” UI affordance wins over aesthetics. */
 button,a,.cta{cursor:pointer}
 
 /* ---------- Top bar ---------- */
@@ -98,7 +99,7 @@ button,a,.cta{cursor:pointer}
 .switcher button.active{color:var(--ink);border-bottom-color:var(--warm)}
 .switcher .sep{color:var(--ink-mute);opacity:.5;font-weight:300;padding:0 2px}
 
-/* ---------- Audio mount — chip on top of a YouTube iframe ----------
+/* ---------- Audio mount â€” chip on top of a YouTube iframe ----------
    YouTube refuses to autoplay audio from display:none / invisible iframes,
    so we render the iframe at its natural size and *cover it visually* with
    the chip button. The browser still sees a "visible" iframe, but the user
@@ -115,7 +116,7 @@ body.viewer-open .audio-mount{bottom:96px}
 .audio-mount .yt-frame{
   position:absolute;inset:0;width:100%;height:100%;
   border:0;z-index:1;
-  /* Almost-invisible — but rendered, so YouTube allows audio playback. */
+  /* Almost-invisible â€” but rendered, so YouTube allows audio playback. */
   opacity:0.001;
   pointer-events:none;
 }
@@ -158,11 +159,11 @@ body.viewer-open .audio-mount{bottom:96px}
 }
 .audio-chip.unmuted .audio-chip-hint{opacity:0;visibility:hidden;width:0;margin-left:0}
 
-/* ---------- Hero — shared shell, three layouts via body.mode-* ---------- */
-/* ---------- Viewer iframe — single-document integration ----------
+/* ---------- Hero â€” shared shell, three layouts via body.mode-* ---------- */
+/* ---------- Viewer iframe â€” single-document integration ----------
    The explorer lives in an iframe layered on top of the cover. The iframe is
    loaded lazily; clicking "Explore" reveals it and the music in the parent
-   keeps playing. A small "Estelas ↑" link returns to the cover. */
+   keeps playing. A small "Estelas â†‘" link returns to the cover. */
 .viewer-frame{
   position:fixed;inset:0;width:100vw;height:100vh;
   border:0;background:#fff;
@@ -209,7 +210,7 @@ body.mode-estelas .hero{
   padding:120px 24px 80px;
 }
 
-/* Painting layer — only in mar / combinada. */
+/* Painting layer â€” only in mar / combinada. */
 .hero-bg{
   position:absolute;inset:0;
   background-image:url('img/sea.png');
@@ -229,7 +230,7 @@ body.mode-estelas .hero{
 body.mode-mar .hero-bg,
 body.mode-huellas .hero-bg{opacity:0.94}
 
-/* FX canvas — Mar runs the spotlight, Combinada runs the painted-wake
+/* FX canvas â€” Mar runs the spotlight, Combinada runs the painted-wake
    droplets that follow the cursor. Hidden in Estelas. */
 .hero-spotlight{
   position:absolute;inset:0;width:100%;height:100%;
@@ -239,7 +240,7 @@ body.mode-huellas .hero-bg{opacity:0.94}
 body.mode-mar .hero-spotlight,
 body.mode-huellas .hero-spotlight{opacity:1}
 
-/* Dashed wake SVG — only Estelas. */
+/* Dashed wake SVG â€” only Estelas. */
 .wake-svg{
   position:absolute;inset:0;width:100%;height:100%;
   z-index:1;pointer-events:none;
@@ -247,7 +248,7 @@ body.mode-huellas .hero-spotlight{opacity:1}
 }
 body.mode-estelas .wake-svg{opacity:1}
 
-/* Huellas mode — walking wakes on a chart-grid background, footprint cursor.
+/* Huellas mode â€” walking wakes on a chart-grid background, footprint cursor.
    Reuses codex's visual language so the user gets the exact intro they liked,
    just integrated as a portada option instead of an intermediate page. */
 .huellas-stage{
@@ -307,7 +308,7 @@ body.mode-estelas .hero-content{max-width:780px;text-align:center}
   margin-bottom:22px;
 }
 
-/* Main title — "Estelas" is always the warm-red highlight; the rest is ink. */
+/* Main title â€” "Estelas" is always the warm-red highlight; the rest is ink. */
 h1.title{
   font-family:var(--ff-serif);
   font-size:clamp(54px,7vw,104px);
@@ -354,7 +355,7 @@ body.mode-estelas .cta-row{justify-content:center}
 .cta .arrow{font-size:16px;line-height:1;transition:transform .25s}
 .cta:hover .arrow{transform:translateX(4px)}
 
-/* Machado quote — bottom-left, present in ALL three modes. Faint cream halo so
+/* Machado quote â€” bottom-left, present in ALL three modes. Faint cream halo so
    it reads over the painting, plain ink on cream paper. */
 .hero-quote{
   position:absolute;z-index:2;
@@ -393,17 +394,17 @@ body.mode-estelas .cta-row{justify-content:center}
     <nav class="switcher mode-switcher" aria-label="Visual mode">
       <span class="sw-label" data-i18n="modeLabel">Portada</span>
       <button data-mode="mar" class="active">Mar</button>
-      <span class="sep">·</span>
+      <span class="sep">Â·</span>
       <button data-mode="estelas">Estelas</button>
-      <span class="sep">·</span>
+      <span class="sep">Â·</span>
       <button data-mode="huellas">Huellas</button>
     </nav>
     <nav class="switcher lang-switcher" aria-label="Language">
       <button data-lang="en" class="active">EN</button>
-      <span class="sep">·</span>
+      <span class="sep">Â·</span>
       <button data-lang="es">ES</button>
-      <span class="sep">·</span>
-      <button data-lang="zh">中文</button>
+      <span class="sep">Â·</span>
+      <button data-lang="zh">ä¸­æ–‡</button>
     </nav>
   </div>
 </header>
@@ -417,7 +418,7 @@ body.mode-estelas .cta-row{justify-content:center}
   <button class="audio-chip muted" id="audio-chip" type="button" aria-label="Toggle music">
     <span class="audio-chip-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
     <span class="audio-chip-meta">
-      <i>Footprints</i><span data-i18n="trackFootprints">Wayne Shorter · 1966</span>
+      <i>Footprints</i><span data-i18n="trackFootprints">Wayne Shorter Â· 1966</span>
     </span>
     <span class="audio-chip-hint" data-i18n="audioHint">Toca para escuchar</span>
   </button>
@@ -436,7 +437,7 @@ body.mode-estelas .cta-row{justify-content:center}
   </div>
 
   <div class="hero-content">
-    <div class="kicker" data-i18n="kicker">Historical trajectories — 1820 to today</div>
+    <div class="kicker" data-i18n="kicker">Historical trajectories â€” 1820 to today</div>
     <h1 class="title">
       <span class="wake">Estelas</span> <span class="tail">del crecimiento</span>
     </h1>
@@ -451,30 +452,30 @@ body.mode-estelas .cta-row{justify-content:center}
     <div class="cta-row">
       <a class="cta" id="cta-explore" href="#viewer">
         <span data-i18n="ctaPrimary">Explore the trajectories</span>
-        <span class="arrow">→</span>
+        <span class="arrow">â†’</span>
       </a>
     </div>
   </div>
 
   <aside class="hero-quote" data-i18n-html="quote">
-    <em>… sino estelas en la mar.</em>
+    <em>â€¦ sino estelas en la mar.</em>
     <span class="quote-src">Antonio Machado</span>
   </aside>
 </section>
 
 <!-- ============ EMBEDDED VIEWER ============
-     The explorer lives inside this iframe — same document, same audio context.
+     The explorer lives inside this iframe â€” same document, same audio context.
      loading="lazy" defers the bundle until the user opens the viewer.
      Navigation back to the cover is done via the explorer's own "home" button
      (postMessage to parent), so there's no second back-control on screen. -->
-<iframe class="viewer-frame" id="viewer-frame" title="Estelas — explorer" loading="lazy"></iframe>
+<iframe class="viewer-frame" id="viewer-frame" title="Estelas â€” explorer" loading="lazy"></iframe>
 
 <script>
 /* =========================================================
-   0. Viewer integration — one URL, one experience.
-   Click "Explore" → load explorer.html into the iframe and reveal it; the
+   0. Viewer integration â€” one URL, one experience.
+   Click "Explore" â†’ load explorer.html into the iframe and reveal it; the
    music chip in the parent page keeps playing without interruption. The
-   "Estelas ↑" link in the corner returns to the cover.
+   "Estelas â†‘" link in the corner returns to the cover.
    --------------------------------------------------------- */
 (function(){
   const frame = document.getElementById('viewer-frame');
@@ -494,7 +495,7 @@ body.mode-estelas .cta-row{justify-content:center}
   window.addEventListener('keydown', (e) => {
     if(e.key === 'Escape' && document.body.classList.contains('viewer-open')) closeViewer();
   });
-  // The explorer's home button posts back to us when it's embedded — see
+  // The explorer's home button posts back to us when it's embedded â€” see
   // js/app.js's btn-home handler.
   window.addEventListener('message', (e) => {
     if(e.data && e.data.type === 'gw-back-to-cover') closeViewer();
@@ -503,7 +504,7 @@ body.mode-estelas .cta-row{justify-content:center}
 
 /* =========================================================
    1. Portada mode switcher (Mar / Estelas / Combinada).
-   Persists to localStorage. Each mode toggles body.mode-* — the rest is CSS.
+   Persists to localStorage. Each mode toggles body.mode-* â€” the rest is CSS.
    --------------------------------------------------------- */
 const MODE_KEY = 'gw_mode';
 (function(){
@@ -526,12 +527,12 @@ const MODE_KEY = 'gw_mode';
 })();
 
 /* =========================================================
-   2. FX canvas — Mar runs a soft cursor-spotlight on the painting;
+   2. FX canvas â€” Mar runs a soft cursor-spotlight on the painting;
    Combinada runs droplets travelling along the wakes painted INTO sea.png,
    accelerating and following the cursor when it hovers near one.
 
    Both effects share the same canvas (#spotlight-canvas) and the same cursor
-   state — tick() dispatches by mode and the canvas is cleared on each frame.
+   state â€” tick() dispatches by mode and the canvas is cleared on each frame.
    --------------------------------------------------------- */
 (function(){
   const canvas = document.getElementById('spotlight-canvas');
@@ -633,7 +634,7 @@ const MODE_KEY = 'gw_mode';
 })();
 
 /* =========================================================
-   2b. Huellas — walking wake-lines on a chart-grid sea with a footprint cursor.
+   2b. Huellas â€” walking wake-lines on a chart-grid sea with a footprint cursor.
    Lifted from codex's intro-wake-container so the user can pick the exact
    visual they liked as the third portada option. Render runs once the first
    time Huellas mode is selected; the cursor trail listens within #huellas-stage.
@@ -796,7 +797,7 @@ const MODE_KEY = 'gw_mode';
     rendered = true;
   }
 
-  /* Footprint cursor + trail — within the Huellas stage. */
+  /* Footprint cursor + trail â€” within the Huellas stage. */
   function startCursorTrail(){
     if(window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
     const href = footprintImageHref('#a65e55');
@@ -855,7 +856,7 @@ const MODE_KEY = 'gw_mode';
     });
   }
 
-  // Render lazily — only when Huellas mode is activated for the first time.
+  // Render lazily â€” only when Huellas mode is activated for the first time.
   function activate(){ if(!rendered) { render(); startCursorTrail(); } }
   window.addEventListener('gw-mode-change', (e) => {
     if(e.detail && e.detail.mode === 'huellas') activate();
@@ -864,7 +865,7 @@ const MODE_KEY = 'gw_mode';
 })();
 
 /* =========================================================
-   3. Estelas — dashed wake-lines on cream paper.
+   3. Estelas â€” dashed wake-lines on cream paper.
    Lines fade in staggered, drift continuously, and brighten on cursor proximity.
    --------------------------------------------------------- */
 (function(){
@@ -873,8 +874,8 @@ const MODE_KEY = 'gw_mode';
   const group  = document.getElementById('wake-group');
   if(!svg || !group) return;
   const VB_W = 1600, VB_H = 900;
-  // Wake-lines: all ascending (bottom-left → top-right). Y range clamped to
-  // [120, 880] so no line starts above the title band — keeps the hero copy
+  // Wake-lines: all ascending (bottom-left â†’ top-right). Y range clamped to
+  // [120, 880] so no line starts above the title band â€” keeps the hero copy
   // readable without lines springing from the very top edge.
   const RAW = [
     [[-50, 760], [200, 720], [500, 820], [800, 660], [1200, 540], [1450, 360], [1700, 200]],
@@ -886,7 +887,7 @@ const MODE_KEY = 'gw_mode';
     [[-30, 880], [250, 880], [580, 830], [900, 870], [1200, 820], [1450, 780], [1700, 720]],
     [[-50, 660], [300, 600], [600, 700], [950, 540], [1200, 500], [1450, 420], [1700, 340]],
     [[-50, 460], [280, 420], [560, 480], [850, 380], [1150, 320], [1430, 280], [1700, 240]],
-    // Filler lines for the upper band — kept well below the title.
+    // Filler lines for the upper band â€” kept well below the title.
     [[-50, 380], [220, 360], [500, 420], [800, 340], [1100, 280], [1400, 220], [1700, 180]],
     [[-50, 580], [240, 540], [540, 510], [880, 470], [1180, 430], [1450, 400], [1700, 360]],
     [[-50, 880], [220, 860], [520, 840], [880, 820], [1180, 800], [1450, 780], [1700, 760]]
@@ -987,14 +988,14 @@ const MODE_KEY = 'gw_mode';
 })();
 
 /* =========================================================
-   4. Audio — Footprints, muted-autoplay, unmute on first interaction.
+   4. Audio â€” Footprints, muted-autoplay, unmute on first interaction.
    The iframe is layered behind the chip at the same screen rectangle so
    YouTube sees a "visible" iframe (autoplay allowed) but the user only sees
    the elegant chip. We poll YT.PlayerState to drive the chip pause/play UI.
    --------------------------------------------------------- */
 (function(){
   const TRACK = {
-    title:'Footprints', artist:'Wayne Shorter · 1966',
+    title:'Footprints', artist:'Wayne Shorter Â· 1966',
     ids:['IFvOEPF7Yhc','5jhq5dXmRGE','XJtj4_5GdkA','oxqEx3CtMug','LgaIUqH0w6c']
   };
   const chip = document.getElementById('audio-chip');
@@ -1014,7 +1015,7 @@ const MODE_KEY = 'gw_mode';
   }
   setChipState();
 
-  // Load the IFrame API — we always try, even under file://. Modern browsers
+  // Load the IFrame API â€” we always try, even under file://. Modern browsers
   // refuse the embed there, but the chip click still opens the song on YouTube.
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
@@ -1058,7 +1059,7 @@ const MODE_KEY = 'gw_mode';
     } catch(_){}
   };
 
-  // First user interaction anywhere on the page → unmute the embed.
+  // First user interaction anywhere on the page â†’ unmute the embed.
   function unmuteOnce(){
     if(unmuted) return;
     unmuted = true;
@@ -1074,7 +1075,7 @@ const MODE_KEY = 'gw_mode';
   window.addEventListener('keydown',     unmuteOnce, true);
   window.addEventListener('touchstart',  unmuteOnce, true);
 
-  // Click on chip → play/pause toggle. Under file:// the iframe never loads —
+  // Click on chip â†’ play/pause toggle. Under file:// the iframe never loads â€”
   // fall back to opening the song on youtube.com.
   if(chip){
     chip.addEventListener('click', () => {
@@ -1093,7 +1094,7 @@ const MODE_KEY = 'gw_mode';
 })();
 
 /* =========================================================
-   5. Language switcher (EN / ES / 中文)
+   5. Language switcher (EN / ES / ä¸­æ–‡)
    --------------------------------------------------------- */
 (function(){
   const dict = {
@@ -1101,34 +1102,34 @@ const MODE_KEY = 'gw_mode';
       modeLabel:'Cover',
       modeCombined:'Hybrid',
       audioHint:'Click to hear',
-      trackFootprints:'Wayne Shorter · 1966',
-      kicker:'Historical trajectories — 1820 to today',
-      subtitle:'An interactive viewer of historical data on economic development, resource use and environmental impacts since 1820. It traces — country by country — the trajectories of GDP, human development, greenhouse gas emissions, land use and material flows, alongside the methodological choices used to reconstruct them.',
+      trackFootprints:'Wayne Shorter Â· 1966',
+      kicker:'Historical trajectories â€” 1820 to today',
+      subtitle:'An interactive viewer of historical data on economic development, resource use and environmental impacts since 1820. It traces â€” country by country â€” the trajectories of GDP, human development, greenhouse gas emissions, land use and material flows, alongside the methodological choices used to reconstruct them.',
       subtitleMin:'Historical series on development and the environment.',
-      quote:'<em>… sino estelas en la mar.</em> <span class="quote-src">Antonio Machado</span>',
+      quote:'<em>â€¦ sino estelas en la mar.</em> <span class="quote-src">Antonio Machado</span>',
       ctaPrimary:'Explore the trajectories'
     },
     es: {
       modeLabel:'Portada',
       modeCombined:'Combinada',
       audioHint:'Toca para escuchar',
-      trackFootprints:'Wayne Shorter · 1966',
-      kicker:'Trayectorias históricas — de 1820 a hoy',
-      subtitle:'Un visor interactivo de datos históricos sobre desarrollo económico, uso de recursos e impactos ambientales desde 1820. Recorre — país por país — las trayectorias del PIB, el desarrollo humano, las emisiones de gases de efecto invernadero, el uso del suelo y los flujos de materiales, junto con las decisiones metodológicas usadas para reconstruirlas.',
-      subtitleMin:'Series históricas de desarrollo y medio ambiente.',
-      quote:'<em>… sino estelas en la mar.</em> <span class="quote-src">Antonio Machado</span>',
+      trackFootprints:'Wayne Shorter Â· 1966',
+      kicker:'Trayectorias histÃ³ricas â€” de 1820 a hoy',
+      subtitle:'Un visor interactivo de datos histÃ³ricos sobre desarrollo econÃ³mico, uso de recursos e impactos ambientales desde 1820. Recorre â€” paÃ­s por paÃ­s â€” las trayectorias del PIB, el desarrollo humano, las emisiones de gases de efecto invernadero, el uso del suelo y los flujos de materiales, junto con las decisiones metodolÃ³gicas usadas para reconstruirlas.',
+      subtitleMin:'Series histÃ³ricas de desarrollo y medio ambiente.',
+      quote:'<em>â€¦ sino estelas en la mar.</em> <span class="quote-src">Antonio Machado</span>',
       ctaPrimary:'Explorar las trayectorias'
     },
     zh: {
-      modeLabel:'封面',
-      modeCombined:'混合',
-      audioHint:'点击试听',
-      trackFootprints:'Wayne Shorter · 1966',
-      kicker:'历史轨迹 — 1820年至今',
-      subtitle:'一个关于自1820年以来经济发展、资源使用与环境影响的交互式历史数据浏览器。它逐国追踪 GDP、人类发展、温室气体排放、土地使用与物质流的轨迹，以及在重建这些数据时所采用的方法选择。',
-      subtitleMin:'发展与环境的历史序列。',
-      quote:'<em>……海上的航迹。</em> <span class="quote-src">安东尼奥·马查多</span>',
-      ctaPrimary:'探索轨迹'
+      modeLabel:'å°é¢',
+      modeCombined:'æ··åˆ',
+      audioHint:'ç‚¹å‡»è¯•å¬',
+      trackFootprints:'Wayne Shorter Â· 1966',
+      kicker:'åŽ†å²è½¨è¿¹ â€” 1820å¹´è‡³ä»Š',
+      subtitle:'ä¸€ä¸ªå…³äºŽè‡ª1820å¹´ä»¥æ¥ç»æµŽå‘å±•ã€èµ„æºä½¿ç”¨ä¸ŽçŽ¯å¢ƒå½±å“çš„äº¤äº’å¼åŽ†å²æ•°æ®æµè§ˆå™¨ã€‚å®ƒé€å›½è¿½è¸ª GDPã€äººç±»å‘å±•ã€æ¸©å®¤æ°”ä½“æŽ’æ”¾ã€åœŸåœ°ä½¿ç”¨ä¸Žç‰©è´¨æµçš„è½¨è¿¹ï¼Œä»¥åŠåœ¨é‡å»ºè¿™äº›æ•°æ®æ—¶æ‰€é‡‡ç”¨çš„æ–¹æ³•é€‰æ‹©ã€‚',
+      subtitleMin:'å‘å±•ä¸ŽçŽ¯å¢ƒçš„åŽ†å²åºåˆ—ã€‚',
+      quote:'<em>â€¦â€¦æµ·ä¸Šçš„èˆªè¿¹ã€‚</em> <span class="quote-src">å®‰ä¸œå°¼å¥¥Â·é©¬æŸ¥å¤š</span>',
+      ctaPrimary:'æŽ¢ç´¢è½¨è¿¹'
     }
   };
   function applyLang(code){

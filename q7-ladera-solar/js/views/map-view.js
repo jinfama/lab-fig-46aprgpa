@@ -22,7 +22,7 @@ function _showMapLoading(msg) {
         el.className = 'map-loading';
         c.appendChild(el);
     }
-    el.textContent = msg || 'Cargando-';
+    el.textContent = msg || 'Cargando…';
     el.style.display = '';
 }
 function _hideMapLoading() {
@@ -729,13 +729,11 @@ function _renderSubnational() {
                 if (_hasDivergingSub) return _colorFn(val);
                 return val > 0 ? _colorFn(val) : '#E8E0D4';
             })
-            .attr('stroke', d => {
-                const val = d.properties._value;
-                if (val == null) return '#E8E0D4';
-                if (_hasDivergingSub) return _colorFn(val);
-                return val > 0 ? _colorFn(val) : '#E8E0D4';
-            })
-            .attr('stroke-width', 1.5)
+            // Thin neutral stroke (not fill-coloured) so dark-coloured
+            // countries don't get a half-pixel halo on coastlines, while
+            // still keeping a visible boundary against the page background.
+            .attr('stroke', 'rgba(139,94,60,0.35)')
+            .attr('stroke-width', 0.6)
             .attr('stroke-linejoin', 'round')
             .style('cursor', 'pointer')
             .on('click', (event, d) => {
@@ -767,14 +765,11 @@ function _renderSubnational() {
                 if (_hasDivergingSub) return _colorFn(val);
                 return val > 0 ? _colorFn(val) : '#E8E0D4';
             })
-            .attr('stroke', d => {
-                const val = d.properties._value;
-                if (val == null) return '#E8E0D4';
-                if (_hasDivergingSub) return _colorFn(val);
-                return val > 0 ? _colorFn(val) : '#E8E0D4';
-            })
-            .attr('stroke-width', 1.5)
-            .attr('stroke-linejoin', 'round')
+            // Borders are drawn separately by admin1-border-mesh and
+            // admin1-outline-mesh below. Painting a 1.5px stroke in the fill
+            // colour here leaked half a pixel beyond the polygon edge and
+            // produced a dark halo around dark-coloured states on the coast.
+            .attr('stroke', 'none')
             .style('cursor', 'pointer')
             .on('click', (event, d) => {
                 const iso3 = d.properties.iso3;

@@ -171,7 +171,9 @@ export function fmtUnit(v, unit) {
         case 'index100':
             return v.toFixed(1);
         case 'M horas/año':
-            return fmt(v) + ' M h/año';
+            // The "M" here means "millones" — spelling it out short avoids the
+            // ambiguous "M h/año" (read as megahour/year) that nobody parses.
+            return fmt(v) + ' mill. h/año';
         default:
             return fmt(v);
     }

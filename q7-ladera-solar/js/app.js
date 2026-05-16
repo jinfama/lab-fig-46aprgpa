@@ -1205,16 +1205,26 @@ function _territoryChipType(code) {
    Right Panel
    ----------------------------------------------- */
 function _buildRightPanel(meta) {
-    // Set up section collapse toggling (class-based for robustness)
-    document.querySelectorAll('.rp-section-header').forEach(header => {
-        header.addEventListener('click', (e) => {
+    // Delegated click handler — survives any re-render of section content
+    // and any change of inner DOM. The previous per-header binding worked at
+    // init but the user reported the PRODUCTOS / USOS DEL SUELO header
+    // refusing to collapse in landuse/bilateral, which only makes sense if
+    // the listener was somehow lost or shadowed. Delegation makes that
+    // impossible: there's a single handler on the panel, no matter what.
+    const panel = document.getElementById('right-panel');
+    if (panel && !panel.dataset.collapseBound) {
+        panel.dataset.collapseBound = '1';
+        panel.addEventListener('click', (e) => {
+            const header = e.target.closest('.rp-section-header');
+            if (!header || !panel.contains(header)) return;
+            const section = header.closest('.rp-section');
+            if (!section) return;
             e.stopPropagation();
-            const section = header.parentElement;
             section.classList.toggle('collapsed');
             _syncRightPanelState();
             window.dispatchEvent(new Event('resize'));
         });
-    });
+    }
     document.getElementById('rp-options')?.classList.remove('collapsed');
 
     _buildRPOptions(meta);
@@ -1703,7 +1713,11 @@ function _buildRPProducts() {
         });
     }
 
-    if (items.length > 0) {
+    // In LABOR the topItems list (Olivar, Uva, etc.) and the Categorías list
+    // collapsed to the same thing — the source already gives us aggregated
+    // categories. Showing both was confusing, so we hide the topItems block
+    // and keep only the aggregated category list below.
+    if (items.length > 0 && catId !== 'labor') {
         const itemTitle = document.createElement('div');
         itemTitle.className = 'picker-region-title';
         itemTitle.textContent = _topItemsHeader(catId);
@@ -1742,16 +1756,27 @@ function _buildRPProducts() {
         catTitle.textContent = 'Categorías';
         listEl.appendChild(catTitle);
 
+        // In LABOR the Categorías are the breakdown — there's no separate
+        // "tipos" list. We treat the picks like topItems: multi-select toggle
+        // so the user can stack several categories in trend view (Olivar +
+        // Uva + Cereales as overlaid or stacked areas).
+        const laborMultiSelect = catId === 'labor';
         categories.forEach(cat => {
             const item = document.createElement('button');
             item.type = 'button';
-            const isActive = currentCat === cat && currentItem === 'all';
+            const isActive = laborMultiSelect
+                ? selectedItemSet.has(cat)
+                : (currentCat === cat && currentItem === 'all');
             item.className = 'picker-item' + (isActive ? ' selected' : '');
             item.innerHTML = `<span class="picker-check">${isActive ? '&#10003;' : ''}</span><span>${cat}</span>`;
             item.addEventListener('click', () => {
-                State.set('selectedItems', []);
-                State.set('cropCategory', cat);
-                State.set('cropItem', 'all');
+                if (laborMultiSelect) {
+                    _toggleSelectedItem(cat);
+                } else {
+                    State.set('selectedItems', []);
+                    State.set('cropCategory', cat);
+                    State.set('cropItem', 'all');
+                }
                 _buildSelectionBar();
                 _updateQueryBarLabels(DataLoader.getMetadata());
                 _buildRPOptions();
@@ -2497,10 +2522,15 @@ function _isNonAdditiveIndicator(ind) {
     const field = String(ind.dataField || '').toLowerCase();
     const text = `${id} ${field}`;
 
-    if (unit.includes('%') || unit.includes('Índice') || unit.includes('indice')) return true;
+    // Only block stacking for indicators where summing is *mathematically*
+    // meaningless: shares/percentages and pure indices. For everything else
+    // (yields, intensities, per-capita, etc.) we let the user choose — even
+    // if stacking is unusual, the toggle should appear so the user can
+    // explore the data without surprises.
+    if (unit.includes('%')) return true;
+    if (unit === 'index100' || unit.includes('índice') || unit.includes('indice')) return true;
     if (unit === '0-2' || unit === '0/1') return true;
-    if (unit.includes('/')) return true;
-    if (/(gini|share|yield|intensity|binary|ratio|rate|_pc\b)/.test(text)) return true;
+    if (/\b(gini|share)\b/.test(text)) return true;
     return false;
 }
 

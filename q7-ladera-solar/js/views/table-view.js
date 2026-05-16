@@ -64,7 +64,7 @@ export function updateTableView() {
         th.textContent = col.label;
         th.style.cursor = 'pointer';
         if (_sortCol === col.id) {
-            th.textContent += _sortAsc ? ' ?' : ' ?';
+            th.textContent += _sortAsc ? ' ▲' : ' ▼';
         }
         th.addEventListener('click', () => {
             if (_sortCol === col.id) _sortAsc = !_sortAsc;

@@ -7,7 +7,7 @@
 <title>Atlas Agrario de Am&eacute;rica Latina</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23D4A032'/%3E%3Cpath d='M12 4v16M8 12c0-2 2-4 4-4M16 12c0-2-2-4-4-4M8 8c0-2 2-4 4-4M16 8c0-2-2-4-4-4' stroke='white' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260514-sidebar-gini-fix52">
+<link rel="stylesheet" href="css/styles.css?v=20260516-collapse-real">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script type="importmap">
@@ -17,11 +17,229 @@
 <body>
 
 <!-- Landing / Hero page -->
-<div class="landing" id="landing">
+<div class="landing mode-globo" id="landing">
+    <!-- Portada 1: GLOBO (default) â€” Three.js Earth + LATAM zoom + retro map -->
     <canvas class="landing-globe" id="landing-globe"></canvas>
     <canvas class="landing-particles" id="landing-particles"></canvas>
     <div class="landing-retro-map" id="landing-retro-map"></div>
     <div class="landing-cursor" id="landing-cursor" aria-hidden="true"></div>
+
+    <!-- Portada 2: PAISAJE â€” pintura agraria con humo, nubes y brillos del r&iacute;o animados.
+         All FX live inside one SVG whose viewBox matches the painting's natural pixel
+         dimensions (1774x887) and uses xMidYMid slice â€” same crop behaviour as the
+         image's background-size: cover, so positions stay anchored to the chimneys
+         and the river regardless of viewport aspect ratio. -->
+    <div class="landing-paisaje" aria-hidden="true">
+        <div class="landing-paisaje-img"></div>
+        <svg class="landing-paisaje-fx" viewBox="0 0 1774 887" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+                <radialGradient id="pf-white" cx="40%" cy="40%" r="55%">
+                    <stop offset="0%"  stop-color="#fbf5e6" stop-opacity="0.88"/>
+                    <stop offset="45%" stop-color="#d8cdb6" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#8c8276" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="pf-grey" cx="40%" cy="40%" r="55%">
+                    <stop offset="0%"  stop-color="#e8dfce" stop-opacity="0.78"/>
+                    <stop offset="45%" stop-color="#a89e90" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#5e5648" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="pf-dark" cx="40%" cy="40%" r="55%">
+                    <stop offset="0%"  stop-color="#574b40" stop-opacity="0.85"/>
+                    <stop offset="45%" stop-color="#322a23" stop-opacity="0.55"/>
+                    <stop offset="100%" stop-color="#18120e" stop-opacity="0"/>
+                </radialGradient>
+                <radialGradient id="pf-spark" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%"  stop-color="#fff6d8" stop-opacity="1"/>
+                    <stop offset="60%" stop-color="#ffdfa0" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#ffba60" stop-opacity="0"/>
+                </radialGradient>
+                <filter id="pf-blur" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="9"/>
+                </filter>
+                <filter id="pf-blur-tight" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4"/>
+                </filter>
+            </defs>
+
+            <!-- ============ SMOKE COLUMNS ============
+                 Each <g> is anchored at a chimney/locomotive on the painting (image-pixel
+                 coords). Inside, 3 circles cycle through animateTransform/animate so a
+                 continuous column of puffs rises. Three smoke palettes â€” pf-white for the
+                 sugar mill, pf-grey for the factory, pf-dark for the locomotive. -->
+
+            <!-- LEFT â€” sugar mill / ingenio at top-left of painting -->
+            <g class="smoke-src" transform="translate(115 200)">
+                <circle r="32" fill="url(#pf-white)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.2s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="34" fill="url(#pf-white)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.2s" begin="1.7s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.2s" begin="1.7s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="30" fill="url(#pf-white)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.2s" begin="3.4s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.2s" begin="3.4s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+            <g class="smoke-src" transform="translate(170 235)">
+                <circle r="22" fill="url(#pf-grey)" filter="url(#pf-blur-tight)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.7;0.4;0" keyTimes="0;0.12;0.6;1" dur="4.8s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,8; 8,-60; 18,-150; 35,-230" keyTimes="0;0.3;0.7;1" dur="4.8s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="22" fill="url(#pf-grey)" filter="url(#pf-blur-tight)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.7;0.4;0" keyTimes="0;0.12;0.6;1" dur="4.8s" begin="2.4s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,8; 8,-60; 18,-150; 35,-230" keyTimes="0;0.3;0.7;1" dur="4.8s" begin="2.4s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+
+            <!-- RIGHT â€” factory cluster (4 chimneys) -->
+            <g class="smoke-src" transform="translate(1320 200)">
+                <circle r="28" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.78;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.6s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 14,-80; 30,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.6s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="28" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.78;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.6s" begin="1.9s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 14,-80; 30,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.6s" begin="1.9s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="28" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.78;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.6s" begin="3.7s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 14,-80; 30,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.6s" begin="3.7s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+            <g class="smoke-src" transform="translate(1390 185)">
+                <circle r="32" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.82;0.5;0" keyTimes="0;0.12;0.6;1" dur="6.0s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 16,-90; 34,-200; 60,-320" keyTimes="0;0.3;0.7;1" dur="6.0s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="32" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.82;0.5;0" keyTimes="0;0.12;0.6;1" dur="6.0s" begin="2.0s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 16,-90; 34,-200; 60,-320" keyTimes="0;0.3;0.7;1" dur="6.0s" begin="2.0s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="32" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.82;0.5;0" keyTimes="0;0.12;0.6;1" dur="6.0s" begin="4.0s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 16,-90; 34,-200; 60,-320" keyTimes="0;0.3;0.7;1" dur="6.0s" begin="4.0s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+            <g class="smoke-src" transform="translate(1460 170)">
+                <circle r="36" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.4s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 18,-90; 38,-200; 65,-320" keyTimes="0;0.3;0.7;1" dur="5.4s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="36" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.4s" begin="1.8s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 18,-90; 38,-200; 65,-320" keyTimes="0;0.3;0.7;1" dur="5.4s" begin="1.8s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="36" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.4s" begin="3.6s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 18,-90; 38,-200; 65,-320" keyTimes="0;0.3;0.7;1" dur="5.4s" begin="3.6s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+            <g class="smoke-src" transform="translate(1530 195)">
+                <circle r="26" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.75;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.0s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.0s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="26" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.75;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.0s" begin="1.7s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.0s" begin="1.7s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="26" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.75;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.0s" begin="3.3s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 12,-70; 28,-180; 50,-280" keyTimes="0;0.3;0.7;1" dur="5.0s" begin="3.3s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+
+            <!-- TRAIN â€” locomotive on the lower-right tracks, dark coal smoke drifting strongly right -->
+            <g class="smoke-src" transform="translate(1620 360)">
+                <circle r="34" fill="url(#pf-dark)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.88;0.55;0" keyTimes="0;0.1;0.6;1" dur="4.2s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 40,-50; 90,-120; 160,-220" keyTimes="0;0.3;0.7;1" dur="4.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="34" fill="url(#pf-dark)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.88;0.55;0" keyTimes="0;0.1;0.6;1" dur="4.2s" begin="1.4s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 40,-50; 90,-120; 160,-220" keyTimes="0;0.3;0.7;1" dur="4.2s" begin="1.4s" repeatCount="indefinite"/>
+                </circle>
+                <circle r="34" fill="url(#pf-dark)" filter="url(#pf-blur)" opacity="0">
+                    <animate attributeName="opacity" values="0;0.88;0.55;0" keyTimes="0;0.1;0.6;1" dur="4.2s" begin="2.8s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,10; 40,-50; 90,-120; 160,-220" keyTimes="0;0.3;0.7;1" dur="4.2s" begin="2.8s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+
+            <!-- ============ CLOUDS ============
+                 Two stacked soft-ellipse bands. The whole <g> translates from 0 to -440
+                 over its duration; an extra "tile" of clouds at +1774 keeps the band
+                 seamless as it scrolls. -->
+            <g class="cloud-band cloud-band-1" opacity="0.55">
+                <ellipse cx="200"  cy="65"  rx="140" ry="20" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="540"  cy="50"  rx="170" ry="22" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="980"  cy="80"  rx="150" ry="22" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="1400" cy="60"  rx="170" ry="22" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="1974" cy="65"  rx="140" ry="20" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="2314" cy="50"  rx="170" ry="22" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <animateTransform attributeName="transform" type="translate" from="0 0" to="-440 0" dur="55s" repeatCount="indefinite"/>
+            </g>
+            <g class="cloud-band cloud-band-2" opacity="0.4">
+                <ellipse cx="120"  cy="135" rx="100" ry="14" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="460"  cy="125" rx="120" ry="16" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="860"  cy="145" rx="110" ry="14" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="1240" cy="130" rx="140" ry="18" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="1700" cy="140" rx="110" ry="14" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <ellipse cx="1894" cy="135" rx="100" ry="14" fill="#fbf5e6" filter="url(#pf-blur)"/>
+                <animateTransform attributeName="transform" type="translate" from="0 0" to="-380 0" dur="85s" repeatCount="indefinite"/>
+            </g>
+
+            <!-- ============ RIVER SPARKLES ============
+                 Tiny warm dots scattered along the river curve; each one fades in/out
+                 with a staggered cycle so the water appears to glint without a visible
+                 line. No path, no stroke â€” just sun reflections. -->
+            <g class="river-sparkles">
+                <circle cx="1290" cy="295" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.0s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="1200" cy="330" r="5" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="2.6s" begin="0.4s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="1080" cy="370" r="7" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.4s" begin="0.8s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="960" cy="420" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="2.8s" begin="1.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="820" cy="480" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.2s" begin="0.2s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="660" cy="540" r="7" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="2.4s" begin="1.6s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="480" cy="620" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.0s" begin="0.6s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="300" cy="685" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="2.8s" begin="1.0s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="160" cy="720" r="5" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
+                    <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.4s" begin="1.4s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+        </svg>
+
+        <!-- Title backdrop â€” strong dark veil concentrated where the ATLAS title sits,
+             so the cream typography reads clearly over the painted sky. -->
+        <div class="paisaje-veil" aria-hidden="true"></div>
+        <!-- Soft sunset glow on the right edge â€” pulses gently -->
+        <div class="paisaje-rays" aria-hidden="true"></div>
+    </div>
+
+    <!-- Switcher: 2 portadas â€” top-right corner -->
+    <nav class="landing-switcher" id="landing-switcher" aria-label="Estilo de portada">
+        <span class="ls-label">Portada</span>
+        <button data-mode="globo" class="active" type="button">Globo</button>
+        <span class="ls-sep">&middot;</span>
+        <button data-mode="paisaje" type="button">Paisaje</button>
+    </nav>
+
     <div class="landing-content" id="landing-content">
         <div class="landing-top">
             <div class="landing-atlas">ATLAS</div>
@@ -344,7 +562,7 @@
   </div>
 </div>
 
-<script type="module" src="js/landing.js?v=20260514-sidebar-gini-fix52"></script>
+<script type="module" src="js/landing.js?v=20260516-collapse-real"></script>
 </body>
 </html>
 

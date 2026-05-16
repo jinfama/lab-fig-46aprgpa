@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Los Trabajadores Agrarios del Mundo</title>
+<meta name="description" content="Base de datos global sobre el trabajo agrario en perspectiva de largo plazo (1961â€“2024).">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%236B4226'/%3E%3Cpath d='M12 4v16M7 12l5 -3 5 3M7 16l5 -3 5 3M7 20l5 -3 5 3' stroke='%23D4A032' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css?v=20260517">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js" } }
+</script>
+</head>
+<body>
+
+<!-- ============================================================
+     LANDING â€” globo Three.js + tÃ­tulo + CTA
+     ============================================================ -->
+<div class="landing" id="landing">
+  <canvas class="landing-globe" id="landing-globe"></canvas>
+
+  <nav class="landing-lang" id="landing-lang">
+    <button data-lang="es" class="active">ES</button>
+    <span class="sep">Â·</span>
+    <button data-lang="en">EN</button>
+  </nav>
+
+  <div class="landing-content" id="landing-content">
+    <div class="landing-eyebrow" data-i18n="landing.eyebrow">AGRICULTURA</div>
+    <h1 class="landing-title" data-i18n="landing.title">Los Trabajadores Agrarios<br>del Mundo</h1>
+    <div class="landing-rule"></div>
+    <p class="landing-subtitle" data-i18n="landing.subtitle">
+      Una base de datos global sobre el trabajo agrario, las condiciones laborales y las huellas del comercio Â· 1961â€“2024
+    </p>
+    <button class="landing-cta" id="landing-cta">
+      <span data-i18n="landing.cta">Explorar</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5v10z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     APP â€” sidebar + main (query bar + viz + timeline) + right panel
+     ============================================================ -->
+<div id="app" class="hidden">
+
+  <!-- LEFT SIDEBAR: categorÃ­as de indicadores -->
+  <nav class="sidebar">
+    <div class="sb-brand" title="Workers of the World">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 4v16M7 12l5 -3 5 3M7 16l5 -3 5 3M7 20l5 -3 5 3" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="sb-categories" id="sidebar"></div>
+    <button class="sb-info-btn" id="btn-info" title="Acerca de">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+    </button>
+  </nav>
+
+  <!-- MAIN AREA -->
+  <div class="main">
+
+    <!-- QUERY BAR: reads like a sentence -->
+    <div class="query-bar">
+      <div class="query-segment">
+        <button class="query-btn query-cat-btn" id="query-cat" title="CategorÃ­a">
+          <span id="query-cat-label">Trabajo agrario</span>
+          <svg class="query-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="query-dropdown" id="query-cat-dropdown"></div>
+      </div>
+      <span class="query-sep">/</span>
+      <div class="query-segment">
+        <button class="query-btn query-ind-btn" id="query-ind" title="Indicador">
+          <span id="query-ind-label">Trabajadores</span>
+          <svg class="query-chevron" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="query-dropdown" id="query-ind-dropdown"></div>
+      </div>
+      <div class="selection-bar" id="selection-bar"></div>
+      <div class="query-spacer"></div>
+
+      <!-- View switcher -->
+      <div class="view-switcher" id="view-switcher">
+        <button class="vw-btn active" data-view="map"     title="Mapa">       <svg viewBox="0 0 24 24"><path d="M3 5l6-2 6 2 6-2v16l-6 2-6-2-6 2V5zm6 0v14m6-14v14" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
+        <button class="vw-btn"        data-view="trend"   title="EvoluciÃ³n">  <svg viewBox="0 0 24 24"><path d="M4 17l4-5 4 3 8-10" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>
+        <button class="vw-btn"        data-view="ranking" title="Ranking">    <svg viewBox="0 0 24 24"><path d="M4 8h12M4 13h8M4 18h14" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>
+        <button class="vw-btn"        data-view="treemap" title="ComposiciÃ³n"><svg viewBox="0 0 24 24"><path d="M3 3h10v8H3zM13 3h8v14h-8zM3 11h10v10H3zM13 17h8v4h-8z" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></button>
+        <button class="vw-btn"        data-view="table"   title="Tabla">      <svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 15h18M3 20h18M8 5v15M14 5v15" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></button>
+      </div>
+
+      <button class="query-icon-btn" id="btn-toggle-panel" title="Mostrar/ocultar panel">
+        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
+      </button>
+    </div>
+
+    <!-- VIZ CONTAINER -->
+    <div class="viz-container">
+      <div class="viz-panel active" id="panel-map">
+        <div class="map-container" id="map-container">
+          <div class="map-year" id="map-year">2020</div>
+          <svg class="map-svg" id="map-svg"></svg>
+          <div class="map-legend" id="map-legend"></div>
+          <div class="map-tooltip" id="map-tooltip"></div>
+        </div>
+      </div>
+      <div class="viz-panel" id="panel-trend">
+        <div class="chart-container">
+          <svg class="chart-svg" id="trend-svg"></svg>
+          <div class="chart-empty" id="trend-empty">Selecciona uno o mÃ¡s paÃ­ses para ver la evoluciÃ³n</div>
+        </div>
+      </div>
+      <div class="viz-panel" id="panel-ranking">
+        <div class="ranking-container" id="ranking-container"></div>
+      </div>
+      <div class="viz-panel" id="panel-treemap">
+        <div class="treemap-container">
+          <div class="treemap-header" id="treemap-header">Selecciona un paÃ­s para ver la composiciÃ³n por categorÃ­a</div>
+          <div class="treemap-chart" id="treemap-chart"></div>
+        </div>
+      </div>
+      <div class="viz-panel" id="panel-table">
+        <div class="table-container" id="table-container"></div>
+      </div>
+      <div class="viz-panel" id="panel-about">
+        <div class="about-container" id="about-container"></div>
+      </div>
+    </div>
+
+    <!-- TIMELINE: slider con play -->
+    <div class="timeline">
+      <button class="tl-play" id="tl-play" title="Reproducir/Pausa">
+        <svg viewBox="0 0 24 24" id="tl-play-icon"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <button class="tl-speed" id="tl-speed" title="Velocidad">2x</button>
+      <input class="tl-year-input" id="tl-year-start" type="number" min="1961" max="2024" value="1961" title="AÃ±o inicio">
+      <div class="tl-track" id="tl-track">
+        <div class="tl-rail"></div>
+        <div class="tl-range-fill" id="tl-range-fill"></div>
+        <div class="tl-handle" id="tl-handle-from">
+          <div class="tl-handle-label" id="tl-label-from">1961</div>
+        </div>
+        <div class="tl-handle" id="tl-handle-to">
+          <div class="tl-handle-label" id="tl-label-to">2021</div>
+        </div>
+      </div>
+      <input class="tl-year-input" id="tl-year-end" type="number" min="1961" max="2024" value="2021" title="AÃ±o fin">
+      <div class="tl-year" id="tl-year">2020</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <span id="footer-source">Fuente: FAO Â· ILO Â· World Bank Â· GSI Â· pipeline labour (Infante-Amate, UGR)</span>
+      <div class="footer-actions">
+        <button class="footer-btn" id="btn-csv" title="Descargar datos del panel actual">Descargar</button>
+        <button class="footer-btn" id="btn-fs" title="Pantalla completa">Pantalla completa</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: opciones / categorÃ­as de cultivo / territorios -->
+  <aside class="right-panel" id="right-panel">
+    <div class="rp-section">
+      <button class="rp-section-header" type="button">OPCIONES</button>
+      <div class="rp-section-body" id="rp-options-body"></div>
+    </div>
+    <div class="rp-section">
+      <button class="rp-section-header" type="button">CATEGORÃAS DE CULTIVO</button>
+      <div class="rp-section-body rp-scrollable" id="rp-crop-body">
+        <div class="rp-search"><input type="text" id="rp-crop-search" placeholder="Buscar categorÃ­a..."></div>
+        <div id="rp-crop-list"></div>
+      </div>
+    </div>
+    <div class="rp-section" style="flex:1; min-height: 0;">
+      <button class="rp-section-header" type="button">PAÃSES</button>
+      <div class="rp-section-body rp-scrollable" id="rp-territories-body">
+        <div class="rp-search"><input type="text" id="rp-territory-search" placeholder="Buscar paÃ­s..."></div>
+        <div id="rp-territory-list"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script type="module" src="js/app.js?v=20260517"></script>
+</body>
+</html>

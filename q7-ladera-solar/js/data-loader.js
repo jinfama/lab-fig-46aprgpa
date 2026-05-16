@@ -909,6 +909,15 @@ const DataLoader = (() => {
             }
         }
 
+        // If the user explicitly filtered by an item or category, do NOT
+        // silently fall back to the country total. That was the cause of the
+        // "millions of workers in olive groves" bug — selecting Olivar would
+        // show the whole country's agricultural workforce because Olivar's
+        // own series wasn't found for the active year.
+        if ((cropItem && cropItem !== 'all') || (cropCategory && cropCategory !== 'all')) {
+            return [];
+        }
+
         return _cloneSeries(entity.totals?.[dataField]);
     }
 
@@ -959,6 +968,12 @@ const DataLoader = (() => {
                 const arr = entity.byCategory[cropCategory][dataField];
                 if (Array.isArray(arr)) return _cloneSeries(arr);
             }
+        }
+
+        // Same defensive guard as _rawSeries: don't substitute the entity
+        // total when the user has an item/category filter active.
+        if ((cropItem && cropItem !== 'all') || (cropCategory && cropCategory !== 'all')) {
+            return [];
         }
 
         return _cloneSeries(entity.totals?.[dataField]);

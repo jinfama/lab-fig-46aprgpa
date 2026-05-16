@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAHE â€” Atlas histÃ³rico de EspaÃ±a</title>
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <a class="brand" href="index.html">
+      <img src="img/logo-color.png" alt="CAHE">
+      <span class="brand-text">Atlas histÃ³rico<span class="sub">de EspaÃ±a</span></span>
+    </a>
+    <nav class="main-nav" id="main-nav">
+      <button class="nav-btn primary active" data-section="visualizacion">VisualizaciÃ³n</button>
+      <button class="nav-btn" data-section="perspectivas">Perspectivas</button>
+      <button class="nav-btn" data-section="datos">Datos &amp; Zenodo</button>
+      <button class="nav-btn" data-section="acerca">Acerca</button>
+    </nav>
+    <div class="right">
+      <button class="btn-home" id="btn-home" type="button">
+        <span class="arrow">â†‘</span><span>Portada</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="ind-selector" id="ind-selector" style="display:none"></section>
+
+  <main class="workspace" id="workspace">
+    <div class="loading">
+      <span class="spinner"></span>
+      <strong>Cargando atlas CAHE</strong>
+    </div>
+  </main>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-panel">
+      <button class="modal-close" data-modal-close type="button" aria-label="Cerrar">Ã—</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -300,6 +300,194 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
+   Landing — 2 portadas: globo · paisaje
+   The shell stays; only the background layer swaps. The paisaje portada
+   paints over the painting with CSS-driven smoke columns, drifting clouds
+   and a river shimmer so the scene reads as alive without external libs.
+   ═══════════════════════════════════════════════ */
+
+/* Switcher chip — top-right of the landing only */
+.landing-switcher {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    z-index: 2020;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 6px 10px;
+    background: rgba(14,9,6,0.32);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(232,200,116,0.22);
+    border-radius: 999px;
+    font-family: var(--ff);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: rgba(232,200,116,0.78);
+    transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.landing-switcher .ls-label {
+    margin-right: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(232,200,116,0.55);
+}
+.landing-switcher button {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    padding: 4px 9px;
+    font: inherit;
+    cursor: pointer;
+    letter-spacing: inherit;
+    border-bottom: 1px solid transparent;
+    transition: color .2s ease, border-color .2s ease;
+}
+.landing-switcher button:hover { color: #F0D890; }
+.landing-switcher button.active {
+    color: #F5E7B0;
+    border-bottom-color: #E8C874;
+}
+.landing-switcher .ls-sep { opacity: .35; padding: 0 2px; font-weight: 300; }
+
+/* ── Portada PAISAJE — animated agrarian landscape painting ──
+   The FX layer is a single SVG with viewBox matching the painting's pixel
+   dimensions (1774x887). All chimney/train smoke, clouds and river sparkles
+   are positioned and animated in image-pixel space via SMIL, so they stay
+   anchored to the actual chimneys regardless of the viewport's aspect. */
+.landing-paisaje {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .9s ease;
+    z-index: 0;
+}
+.landing-paisaje-img {
+    position: absolute;
+    inset: 0;
+    background-image: url('../img/paisaje_latam_web.jpg');
+    background-size: cover;
+    background-position: center center;
+    filter: saturate(1.05) contrast(1.03);
+    z-index: 0;
+}
+.landing-paisaje-fx {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Title-area veil — a strong dark ellipse concentrated where ATLAS / Agrario
+   de América Latina sits, plus softer top + bottom gradients. Without this
+   the cream typography is unreadable over the painted sky. */
+.paisaje-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background:
+        radial-gradient(680px 360px at 50% 32%, rgba(8,6,4,0.78) 0%, rgba(8,6,4,0.45) 40%, rgba(8,6,4,0.0) 75%),
+        linear-gradient(180deg, rgba(8,6,4,0.55) 0%, rgba(8,6,4,0.20) 30%, rgba(8,6,4,0.00) 55%, rgba(8,6,4,0.35) 90%, rgba(8,6,4,0.55) 100%);
+}
+
+/* Soft sunset glow on the right edge — pulses gently. The painting already
+   carries a warm light source on the right; this layer just makes it breathe. */
+.paisaje-rays {
+    position: absolute;
+    right: -12%;
+    top: -10%;
+    width: 60%;
+    height: 75%;
+    background: radial-gradient(closest-side, rgba(255,210,140,0.22), rgba(255,180,110,0) 70%);
+    animation: rays-pulse 9s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+    filter: blur(3px);
+    z-index: 1;
+    pointer-events: none;
+}
+@keyframes rays-pulse {
+    from { opacity: 0.65; transform: scale(1.0); }
+    to   { opacity: 1.0;  transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-paisaje-fx * { animation: none !important; }
+    .paisaje-rays { animation: none !important; opacity: .55; }
+}
+
+/* ── Mode: PAISAJE ──
+   Hide the deep-space gradient; reveal the painting. Title becomes warm
+   cream-on-painting; the progress bar is unnecessary (cover is instant). */
+.landing.mode-paisaje {
+    background: #1a0f08;
+}
+.landing.mode-paisaje::before { display: none; }
+.landing.mode-paisaje .landing-globe,
+.landing.mode-paisaje .landing-particles,
+.landing.mode-paisaje .landing-retro-map { display: none; }
+.landing.mode-paisaje .landing-paisaje { opacity: 1; }
+.landing.mode-paisaje .landing-progress { display: none; }
+.landing.mode-paisaje .landing-content {
+    text-shadow: 0 2px 22px rgba(0,0,0,0.55);
+}
+.landing.mode-paisaje .landing-top { margin-top: -22vh; }
+.landing.mode-paisaje .landing-atlas {
+    color: #F0D890;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.7), 0 0 40px rgba(196,145,62,0.35);
+}
+.landing.mode-paisaje .landing-title {
+    color: rgba(248,238,216,0.95);
+    text-shadow: 0 2px 18px rgba(0,0,0,0.65);
+}
+.landing.mode-paisaje .landing-subtitle {
+    color: rgba(238,222,192,0.82);
+    text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+}
+.landing.mode-paisaje .landing-rule { background: rgba(232,200,116,0.6); }
+.landing.mode-paisaje .landing-cta {
+    background: rgba(232,200,116,0.18);
+    border-color: rgba(232,200,116,0.55);
+    color: #F5E7B0;
+}
+.landing.mode-paisaje .landing-cta:hover {
+    background: rgba(232,200,116,0.28);
+    border-color: #E8C874;
+}
+
+@media (max-width: 720px) {
+    .landing-switcher .ls-label { display: none; }
+    .landing-switcher { top: 12px; right: 12px; padding: 4px 8px; }
+}
+
+/* ═══════════════════════════════════════════════
+   Chart text scaling for large screens
+   D3 calls .attr('font-size', '10px') in 50+ places, but CSS overrides
+   SVG attributes, so a media-query rule is enough to bump axis/tick text
+   on bigger displays without touching the JS.
+   ═══════════════════════════════════════════════ */
+@media (min-width: 1500px) {
+    .chart-svg text,
+    .map-svg text,
+    #ranking-container svg text,
+    #treemap-chart text,
+    .bilateral-info text { font-size: 12px !important; }
+}
+@media (min-width: 1920px) {
+    .chart-svg text,
+    .map-svg text,
+    #ranking-container svg text,
+    #treemap-chart text,
+    .bilateral-info text { font-size: 13px !important; }
+}
+
+/* ═══════════════════════════════════════════════
    Loading screen
    ═══════════════════════════════════════════════ */
 .loading-screen {
@@ -2318,6 +2506,12 @@ body.resizing-right-panel .right-panel {
 }
 .rp-section-body { padding: 8px 0 10px; flex-shrink: 0; }
 #rp-options .rp-section-body { padding: 7px 12px 8px; }
+/* When the body opens with a sticky search box, the body's own top padding
+   leaves a transparent strip between the section header and the search box,
+   so items behind it bleed through. Collapse the strip in those sections. */
+#rp-products .rp-section-body,
+#rp-partners .rp-section-body,
+#rp-territories .rp-section-body { padding-top: 0; }
 #rp-options-body {
     max-height: none;
     overflow-y: visible;
@@ -2329,7 +2523,12 @@ body.resizing-right-panel .right-panel {
     flex: 0 0 auto !important;
     min-height: auto !important;
 }
-.rp-section.collapsed .rp-section-body { display: none; }
+/* !important is required because #rp-products-body declares `display: flex`
+   below (ID = higher specificity than this class chain), and #rp-options-body
+   declares `display: grid` above. Without !important the body would never
+   hide on collapse in those two sections — which is exactly the bug the
+   user reported on CULTIVOS. */
+.rp-section.collapsed .rp-section-body { display: none !important; }
 #rp-options.collapsed {
     flex: 0 0 auto !important;
     max-height: none;
@@ -2359,17 +2558,17 @@ body.resizing-right-panel .right-panel {
 }
 .rp-section:last-child { border-bottom: 0; }
 .rp-search {
-    padding: 4px 14px 6px;
+    padding: 0 14px 6px;
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    background: var(--c-bg);
+    background: #F5EFE5;
 }
 #rp-products .rp-search {
     position: sticky;
     top: 0;
     z-index: 30;
-    background: var(--c-bg);
+    background: #F5EFE5;
     box-shadow: 0 1px 0 var(--c-border), 0 10px 12px rgba(245, 239, 229, 1);
 }
 #rp-products-body {
@@ -2403,7 +2602,7 @@ body.resizing-right-panel .right-panel {
     content: '';
     position: absolute;
     inset: -48px 0 -18px;
-    background: var(--c-bg);
+    background: #F5EFE5;
     z-index: 0;
 }
 .rp-search input {

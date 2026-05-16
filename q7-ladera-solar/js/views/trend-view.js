@@ -244,14 +244,27 @@ function _stackedYValue(y, value, h) {
 }
 
 function _xDomainForRange(yearRange, data) {
+    // First figure out where the data actually has values — indicators with
+    // leading nulls (e.g. labour starts in 1961) shouldn't render the empty
+    // years before the first real datapoint.
+    const validData = (data || []).filter(d => d && d.value != null && Number.isFinite(d.value));
+    const dataExtent = d3.extent(validData, d => d.year);
+
     if (Array.isArray(yearRange) && yearRange.length >= 2) {
         const start = Number(yearRange[0]);
         const end = Number(yearRange[1]);
-        if (Number.isFinite(start) && Number.isFinite(end) && end > start) return [start, end];
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+            // Intersect the user's selected range with the data's true extent
+            // so a global 1900-2024 timeline doesn't leave an empty strip on
+            // the left when the indicator (labour, etc.) only starts later.
+            const dataStart = Number.isFinite(dataExtent?.[0]) ? dataExtent[0] : start;
+            return [Math.max(start, dataStart), end];
+        }
     }
-    const extent = d3.extent(data || [], d => d.year);
-    if (Number.isFinite(extent?.[0]) && Number.isFinite(extent?.[1]) && extent[1] > extent[0]) return extent;
-    const year = Number(extent?.[0]);
+    if (Number.isFinite(dataExtent?.[0]) && Number.isFinite(dataExtent?.[1]) && dataExtent[1] > dataExtent[0]) return dataExtent;
+    const fallback = d3.extent(data || [], d => d.year);
+    if (Number.isFinite(fallback?.[0]) && Number.isFinite(fallback?.[1]) && fallback[1] > fallback[0]) return fallback;
+    const year = Number(fallback?.[0]);
     return Number.isFinite(year) ? [year - 1, year + 1] : [1900, 2024];
 }
 
@@ -550,14 +563,16 @@ function _renderBilateralOverlay() {
         .attr('fill', '#7A4A22')
         .text(`${flowLabel} - ${shortEntityLabel(entityName)}${productText} - socios`);
 
+    // Y-axis unit label — horizontal, top-right of chart, so it never collides
+    // with the y-tick numbers and survives the wider ticks of big screens.
     g.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -h / 2)
-        .attr('y', -50)
-        .attr('text-anchor', 'middle')
+        .attr('x', w)
+        .attr('y', -6)
+        .attr('text-anchor', 'end')
         .attr('font-size', '10px')
+        .attr('font-style', 'italic')
         .attr('fill', '#A89888')
-        .text(`${flowLabel} (toneladas)`);
+        .text('toneladas');
 
     const overlay = g.append('rect')
         .attr('width', w)
@@ -914,13 +929,15 @@ function _renderOverlay() {
             .attr('opacity', 0.6);
     }
 
-    // Y axis label
+    // Y-axis unit — horizontal, top-right, italic. Avoids the overlap with
+    // y-tick numbers that the previously rotated-vertical label produced when
+    // the tick values needed wider columns on large screens.
     g.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -h / 2)
-        .attr('y', -50)
-        .attr('text-anchor', 'middle')
+        .attr('x', w)
+        .attr('y', -6)
+        .attr('text-anchor', 'end')
         .attr('font-size', '10px')
+        .attr('font-style', 'italic')
         .attr('fill', '#A89888')
         .text(_getActiveIndicatorLabel() + (unit ? ` (${unit})` : ''));
 
@@ -1404,12 +1421,12 @@ function _renderStacked() {
             .attr('opacity', 0.6);
     }
 
-    // Y axis label
+    // Y-axis unit — horizontal, top-right. Same rationale as the line view.
     g.append('text')
-        .attr('transform', 'rotate(-90)')
-        .attr('x', -h / 2).attr('y', -50)
-        .attr('text-anchor', 'middle')
+        .attr('x', w).attr('y', -6)
+        .attr('text-anchor', 'end')
         .attr('font-size', '10px')
+        .attr('font-style', 'italic')
         .attr('fill', '#A89888')
         .text(_getActiveIndicatorLabel() + (unit ? ` (${unit})` : ''));
 

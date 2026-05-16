@@ -1,5 +1,13 @@
 /* landing.js - Three.js realistic globe ? zoom to LATAM ? retro map ? app.
-   Blue Marble Earth texture, smooth camera zoom, clean transition. */
+   Blue Marble Earth texture, smooth camera zoom, clean transition.
+
+   The landing supports two portadas, swappable from the top-right corner:
+     mode-globo    — original 3D Earth + zoom + retro map (default).
+     mode-paisaje  — agrarian-landscape painting with CSS-animated smoke,
+                     clouds and river shimmer (no globe).
+   Mode preference persists in localStorage. The custom LATAM cursor is
+   initialised in both modes; the Three.js globe is initialised lazily only
+   when the user is actually on globo. */
 
 import * as THREE from 'three';
 
@@ -8,6 +16,11 @@ let _scene, _camera, _renderer, _globe, _animFrame;
 let _dataReady = false;
 let _dataPromise = null;
 let _appStarting = false;
+let _mode = 'globo';
+let _globeInited = false;
+let _zoomStarted = false;
+const LANDING_MODE_KEY = 'latam.landing.mode';
+const VALID_MODES = ['globo','paisaje'];
 
 /* -----------------------------------------------
    Particles - floating grain/seed shapes
@@ -479,6 +492,49 @@ function _showRetroMap() {
 }
 
 /* -----------------------------------------------
+   Mode switching
+   The paisaje cover is purely CSS — no JS init needed when switching to it.
+   Only the globe carries init/animation cost, so we lazy-spin it up the
+   first time the user lands on (or switches to) globo.
+   ----------------------------------------------- */
+function _readSavedMode() {
+    const urlMode = new URLSearchParams(location.search).get('portada');
+    if (urlMode && VALID_MODES.includes(urlMode)) return urlMode;
+    try {
+        const saved = localStorage.getItem(LANDING_MODE_KEY);
+        if (saved && VALID_MODES.includes(saved)) return saved;
+    } catch(_){}
+    return 'globo';
+}
+function _applyMode(mode, opts = {}) {
+    if (!VALID_MODES.includes(mode)) mode = 'globo';
+    _mode = mode;
+    const landing = document.getElementById('landing');
+    if (!landing) return;
+    landing.classList.remove('mode-globo','mode-paisaje');
+    landing.classList.add('mode-' + mode);
+
+    document.querySelectorAll('#landing-switcher button[data-mode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+
+    try { localStorage.setItem(LANDING_MODE_KEY, mode); } catch(_){}
+
+    if (mode === 'globo') {
+        if (!_globeInited) {
+            _initGlobe();
+            _globeInited = true;
+        }
+        if (_dataReady && !_zoomStarted && !opts.skipZoom) {
+            _zoomStarted = true;
+            _zoomToLatam().then(_showCTA);
+        }
+    } else if (mode === 'paisaje') {
+        if (_dataReady) _showCTA();
+    }
+}
+
+/* -----------------------------------------------
    Init
    ----------------------------------------------- */
 (async function main() {
@@ -488,14 +544,34 @@ function _showRetroMap() {
     let prog = 0;
     const tick = n => { prog = Math.min(prog+n, 100); if(bar) bar.style.width = prog+'%'; };
 
-    // Three.js globe
-    _initGlobe();
+    // Decide which portada to render — URL ?portada=… wins over localStorage
+    const initialMode = _readSavedMode();
+    const landing = document.getElementById('landing');
+    if (landing) {
+        landing.classList.remove('mode-globo','mode-paisaje');
+        landing.classList.add('mode-' + initialMode);
+    }
+    _mode = initialMode;
+
+    // Reflect initial mode on switcher buttons
+    document.querySelectorAll('#landing-switcher button[data-mode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === initialMode);
+    });
+
+    // The custom LATAM cursor is part of the landing's identity — it should
+    // appear in both modes, not only over the globe.
     _initLatamCursor();
+
+    // Globe is expensive — only spin it up when needed
+    if (initialMode === 'globo') {
+        _initGlobe();
+        _globeInited = true;
+    }
     tick(15);
 
     window.addEventListener('resize', () => {
         _width = innerWidth; _height = innerHeight;
-        _resizeGlobe();
+        if (_globeInited) _resizeGlobe();
     });
 
     // Data
@@ -512,13 +588,26 @@ function _showRetroMap() {
         dataP.finally(() => _enterApp());
     } else {
         const ctaFallback = setTimeout(_showCTA, 3200);
-        dataP.then(() => _zoomToLatam())
-            .catch(e => console.warn('Landing animation skipped:', e))
-            .then(() => {
-                clearTimeout(ctaFallback);
-                _showCTA();
-            });
+        dataP.then(() => {
+            // Only the globo portada runs the zoom-to-LATAM animation; in mural
+            // and sendas the cover is already painted, so we can reveal the CTA
+            // immediately once data is ready.
+            if (_mode === 'globo') {
+                _zoomStarted = true;
+                return _zoomToLatam();
+            }
+        })
+        .catch(e => console.warn('Landing animation skipped:', e))
+        .then(() => {
+            clearTimeout(ctaFallback);
+            _showCTA();
+        });
     }
+
+    // Switcher click handlers — instantly swap the portada
+    document.querySelectorAll('#landing-switcher button[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => _applyMode(btn.dataset.mode));
+    });
 
     document.getElementById('landing-cta').addEventListener('click', _enterApp);
     document.addEventListener('keydown', e => {

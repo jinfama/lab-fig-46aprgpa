@@ -30,7 +30,7 @@ const PARTNER_TO_GEO = {
     'Iran (Islamic Republic of)':               'Iran',
     'Republic of Korea':                        'South Korea',
     'Dominican Republic':                       'Dominican Rep.',
-    'T-rkiye':                                  'Turkey',
+    'Türkiye':                                  'Turkey',
     'Viet Nam':                                 'Vietnam',
     'Belgium-Luxembourg':                       'Belgium',
     'USSR':                                     'Russia',
@@ -266,7 +266,7 @@ function _populateControls() {
         // LATAM aggregate option
         const latamOpt = document.createElement('option');
         latamOpt.value = 'latin_america';
-        latamOpt.textContent = '- América Latina -';
+        latamOpt.textContent = '— América Latina —';
         expSelect.appendChild(latamOpt);
 
         // Region options
@@ -690,7 +690,7 @@ function _shortName(partnerName) {
         'Haiti': 'Haití',
         'Belgium-Luxembourg': 'Bélgica',
         'Viet Nam': 'Vietnam',
-        'T-rkiye': 'Turquía',
+        'Türkiye': 'Turquía',
     };
     return shorts[partnerName] || partnerName;
 }
