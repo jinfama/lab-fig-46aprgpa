@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas HistÃ³rico Municipal de EspaÃ±a</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="css/styles.css">
 <script src="vendor/d3.v7.min.js"></script>
 <script src="vendor/topojson-client.min.js"></script>
@@ -131,17 +132,47 @@
 <section class="data-view" id="data-view" aria-label="Vistas analiticas">
     <div class="data-shell">
         <div class="data-head">
-            <div>
-                <div class="kicker" id="data-view-kicker">Vista</div>
-                <h1 id="data-view-title">Tendencias</h1>
-                <p id="data-view-desc">Selecciona uno o varios municipios para comparar su evoluci&oacute;n hist&oacute;rica.</p>
+            <div class="data-head-main">
+                <div class="data-title-row">
+                    <div class="kicker data-inline-kicker" id="data-view-kicker">Vista</div>
+                    <h1 id="data-view-title">Tendencias</h1>
+                    <p id="data-view-desc">Selecciona uno o varios municipios para comparar su evoluci&oacute;n hist&oacute;rica.</p>
+                </div>
             </div>
             <div class="data-selection-summary" id="data-selection-summary">Sin municipios seleccionados</div>
         </div>
 
         <div class="data-panel active" id="panel-trends">
-            <svg class="trend-chart" id="trend-chart"></svg>
-            <div class="data-empty" id="trend-empty">Busca o selecciona municipios en el mapa para ver su evoluci&oacute;n hist&oacute;rica.</div>
+            <div class="trend-workspace" id="trend-workspace">
+                <div class="trend-main">
+                    <svg class="trend-chart" id="trend-chart"></svg>
+                    <div class="data-empty" id="trend-empty">Busca o selecciona municipios en el mapa para ver su evoluci&oacute;n hist&oacute;rica.</div>
+                </div>
+                <aside class="trend-sidebar" id="trend-sidebar">
+                    <button class="trend-sidebar-toggle" id="trend-sidebar-toggle" type="button" aria-label="Ocultar controles" title="Ocultar controles">
+                        <span class="toggle-open">Controles</span>
+                        <span class="toggle-closed">Opciones</span>
+                    </button>
+                    <div class="trend-controls" id="trend-controls">
+                        <div class="trend-control-block trend-search-block">
+                            <div class="kicker">Municipios</div>
+                            <div class="muni-search-box compact">
+                                <input id="trend-muni-search" type="search" placeholder="Buscar y anadir municipio" autocomplete="off">
+                                <button id="trend-muni-search-clear" type="button" aria-label="Limpiar busqueda">&times;</button>
+                            </div>
+                            <div class="muni-search-results trend-search-results" id="trend-muni-results"></div>
+                        </div>
+                        <div class="trend-control-block trend-indicators-block">
+                            <div class="kicker">Indicadores</div>
+                            <div class="trend-chip-row" id="trend-indicator-chips"></div>
+                        </div>
+                        <div class="trend-control-block" id="trend-climate-controls"></div>
+                        <div class="trend-control-block" id="trend-land-metric"></div>
+                        <div class="trend-control-block" id="trend-layout-controls"></div>
+                        <div class="trend-selected-strip" id="trend-selected-munis"></div>
+                    </div>
+                </aside>
+            </div>
         </div>
 
         <div class="data-panel" id="panel-ranking">

@@ -9,8 +9,8 @@
   var container = canvas.parentElement;
 
   function resize() {
-    var vhSize = window.innerHeight * 0.48;
-    var size = Math.min(container.offsetWidth, Math.max(220, Math.min(vhSize, 580)));
+    var vhSize = window.innerHeight * 0.38;
+    var size = Math.min(container.offsetWidth, Math.max(210, Math.min(vhSize, 500)));
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     canvas.style.width = size + 'px';
@@ -136,12 +136,13 @@
   function drawClimateRing() {
     if (climateSweep <= 0) return;
 
-    var globeScale = Math.min(w, h) * 0.38;
+    // El anillo crece junto al globo (usa zoomScale en vivo)
+    var globeScale = Math.min(w, h) * zoomScale;
     var cx = w / 2;
     var cy = h / 2;
-    var gap = globeScale * 0.04;
+    var gap = globeScale * 0.03;
     var innerR = globeScale + gap;
-    var outerMax = Math.min(w, h) / 2 - 2;
+    var outerMax = Math.min(w, h) / 2 - 4;
     var available = outerMax - innerR;
     if (available < 6) return;
 
@@ -212,12 +213,16 @@
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
+  // Zoom progresivo hacia España. Mantener el radio por debajo de medio canvas
+  // evita que la esfera se recorte como un rectangulo al asentarse.
+  var zoomScale = 0.36;
   function draw() {
     ctx.save();
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    var scale = Math.min(w, h) * 0.38;
+    if (phase === 'slow' && zoomScale < 0.43) zoomScale += 0.0009;
+    var scale = Math.min(w, h) * zoomScale;
     projection
       .scale(scale)
       .translate([w / 2, h / 2]);

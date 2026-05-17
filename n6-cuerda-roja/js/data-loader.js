@@ -3,6 +3,7 @@
 
 const CACHE = {};
 let _manifest = null;
+let _categorySeriesIndex = null;
 
 async function _fetchJson(url) {
   if (CACHE[url]) return CACHE[url];
@@ -38,6 +39,18 @@ export const DataLoader = {
   async loadCountryFootprints(iso3) { return _fetchJson(`data/footprints/${iso3}.json`); },
   async loadConditions()        { return _fetchJson('data/conditions.json'); },
   async loadForcedLaborRisk()   { return _fetchJson('data/forced_labor_risk.json'); },
+  async loadTradeFootprintFlows() { return _fetchJson('data/trade_footprint_flows.json'); },
   async loadCountryYearIndicators() { return _fetchJson('data/country_year_indicators.json'); },
+  async loadCategorySeriesIndex() {
+    if (_categorySeriesIndex) return _categorySeriesIndex;
+    _categorySeriesIndex = await _fetchJson('data/category_series_index.json');
+    return _categorySeriesIndex;
+  },
+  async loadCategorySeries(category) {
+    const index = await this.loadCategorySeriesIndex();
+    const entry = (index.categories || []).find(d => d.category_labor === category);
+    if (!entry) throw new Error(`[DataLoader] category series not found: ${category}`);
+    return _fetchJson(`data/category_series/${entry.file}`);
+  },
   async loadIsoMapping()        { return _fetchJson('data/iso_m49.json'); },
 };

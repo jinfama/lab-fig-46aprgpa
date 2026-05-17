@@ -13,6 +13,7 @@ const state = {
         'historeco.json': null,
         'usos_suelo.json': null,
         'calzada.json': null,
+        'clima_mensual_andalucia.json': null,
     },
     catalog: null,            // atlas_indicators.json — index of all 43 indicators
     categories: null,         // dict built from catalog (8 categories)
@@ -23,6 +24,14 @@ const state = {
     activeOverlays: new Set(),// overlays activos en transporte
     viewLevel: "mun",         // mun | prov | ccaa
     selectedInes: [],
+    selectedTrendIndicators: [],
+    trendLayout: "auto",      // auto | overlay | facet-muni | facet-indicator
+    landMetric: "absolute",   // absolute | share, only for land-use area indicators
+    trendSidebarOpen: true,
+    trendOpenDropdown: null,
+    climateMonthlyPromise: null,
+    climateMonthlyError: null,
+    climateTrendMode: "series", // series | stripes | decades | climogram
     hoveredIne: null,
     playing: false,
     playTimer: null,
@@ -40,6 +49,8 @@ const POP_COLORS = ["#fbe8c2", "#fbc887", "#f59055", "#d44e2a", "#7d1f0d"];
 const CAMBIO_COLORS = ["#1f3a5f", "#5781a8", "#a8c6dd", "#f2efe9", "#e9b694", "#b35a32", "#5e1a0c"];
 const LINE_COLORS = ["#c0392b", "#2b5797", "#2d8659", "#7d4ba0", "#c97f1c", "#475569", "#9b1d1d", "#0e7490"];
 const NO_DATA_COLOR = "#e4e8ec";
+const CLIMATE_MONTHLY_SOURCE = "clima_mensual_andalucia.json";
+const MONTH_LABELS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 // Order + display labels + icons for the 8 categories surfaced in the top tabs.
 // Categories not listed here are dropped from the UI.
@@ -73,6 +84,49 @@ const OVERLAY_INDICATORS = [
 
 let CATEGORIES = {};  // populated by buildCategoriesFromCatalog()
 
+function catalogIndicator(indId) {
+    return state.catalog?.indicators.find(i => i.id === indId) || null;
+}
+
+function isLandUseShareIndicatorId(indId) {
+    const id = (indId || "").toLowerCase();
+    return id.endsWith("_share_pct") || id.endsWith("_pct") || id.includes("_share_");
+}
+
+function isLandUseAreaIndicator(indId) {
+    const ind = catalogIndicator(indId);
+    if (!ind || ind.category !== "usos_suelo" || isLandUseShareIndicatorId(indId)) return false;
+    const unit = (ind.unit || "").toLowerCase();
+    return unit.includes("ha") || unit.includes("m²") || unit.includes("m2") || unit.includes("km²") || unit.includes("km2");
+}
+
+function usesLandShareMetric(indId) {
+    return state.landMetric === "share" && isLandUseAreaIndicator(indId);
+}
+
+function landUseShareSourceId(indId) {
+    const candidate = (indId || "").replace(/_ha$/i, "_share_pct");
+    if (candidate !== indId && catalogIndicator(candidate)) return candidate;
+    return null;
+}
+
+function municipalAreaHa(ine) {
+    const areaKm2 = state.data?.municipios?.[ine]?.area_km2;
+    return Number.isFinite(areaKm2) && areaKm2 > 0 ? areaKm2 * 100 : null;
+}
+
+function effectiveIndicatorUnit(indId, fallback = "") {
+    return usesLandShareMetric(indId) ? "%" : fallback;
+}
+
+function isClimateCategoryActive() {
+    return state.category === "clima";
+}
+
+function supportsClimateAnnualViews() {
+    return isClimateCategoryActive();
+}
+
 function buildCategoriesFromCatalog() {
     const out = {};
     // Población = derived layers from poblacion.json + overlays
@@ -97,6 +151,7 @@ function buildCategoriesFromCatalog() {
         let cat = ind.category;
         if (cat === 'poblacion') continue;       // already handled
         if (cat === 'demografia') cat = 'poblacion';
+        if (cat === 'usos_suelo' && isLandUseShareIndicatorId(ind.id)) continue;
         if (!out[cat]) {
             out[cat] = {
                 label: CATEGORY_DEF.find(d => d.id === cat)?.label || cat,
@@ -136,6 +191,13 @@ function displayIndicatorName(name = "") {
         .replace(/\s*\([^)]*\b(?:18|19|20)\d{2}\b[^)]*\)/g, "")
         .replace(/\s{2,}/g, " ")
         .trim();
+}
+
+function normalizeSearchText(text = "") {
+    return String(text)
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
 }
 
 // ───────── Loading helpers ─────────
@@ -829,9 +891,9 @@ function getMuniValueAnim(ine, year) {
     return interpSeries(state.data.municipios[ine]?.pob, state.data.years, year);
 }
 
-// Generic value getter for ANY indicator (derived from population, or from
-// historeco / usos_suelo / calzada). Returns null when data not loaded yet.
-function indicatorValue(ine, indId, year) {
+// Generic raw value getter for ANY indicator (derived from population, or from
+// historeco / usos_suelo / calzada). Returns null when data is not loaded yet.
+function indicatorRawValue(ine, indId, year) {
     if (indId === 'cambio') {
         const m = state.data.municipios[ine];
         if (!m) return null;
@@ -859,6 +921,24 @@ function indicatorValue(ine, indId, year) {
     return interpSeries(series, years, year);
 }
 
+function landUseShareValue(ine, indId, year, rawAreaValue = null) {
+    const shareId = landUseShareSourceId(indId);
+    if (shareId) {
+        const suppliedShare = indicatorRawValue(ine, shareId, year);
+        if (suppliedShare != null && Number.isFinite(suppliedShare)) return suppliedShare;
+    }
+    const areaHa = municipalAreaHa(ine);
+    const v = rawAreaValue ?? indicatorRawValue(ine, indId, year);
+    if (v == null || !Number.isFinite(v) || !areaHa) return null;
+    return (v / areaHa) * 100;
+}
+
+function indicatorValue(ine, indId, year) {
+    const raw = indicatorRawValue(ine, indId, year);
+    if (usesLandShareMetric(indId)) return landUseShareValue(ine, indId, year, raw);
+    return raw;
+}
+
 // Backwards-compatible alias used by older code paths in this file.
 function layerValue(ine, year, layer) { return indicatorValue(ine, layer, year); }
 
@@ -875,6 +955,7 @@ function featureGroupKey(feature, level = state.viewLevel) {
 }
 
 function aggregationMode(indId) {
+    if (usesLandShareMetric(indId)) return "area_share";
     if (indId === "densidad") return "density";
     if (indId === "cambio") return "change";
     if (indId === "pob" || indId === "pob_log") return "sum";
@@ -901,7 +982,8 @@ function aggregationMode(indId) {
 
 function aggregateValuesForLevel(level, indId, year) {
     if (level === "mun") return null;
-    const cacheKey = `${level}|${indId}|${Math.round(year * 1000) / 1000}`;
+    const metricKey = usesLandShareMetric(indId) ? "share" : "absolute";
+    const cacheKey = `${level}|${indId}|${metricKey}|${Math.round(year * 1000) / 1000}`;
     if (_aggregateCache.has(cacheKey)) return _aggregateCache.get(cacheKey);
 
     const mode = aggregationMode(indId);
@@ -934,6 +1016,17 @@ function aggregateValuesForLevel(level, indId, year) {
             continue;
         }
 
+        if (mode === "area_share") {
+            const v = indicatorRawValue(ine, indId, year);
+            const areaHa = municipalAreaHa(ine);
+            if (v != null && Number.isFinite(v)) {
+                bucket.sum += v;
+                bucket.count += 1;
+            }
+            if (areaHa) bucket.area += areaHa;
+            continue;
+        }
+
         const v = indicatorValue(ine, indId, year);
         if (v == null || !Number.isFinite(v)) continue;
         bucket.sum += v;
@@ -947,6 +1040,8 @@ function aggregateValuesForLevel(level, indId, year) {
             value = bucket.area > 0 ? bucket.pop / bucket.area : null;
         } else if (mode === "change") {
             value = bucket.basePop > 0 ? ((bucket.pop - bucket.basePop) / bucket.basePop) * 100 : null;
+        } else if (mode === "area_share") {
+            value = bucket.count > 0 && bucket.area > 0 ? (bucket.sum / bucket.area) * 100 : null;
         } else if (mode === "sum") {
             value = bucket.count > 0 ? bucket.sum : null;
         } else {
@@ -1043,7 +1138,8 @@ function indicatorMeta(indId) {
     }
     const ind = state.catalog?.indicators.find(i => i.id === indId);
     if (!ind) return { name: indId, unit: '', desc: '' };
-    return { name: displayIndicatorName(ind.name), rawName: ind.name, unit: ind.unit, desc: `${displayIndicatorName(ind.name)} (${ind.unit})` };
+    const unit = effectiveIndicatorUnit(indId, ind.unit);
+    return { name: displayIndicatorName(ind.name), rawName: ind.name, unit, desc: `${displayIndicatorName(ind.name)} (${unit})` };
 }
 
 function sourceDetailsForIndicator(indId = state.indicator) {
@@ -1219,7 +1315,7 @@ function _computeScaleForLayer(layer) {
 }
 
 function colorScaleFor(layer /*, year ignored — scale is constant */) {
-    const key = `${state.viewLevel}|${layer}`;
+    const key = `${state.viewLevel}|${layer}|${usesLandShareMetric(layer) ? "share" : "absolute"}`;
     if (!_scaleCache.has(key)) {
         _scaleCache.set(key, _computeScaleForLayer(layer));
     }
@@ -1227,7 +1323,7 @@ function colorScaleFor(layer /*, year ignored — scale is constant */) {
 }
 
 function getScaleInfo(layer) {
-    const key = `${state.viewLevel}|${layer}`;
+    const key = `${state.viewLevel}|${layer}|${usesLandShareMetric(layer) ? "share" : "absolute"}`;
     if (!_scaleCache.has(key)) {
         _scaleCache.set(key, _computeScaleForLayer(layer));
     }
@@ -1553,8 +1649,10 @@ function indicatorFormat(layer = analysisLayer()) {
     const unit = meta.unit || "";
     const lower = unit.toLowerCase();
     const suffix = unit === "%" ? "%" : "";
-    const fmt = layer === "cambio" || unit === "%"
+    const fmt = layer === "cambio"
         ? d3.format("+,.1f")
+        : unit === "%"
+            ? d3.format(",.1f")
         : lower.includes("km") || lower.includes("mm") || lower.includes("c")
             ? d3.format(",.2f")
             : d3.format(",.0f");
@@ -1575,6 +1673,741 @@ function nearestPoint(points, year) {
     ), points[0]);
 }
 
+function selectableTrendIndicators() {
+    const cat = CATEGORIES[state.category];
+    return (cat?.indicators || []).filter(ind => isPaintableIndicator(ind.id));
+}
+
+function arraysEqual(a, b) {
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+function activeTrendIndicators() {
+    const options = selectableTrendIndicators().map(ind => ind.id);
+    let selected = state.selectedTrendIndicators.filter(id => options.includes(id));
+    const layer = analysisLayer();
+    if (!selected.length && options.includes(layer)) selected = [layer];
+    if (!selected.length && options.length) selected = [options[0]];
+    if (!arraysEqual(state.selectedTrendIndicators, selected)) {
+        state.selectedTrendIndicators = selected;
+    }
+    return selected;
+}
+
+async function setTrendIndicatorSelection(nextIds, primaryId = null) {
+    const options = new Set(selectableTrendIndicators().map(ind => ind.id));
+    const next = [...new Set(nextIds.filter(id => options.has(id)))];
+    if (!next.length && primaryId && options.has(primaryId)) next.push(primaryId);
+    if (!next.length) return;
+    state.selectedTrendIndicators = next;
+    const primary = primaryId && next.includes(primaryId) ? primaryId : next[0];
+    if (primary) state.indicator = primary;
+    for (const id of next) await ensureIndicatorLoaded(id);
+    syncCensusToIndicator();
+    setupTimeline();
+    renderIndicatorList();
+    paintMunicipios();
+    renderSelectionSidebar();
+    renderDataView();
+}
+
+async function toggleTrendIndicator(indId) {
+    const current = activeTrendIndicators();
+    let next;
+    if (current.includes(indId)) {
+        next = current.length > 1 ? current.filter(id => id !== indId) : current;
+    } else {
+        next = [...current, indId];
+    }
+    const primary = next.includes(indId) ? indId : next[0];
+    await setTrendIndicatorSelection(next, primary);
+}
+
+function setLandMetric(metric) {
+    if (!["absolute", "share"].includes(metric) || state.landMetric === metric) return;
+    state.landMetric = metric;
+    _scaleCache.clear();
+    _aggregateCache.clear();
+    renderIndicatorList();
+    paintMunicipios();
+    renderSelectionSidebar();
+    renderDataView();
+}
+
+function trendValueFormatter(unit = "", signed = false) {
+    const lower = unit.toLowerCase();
+    const suffix = unit === "%" ? "%" : (unit ? ` ${unit}` : "");
+    const fmt = signed
+        ? d3.format("+,.1f")
+        : unit === "%"
+            ? d3.format(",.1f")
+            : lower.includes("km") || lower.includes("mm") || lower.includes("c")
+                ? d3.format(",.2f")
+                : d3.format(",.0f");
+    return (v) => v == null || !Number.isFinite(v) ? "â€”" : `${fmt(v)}${suffix}`;
+}
+
+function buildTrendSeries(selected, indicators) {
+    const out = [];
+    selected.forEach((muni, muniIndex) => {
+        indicators.forEach((indId, indicatorIndex) => {
+            const years = indicatorYears(indId) || [];
+            const meta = indicatorMeta(indId);
+            const points = years.map(y => ({ year: y, v: indicatorValue(muni.ine, indId, y) }))
+                .filter(d => d.v != null && Number.isFinite(d.v));
+            if (!points.length) return;
+            out.push({
+                ine: muni.ine,
+                municipality: muni.name,
+                indicator: indId,
+                indicatorName: meta.name,
+                unit: meta.unit || "",
+                muniIndex,
+                indicatorIndex,
+                points,
+            });
+        });
+    });
+    return out;
+}
+
+function resolveTrendLayout(selected, indicators, series) {
+    const forced = state.trendLayout || "auto";
+    if (forced === "overlay") return "overlay";
+    if (forced === "facet-muni" && selected.length > 1) return "facet-muni";
+    if (forced === "facet-indicator" && indicators.length > 1) return "facet-indicator";
+
+    const unitCount = new Set(series.map(s => s.unit)).size;
+    if (indicators.length > 1 && selected.length > 1) {
+        return unitCount > 1 ? "facet-indicator" : "facet-muni";
+    }
+    if (indicators.length > 1 && unitCount > 1) return "facet-indicator";
+    return "overlay";
+}
+
+function resolvedClimatePanels(selected, indicators, series) {
+    if (selected.length > 1) return buildTrendPanels(selected, indicators, series, "facet-muni");
+    if (indicators.length > 1) return buildTrendPanels(selected, indicators, series, "facet-indicator");
+    return [{ title: selected[0]?.name || "", subtitle: indicators.map(id => indicatorMeta(id).name).join(", "), series }];
+}
+
+function applyTrendColors(series, selected, indicators, layout) {
+    const muniColors = new Map(selected.map((m, i) => [m.ine, LINE_COLORS[i % LINE_COLORS.length]]));
+    const indicatorColors = new Map(indicators.map((id, i) => [id, LINE_COLORS[i % LINE_COLORS.length]]));
+    series.forEach((s, i) => {
+        if (layout === "facet-muni" || (indicators.length > 1 && selected.length === 1)) {
+            s.color = indicatorColors.get(s.indicator);
+            s.name = indicators.length > 1 ? s.indicatorName : s.municipality;
+        } else if (layout === "facet-indicator" || indicators.length === 1) {
+            s.color = muniColors.get(s.ine);
+            s.name = selected.length > 1 ? s.municipality : s.indicatorName;
+        } else {
+            s.color = LINE_COLORS[i % LINE_COLORS.length];
+            s.name = `${s.municipality} - ${s.indicatorName}`;
+        }
+    });
+}
+
+function trendXDomain(series) {
+    const years = series.flatMap(s => s.points.map(p => p.year));
+    return years.length ? d3.extent(years) : [YEAR_MIN, YEAR_MAX];
+}
+
+function trendYDomain(series) {
+    const values = series.flatMap(s => s.points.map(p => p.v)).filter(Number.isFinite);
+    if (!values.length) return [0, 1];
+    const rawMin = d3.min(values);
+    const rawMax = d3.max(values);
+    const yBaseMin = rawMin < 0 ? rawMin : 0;
+    const yBaseMax = rawMax > 0 ? rawMax : 0;
+    const pad = Math.max((yBaseMax - yBaseMin) * 0.06, 1e-9);
+    return [yBaseMin < 0 ? yBaseMin - pad : yBaseMin, yBaseMax + pad];
+}
+
+function buildTrendPanels(selected, indicators, series, layout) {
+    if (layout === "facet-muni") {
+        return selected.map(m => ({
+            title: m.name,
+            subtitle: `${series.filter(s => s.ine === m.ine).length} series`,
+            series: series.filter(s => s.ine === m.ine),
+        })).filter(p => p.series.length);
+    }
+    if (layout === "facet-indicator") {
+        return indicators.map(id => {
+            const meta = indicatorMeta(id);
+            return {
+                title: meta.name,
+                subtitle: meta.unit || "",
+                series: series.filter(s => s.indicator === id),
+            };
+        }).filter(p => p.series.length);
+    }
+    return [{ title: "", subtitle: "", series }];
+}
+
+function drawTrendPanel(svg, panel, x0, y0, panelW, panelH, xDomain, yDomain, opts = {}) {
+    const margin = opts.facet
+        ? { top: 30, right: 16, bottom: 34, left: 64 }
+        : { top: 20, right: opts.showLabels ? 130 : 22, bottom: 42, left: 74 };
+    const iw = Math.max(80, panelW - margin.left - margin.right);
+    const ih = Math.max(80, panelH - margin.top - margin.bottom);
+    const panelG = svg.append("g").attr("transform", `translate(${x0},${y0})`);
+
+    if (panel.title) {
+        panelG.append("text").attr("class", "facet-title")
+            .attr("x", 0).attr("y", 12).text(panel.title);
+        if (panel.subtitle) {
+            panelG.append("text").attr("class", "facet-subtitle")
+                .attr("x", 0).attr("y", 26).text(panel.subtitle);
+        }
+    }
+
+    const g = panelG.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const x = d3.scaleLinear().domain(xDomain).range([0, iw]);
+    const y = d3.scaleLinear().domain(yDomain).range([ih, 0]);
+    const units = [...new Set(panel.series.map(s => s.unit))];
+    const signed = panel.series.some(s => s.indicator === "cambio");
+    const fmtY = trendValueFormatter(units.length === 1 ? units[0] : "", signed);
+    const fmtTip = (v, s) => trendValueFormatter(s.unit, s.indicator === "cambio")(v);
+
+    y.ticks(opts.facet ? 4 : 5).forEach(t => {
+        g.append("line").attr("class", "axis-grid")
+            .attr("x1", 0).attr("x2", iw).attr("y1", y(t)).attr("y2", y(t));
+        g.append("text").attr("class", "axis-label")
+            .attr("x", -8).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmtY(t));
+    });
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", ih);
+    g.append("line").attr("class", "axis-domain")
+        .attr("x1", 0).attr("x2", iw).attr("y1", ih).attr("y2", ih);
+    if (yDomain[0] < 0 && yDomain[1] > 0) {
+        g.append("line").attr("class", "axis-line")
+            .attr("x1", 0).attr("x2", iw).attr("y1", y(0)).attr("y2", y(0));
+    }
+
+    const lineGen = d3.line().x(d => x(d.year)).y(d => y(d.v)).curve(d3.curveMonotoneX);
+    panel.series.forEach(s => {
+        g.append("path").datum(s.points)
+            .attr("class", "data-line").attr("stroke", s.color).attr("d", lineGen);
+        g.selectAll(null).data(s.points).enter().append("circle")
+            .attr("class", "data-dot").attr("fill", s.color)
+            .attr("r", opts.facet ? 1.8 : 2.4)
+            .attr("cx", d => x(d.year)).attr("cy", d => y(d.v));
+        if (opts.showLabels) {
+            const last = s.points[s.points.length - 1];
+            if (last) {
+                g.append("text").attr("class", "series-label")
+                    .attr("x", x(last.year) + 6)
+                    .attr("y", y(last.v) + 3)
+                    .attr("fill", s.color)
+                    .text(s.name);
+            }
+        }
+    });
+
+    const cy = currentYear();
+    if (cy >= xDomain[0] && cy <= xDomain[1]) {
+        g.append("line").attr("class", "year-marker")
+            .attr("x1", x(cy)).attr("x2", x(cy)).attr("y1", 0).attr("y2", ih);
+    }
+    const tickYears = [xDomain[0], ...d3.ticks(xDomain[0], xDomain[1], opts.facet ? 3 : 4), xDomain[1]]
+        .filter((yr, i, arr) => Number.isFinite(yr) && arr.indexOf(yr) === i);
+    tickYears.forEach(yr => {
+        g.append("text").attr("class", "axis-label")
+            .attr("x", x(yr)).attr("y", ih + 18).attr("text-anchor", "middle").text(Math.round(yr));
+    });
+
+    const hoverLine = g.append("line").attr("class", "chart-hover-line")
+        .attr("y1", 0).attr("y2", ih).style("display", "none");
+    g.append("rect")
+        .attr("class", "chart-hit-area")
+        .attr("x", 0).attr("y", 0).attr("width", iw).attr("height", ih)
+        .on("mousemove", (event) => {
+            const [mx] = d3.pointer(event, g.node());
+            const targetYear = x.invert(Math.max(0, Math.min(iw, mx)));
+            hoverLine.attr("x1", x(targetYear)).attr("x2", x(targetYear)).style("display", null);
+            showChartTooltip(event, chartTooltipHtml(targetYear, panel.series, fmtTip));
+        })
+        .on("mouseleave", () => {
+            hoverLine.style("display", "none");
+            hideChartTooltip();
+        });
+}
+
+function anomalyColorScale(values) {
+    const clean = values.filter(Number.isFinite);
+    const extent = d3.max(clean.map(v => Math.abs(v))) || 1;
+    return d3.scaleLinear()
+        .domain([-extent, 0, extent])
+        .range(["#2b5797", "#f2efe9", "#c0392b"])
+        .clamp(true);
+}
+
+function renderClimateStripesChart(selector, chartHeight = 430) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    const selected = selectedMunicipios();
+    const indicators = activeTrendIndicators();
+    if (!selected.length || !indicators.length) return false;
+
+    const series = buildTrendSeries(selected, indicators);
+    if (!series.length) return false;
+    const panels = resolvedClimatePanels(selected, indicators, series);
+    const w = svg.node().clientWidth || 720;
+    const panelH = 84;
+    const gapY = 14;
+    const h = Math.max(chartHeight, panels.length * panelH + (panels.length - 1) * gapY);
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+
+    const margin = { top: 26, right: 20, bottom: 20, left: 150 };
+    panels.forEach((panel, i) => {
+        const y0 = i * (panelH + gapY);
+        const g = svg.append("g").attr("transform", `translate(0,${y0})`);
+        g.append("text").attr("class", "facet-title")
+            .attr("x", 0).attr("y", 14).text(panel.title || panel.series[0]?.municipality || "");
+        g.append("text").attr("class", "facet-subtitle")
+            .attr("x", 0).attr("y", 29).text(panel.subtitle || panel.series.map(s => s.indicatorName).join(", "));
+
+        const rowH = Math.max(14, Math.min(28, (panelH - margin.top - margin.bottom) / Math.max(1, panel.series.length)));
+        panel.series.forEach((s, row) => {
+            const y = margin.top + row * rowH;
+            const mean = d3.mean(s.points, p => p.v);
+            const deviations = s.points.map(p => p.v - mean);
+            const color = anomalyColorScale(deviations);
+            const x = d3.scaleBand()
+                .domain(s.points.map(p => p.year))
+                .range([margin.left, w - margin.right])
+                .paddingInner(0.02);
+            g.append("text").attr("class", "axis-label")
+                .attr("x", margin.left - 8)
+                .attr("y", y + rowH * 0.72)
+                .attr("text-anchor", "end")
+                .text(s.indicatorName);
+            g.selectAll(null).data(s.points).enter().append("rect")
+                .attr("class", "stripe-cell")
+                .attr("x", d => x(d.year))
+                .attr("y", y)
+                .attr("width", Math.max(1, x.bandwidth()))
+                .attr("height", rowH - 2)
+                .attr("fill", d => color(d.v - mean));
+            const first = s.points[0]?.year;
+            const last = s.points[s.points.length - 1]?.year;
+            if (row === panel.series.length - 1) {
+                [first, last].forEach((yr, k) => {
+                    if (yr == null) return;
+                    g.append("text").attr("class", "axis-label")
+                        .attr("x", k === 0 ? margin.left : w - margin.right)
+                        .attr("y", panelH - 4)
+                        .attr("text-anchor", k === 0 ? "start" : "end")
+                        .text(yr);
+                });
+            }
+        });
+    });
+    return true;
+}
+
+function renderClimateDecadeChart(selector, chartHeight = 430) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    const selected = selectedMunicipios();
+    const indicators = activeTrendIndicators();
+    if (!selected.length || !indicators.length) return false;
+
+    const series = buildTrendSeries(selected, indicators);
+    if (!series.length) return false;
+    const panels = resolvedClimatePanels(selected, indicators, series);
+    const w = svg.node().clientWidth || 720;
+    const cols = w >= 940 && panels.length > 1 ? 2 : 1;
+    const gapX = 28;
+    const gapY = 24;
+    const panelW = (w - gapX * (cols - 1)) / cols;
+    const panelH = 250;
+    const rows = Math.ceil(panels.length / cols);
+    const h = Math.max(chartHeight, rows * panelH + (rows - 1) * gapY);
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+
+    panels.forEach((panel, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x0 = col * (panelW + gapX);
+        const y0 = row * (panelH + gapY);
+        const g0 = svg.append("g").attr("transform", `translate(${x0},${y0})`);
+        g0.append("text").attr("class", "facet-title")
+            .attr("x", 0).attr("y", 14).text(panel.title || panel.series[0]?.municipality || "");
+        g0.append("text").attr("class", "facet-subtitle")
+            .attr("x", 0).attr("y", 29).text(panel.subtitle || panel.series.map(s => s.indicatorName).join(", "));
+
+        const margin = { top: 42, right: 16, bottom: 34, left: 58 };
+        const iw = panelW - margin.left - margin.right;
+        const ih = panelH - margin.top - margin.bottom;
+        const g = g0.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+        const allYears = [...new Set(panel.series.flatMap(s => s.points.map(p => p.year)))].sort((a, b) => a - b);
+        const x = d3.scaleBand().domain(allYears).range([0, iw]).padding(0.24);
+        const baselines = new Map(panel.series.map(s => [s, d3.mean(s.points, p => p.v)]));
+        const deltas = panel.series.flatMap(s => s.points.map(p => p.v - baselines.get(s)));
+        const yDomain = trendYDomain([{ points: deltas.map((v, j) => ({ year: j, v })) }]);
+        const y = d3.scaleLinear().domain(yDomain).range([ih, 0]);
+        const color = anomalyColorScale(deltas);
+        const line = d3.line()
+            .x(d => x(d.year) + x.bandwidth() / 2)
+            .y(d => y(d.delta))
+            .curve(d3.curveMonotoneX);
+
+        y.ticks(4).forEach(t => {
+            g.append("line").attr("class", "axis-grid")
+                .attr("x1", 0).attr("x2", iw).attr("y1", y(t)).attr("y2", y(t));
+            g.append("text").attr("class", "axis-label")
+                .attr("x", -8).attr("y", y(t) + 3).attr("text-anchor", "end")
+                .text(Math.abs(t) >= 10 ? d3.format("+,.0f")(t) : d3.format("+,.1f")(t));
+        });
+        g.append("line").attr("class", "stripe-baseline")
+            .attr("x1", 0).attr("x2", iw).attr("y1", y(0)).attr("y2", y(0));
+        panel.series.forEach((s, si) => {
+            const baseline = baselines.get(s);
+            const barW = Math.max(2, x.bandwidth() / panel.series.length);
+            const offset = (si - (panel.series.length - 1) / 2) * barW;
+            const points = s.points.map(p => ({ ...p, delta: p.v - baseline }));
+            g.selectAll(null).data(points).enter().append("rect")
+                .attr("class", "climate-bar")
+                .attr("x", d => x(d.year) + x.bandwidth() / 2 + offset - barW / 2)
+                .attr("y", d => d.delta >= 0 ? y(d.delta) : y(0))
+                .attr("width", barW)
+                .attr("height", d => Math.abs(y(d.delta) - y(0)))
+                .attr("fill", d => color(d.delta))
+                .attr("opacity", panel.series.length > 1 ? 0.78 : 0.92);
+            if (panel.series.length === 1) {
+                g.append("path").datum(points)
+                    .attr("class", "data-line")
+                    .attr("stroke", "#1a1a1a")
+                    .attr("stroke-width", 1.4)
+                    .attr("fill", "none")
+                    .attr("d", line);
+            }
+        });
+        allYears.forEach((yr, j) => {
+            if (j % Math.ceil(allYears.length / 5) !== 0 && j !== allYears.length - 1) return;
+            g.append("text").attr("class", "axis-label")
+                .attr("x", x(yr) + x.bandwidth() / 2)
+                .attr("y", ih + 18)
+                .attr("text-anchor", "middle")
+                .text(yr);
+        });
+    });
+    return true;
+}
+
+function requestClimateMonthlyLoad() {
+    if (state.sources[CLIMATE_MONTHLY_SOURCE] || state.climateMonthlyPromise) return;
+    state.climateMonthlyError = null;
+    state.climateMonthlyPromise = loadSource(CLIMATE_MONTHLY_SOURCE)
+        .then(() => {
+            state.climateMonthlyPromise = null;
+            if (document.body.classList.contains("show-data") && state.mainTab === "trends" && state.climateTrendMode === "climogram") {
+                renderDataView();
+            }
+        })
+        .catch(err => {
+            state.climateMonthlyPromise = null;
+            state.climateMonthlyError = err;
+            console.warn("No se pudieron cargar datos mensuales de clima", err);
+            if (document.body.classList.contains("show-data") && state.mainTab === "trends" && state.climateTrendMode === "climogram") {
+                renderDataView();
+            }
+        });
+}
+
+function climateMonthlyStore() {
+    const raw = state.sources[CLIMATE_MONTHLY_SOURCE];
+    if (!raw) return null;
+    if (!raw._index) {
+        raw._index = {};
+        (raw.territories || []).forEach(t => {
+            if (t.code) raw._index[t.code] = t;
+        });
+    }
+    return { years: raw.years || [], index: raw._index };
+}
+
+function extractClimateMonthly(ine) {
+    const store = climateMonthlyStore();
+    const rec = store?.index?.[ine];
+    const years = store?.years || [];
+    if (!rec || !years.length) return null;
+
+    const reshape = (arr) => years.map((_, yi) => MONTH_LABELS.map((__, month) => {
+        const value = arr?.[yi * 12 + month];
+        return value == null || !Number.isFinite(value) ? null : value;
+    }));
+    const tmeanByYear = reshape(rec.tmean || []);
+    const precByYear = reshape(rec.prec || []);
+    const monthlyAverage = (rows, month) => {
+        const values = rows.map(row => row[month]).filter(Number.isFinite);
+        return values.length ? d3.mean(values) : null;
+    };
+    return {
+        years,
+        tmeanByYear,
+        precByYear,
+        tmeanAvg: MONTH_LABELS.map((_, month) => monthlyAverage(tmeanByYear, month)),
+        precAvg: MONTH_LABELS.map((_, month) => monthlyAverage(precByYear, month)),
+    };
+}
+
+function climateMonthlyCurrent(data) {
+    const target = Math.round(currentYear());
+    const minYear = data.years[0];
+    const maxYear = data.years[data.years.length - 1];
+    let idx = data.years.indexOf(target);
+    let label = `${target}`;
+    if (idx < 0 && target >= minYear && target <= maxYear) {
+        const nearest = nearestYearFrom(data.years, target);
+        idx = data.years.indexOf(nearest);
+        label = `${nearest}`;
+    }
+    if (idx < 0) {
+        return {
+            label: "media",
+            tmean: data.tmeanAvg,
+            prec: data.precAvg,
+        };
+    }
+    return {
+        label,
+        tmean: data.tmeanByYear[idx],
+        prec: data.precByYear[idx],
+    };
+}
+
+function renderClimateClimogramChart(selector, chartHeight = 430) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    const selected = selectedMunicipios();
+    if (!selected.length) return false;
+
+    if (state.climateMonthlyError) {
+        return renderClimateStatus(selector, chartHeight, "No se pudo cargar el climograma", "Revisa el archivo mensual de clima.");
+    }
+    if (!climateMonthlyStore()) {
+        requestClimateMonthlyLoad();
+        return renderClimateStatus(selector, chartHeight, "Cargando climogramas", "Datos mensuales disponibles para municipios de Andalucia.");
+    }
+
+    if (!selected.some(muni => extractClimateMonthly(muni.ine))) {
+        return renderClimateStatus(
+            selector,
+            chartHeight,
+            "Sin datos mensuales para estos municipios",
+            "Por ahora los climogramas usan el archivo mensual de Andalucia. Selecciona un municipio andaluz o incorpora una fuente mensual nacional."
+        );
+    }
+
+    const w = svg.node().clientWidth || 720;
+    const cols = w >= 980 && selected.length > 1 ? 2 : 1;
+    const gapX = 26;
+    const gapY = 22;
+    const panelW = (w - gapX * (cols - 1)) / cols;
+    const panelH = selected.length > 1 ? 286 : Math.max(430, chartHeight);
+    const rows = Math.ceil(selected.length / cols);
+    const h = Math.max(chartHeight, rows * panelH + (rows - 1) * gapY);
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+
+    selected.forEach((muni, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        drawClimateClimogramPanel(svg, {
+            muni,
+            data: extractClimateMonthly(muni.ine),
+            color: LINE_COLORS[i % LINE_COLORS.length],
+        }, col * (panelW + gapX), row * (panelH + gapY), panelW, panelH, selected.length > 1);
+    });
+    return true;
+}
+
+function drawClimateClimogramPanel(svg, panel, x0, y0, panelW, panelH, isFacet) {
+    const root = svg.append("g").attr("transform", `translate(${x0},${y0})`);
+    root.append("text").attr("class", "facet-title")
+        .attr("x", 0).attr("y", 14).text(panel.muni.name);
+
+    if (!panel.data) {
+        root.append("text").attr("class", "facet-subtitle")
+            .attr("x", 0).attr("y", 30)
+            .text("Sin datos mensuales; la fuente mensual actual cubre Andalucia.");
+        root.append("text").attr("class", "axis-label")
+            .attr("x", panelW / 2).attr("y", panelH / 2)
+            .attr("text-anchor", "middle")
+            .text("Selecciona un municipio andaluz para ver el climograma.");
+        return;
+    }
+
+    const current = climateMonthlyCurrent(panel.data);
+    root.append("text").attr("class", "facet-subtitle")
+        .attr("x", 0).attr("y", 30)
+        .text(`Temperatura y precipitacion mensual - ${current.label}`);
+
+    const margin = isFacet
+        ? { top: 44, right: 42, bottom: 30, left: 46 }
+        : { top: 52, right: 58, bottom: 44, left: 58 };
+    const iw = Math.max(120, panelW - margin.left - margin.right);
+    const ih = Math.max(150, panelH - margin.top - margin.bottom);
+    const g = root.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const precValues = [...panel.data.precAvg, ...current.prec].filter(Number.isFinite);
+    const tempValues = [...panel.data.tmeanAvg, ...current.tmean].filter(Number.isFinite);
+    if (!precValues.length || !tempValues.length) {
+        root.append("text").attr("class", "axis-label")
+            .attr("x", panelW / 2).attr("y", panelH / 2)
+            .attr("text-anchor", "middle")
+            .text("Sin valores mensuales suficientes.");
+        return;
+    }
+
+    const x = d3.scaleBand().domain(d3.range(12)).range([0, iw]).padding(0.15);
+    const yPrec = d3.scaleLinear().domain([0, (d3.max(precValues) || 1) * 1.16]).range([ih, 0]).nice();
+    const tempPad = Math.max(1, ((d3.max(tempValues) || 0) - (d3.min(tempValues) || 0)) * 0.08);
+    const yTemp = d3.scaleLinear()
+        .domain([(d3.min(tempValues) || 0) - tempPad, (d3.max(tempValues) || 1) + tempPad])
+        .range([ih, 0]).nice();
+
+    yPrec.ticks(isFacet ? 3 : 5).forEach(t => {
+        g.append("line").attr("class", "axis-grid")
+            .attr("x1", 0).attr("x2", iw).attr("y1", yPrec(t)).attr("y2", yPrec(t));
+        g.append("text").attr("class", "axis-label")
+            .attr("x", -8).attr("y", yPrec(t) + 3).attr("text-anchor", "end")
+            .text(Math.round(t));
+    });
+    yTemp.ticks(isFacet ? 3 : 5).forEach(t => {
+        g.append("text").attr("class", "axis-label temp-axis-label")
+            .attr("x", iw + 8).attr("y", yTemp(t) + 3)
+            .text(`${Math.round(t)} C`);
+    });
+
+    g.selectAll(null).data(panel.data.precAvg).enter().append("rect")
+        .attr("class", "climogram-prec-avg")
+        .attr("x", (_, i) => x(i))
+        .attr("y", d => d == null ? ih : yPrec(d))
+        .attr("width", x.bandwidth())
+        .attr("height", d => d == null ? 0 : ih - yPrec(d));
+
+    g.selectAll(null).data(current.prec).enter().append("rect")
+        .attr("class", "climogram-prec-current")
+        .attr("x", (_, i) => x(i) + x.bandwidth() * 0.15)
+        .attr("y", d => d == null ? ih : yPrec(d))
+        .attr("width", x.bandwidth() * 0.7)
+        .attr("height", d => d == null ? 0 : ih - yPrec(d));
+
+    const line = d3.line()
+        .defined(d => d.value != null && Number.isFinite(d.value))
+        .x(d => x(d.month) + x.bandwidth() / 2)
+        .y(d => yTemp(d.value))
+        .curve(d3.curveMonotoneX);
+    const avgTemp = panel.data.tmeanAvg.map((value, month) => ({ month, value }));
+    const curTemp = current.tmean.map((value, month) => ({ month, value }));
+    g.append("path").datum(avgTemp)
+        .attr("class", "climogram-temp-avg")
+        .attr("d", line);
+    g.append("path").datum(curTemp)
+        .attr("class", "climogram-temp-current")
+        .attr("d", line);
+    g.selectAll(null).data(curTemp.filter(d => d.value != null && Number.isFinite(d.value))).enter().append("circle")
+        .attr("class", "climogram-temp-dot")
+        .attr("cx", d => x(d.month) + x.bandwidth() / 2)
+        .attr("cy", d => yTemp(d.value))
+        .attr("r", isFacet ? 2.3 : 3.2);
+
+    MONTH_LABELS.forEach((label, i) => {
+        g.append("text").attr("class", "axis-label")
+            .attr("x", x(i) + x.bandwidth() / 2)
+            .attr("y", ih + 18)
+            .attr("text-anchor", "middle")
+            .text(label);
+    });
+    if (!isFacet) {
+        g.append("text").attr("class", "climogram-axis-title climogram-prec-title")
+            .attr("x", 0).attr("y", -12).text("Precip. (mm)");
+        g.append("text").attr("class", "climogram-axis-title climogram-temp-title")
+            .attr("x", iw).attr("y", -12).attr("text-anchor", "end").text("Temp. (C)");
+        g.append("line").attr("class", "climogram-temp-avg climogram-legend-line")
+            .attr("x1", iw * 0.32).attr("x2", iw * 0.32 + 22).attr("y1", ih + 34).attr("y2", ih + 34);
+        g.append("text").attr("class", "axis-label")
+            .attr("x", iw * 0.32 + 28).attr("y", ih + 37).text("Media periodo");
+        g.append("rect").attr("class", "climogram-prec-avg")
+            .attr("x", iw * 0.62).attr("y", ih + 27).attr("width", 14).attr("height", 10);
+        g.append("text").attr("class", "axis-label")
+            .attr("x", iw * 0.62 + 20).attr("y", ih + 37).text("Precip. media");
+    }
+
+    g.append("rect")
+        .attr("class", "chart-hit-area")
+        .attr("x", 0).attr("y", 0).attr("width", iw).attr("height", ih)
+        .on("mousemove", (event) => {
+            const [mx] = d3.pointer(event, g.node());
+            const month = Math.min(11, Math.max(0, Math.floor(mx / Math.max(1, iw / 12))));
+            showChartTooltip(event, climateClimogramTooltip(panel, current, month));
+        })
+        .on("mouseleave", hideChartTooltip);
+}
+
+function climateClimogramTooltip(panel, current, month) {
+    const temp = current.tmean[month];
+    const prec = current.prec[month];
+    const avgTemp = panel.data.tmeanAvg[month];
+    const avgPrec = panel.data.precAvg[month];
+    const fmtTemp = v => v == null || !Number.isFinite(v) ? "-" : `${d3.format(".1f")(v)} C`;
+    const fmtPrec = v => v == null || !Number.isFinite(v) ? "-" : `${d3.format(".1f")(v)} mm`;
+    return `
+        <strong>${panel.muni.name} - ${MONTH_LABELS[month]} ${current.label}</strong>
+        <div class="chart-tip-row"><span class="chart-tip-name" style="border-left:3px solid #c44e10;padding-left:6px">Temperatura</span><span>${fmtTemp(temp)}</span></div>
+        <div class="chart-tip-row"><span class="chart-tip-name" style="border-left:3px solid #1d91c0;padding-left:6px">Precipitacion</span><span>${fmtPrec(prec)}</span></div>
+        <div class="chart-tip-row"><span>Media temp.</span><span>${fmtTemp(avgTemp)}</span></div>
+        <div class="chart-tip-row"><span>Media precip.</span><span>${fmtPrec(avgPrec)}</span></div>
+    `;
+}
+
+function renderClimateStatus(selector, chartHeight, title, subtitle) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    const w = svg.node().clientWidth || 720;
+    const h = chartHeight;
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+    const g = svg.append("g").attr("transform", `translate(${w / 2},${h / 2})`);
+    g.append("text")
+        .attr("text-anchor", "middle")
+        .attr("fill", "#555")
+        .attr("font-size", 14)
+        .attr("font-weight", 700)
+        .text(title);
+    g.append("text")
+        .attr("text-anchor", "middle")
+        .attr("y", 24)
+        .attr("fill", "#8a8a8a")
+        .attr("font-size", 12)
+        .text(subtitle);
+    return true;
+}
+
+function renderClimateNoMonthly(selector, chartHeight = 430) {
+    const svg = d3.select(selector);
+    svg.selectAll("*").remove();
+    const w = svg.node().clientWidth || 720;
+    const h = chartHeight;
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+    const g = svg.append("g").attr("transform", `translate(${w / 2},${h / 2})`);
+    g.append("text")
+        .attr("text-anchor", "middle")
+        .attr("fill", "#555")
+        .attr("font-size", 14)
+        .attr("font-weight", 700)
+        .text("Climograma pendiente");
+    g.append("text")
+        .attr("text-anchor", "middle")
+        .attr("y", 24)
+        .attr("fill", "#8a8a8a")
+        .attr("font-size", 12)
+        .text("El paquete nacional actual solo incluye series climáticas anuales.");
+    return true;
+}
+
 function chartTooltipHtml(year, series, fmt) {
     const rows = series.map(s => {
         const point = nearestPoint(s.points, year);
@@ -1582,7 +2415,7 @@ function chartTooltipHtml(year, series, fmt) {
         return `
             <div class="chart-tip-row">
                 <span class="chart-tip-name" style="border-left:3px solid ${s.color};padding-left:6px">${s.name}</span>
-                <span>${fmt(point.v)}</span>
+                <span>${fmt(point.v, s)}</span>
             </div>
         `;
     }).join("");
@@ -1621,97 +2454,361 @@ function hideChartTooltip() {
 function drawTrendChart(selector, chartHeight = 430) {
     const svg = d3.select(selector);
     svg.selectAll("*").remove();
-    if (state.selectedInes.length === 0) return false;
+    const selected = selectedMunicipios();
+    const indicators = activeTrendIndicators();
+    if (!selected.length || !indicators.length) return false;
 
-    const w = svg.node().clientWidth || 720;
-    const h = chartHeight;
-    svg.attr("viewBox", `0 0 ${w} ${h}`);
-    const margin = { top: 20, right: 120, bottom: 42, left: 74 };
-    const iw = w - margin.left - margin.right;
-    const ih = h - margin.top - margin.bottom;
-    const layer = analysisLayer();
-    const yrs = analysisYears(layer);
-    const series = state.selectedInes.map((ine, i) => {
-        const m = state.data.municipios[ine];
-        if (!m) return null;
-        const points = yrs.map((y) => ({ year: y, v: indicatorValue(ine, layer, y) }))
-            .filter(d => d.v != null && Number.isFinite(d.v));
-        if (!points.length) return null;
-        return { ine, name: m.name, color: LINE_COLORS[i % LINE_COLORS.length], points };
-    }).filter(Boolean);
+    if (supportsClimateAnnualViews() && state.climateTrendMode === "stripes") {
+        return renderClimateStripesChart(selector, chartHeight);
+    }
+    if (supportsClimateAnnualViews() && state.climateTrendMode === "decades") {
+        return renderClimateDecadeChart(selector, chartHeight);
+    }
+    if (supportsClimateAnnualViews() && state.climateTrendMode === "climogram") {
+        return renderClimateClimogramChart(selector, chartHeight);
+    }
+
+    const series = buildTrendSeries(selected, indicators);
     if (!series.length) return false;
 
-    const yearExtent = d3.extent(yrs);
-    const values = series.flatMap(s => s.points.map(p => p.v));
-    const rawMin = d3.min(values) ?? 0;
-    const rawMax = d3.max(values) ?? 1;
-    const yBaseMin = layer === "cambio" ? Math.min(0, rawMin) : 0;
-    const yBaseMax = layer === "cambio" ? Math.max(0, rawMax) : Math.max(rawMax, 1);
-    const yPad = Math.max((yBaseMax - yBaseMin) * 0.06, 1e-9);
-    const yMin = layer === "cambio" ? yBaseMin - yPad : yBaseMin;
-    const yMax = yBaseMax + yPad;
-    const x = d3.scaleLinear().domain(yearExtent).range([0, iw]);
-    const y = d3.scaleLinear().domain([yMin, yMax]).range([ih, 0]);
-    const fmt = indicatorFormat(layer);
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-    y.ticks(5).forEach(t => {
-        g.append("line").attr("class", "axis-grid")
-            .attr("x1", 0).attr("x2", iw).attr("y1", y(t)).attr("y2", y(t));
-        g.append("text").attr("class", "axis-label")
-            .attr("x", -8).attr("y", y(t) + 3).attr("text-anchor", "end").text(fmt(t));
-    });
-    g.append("line").attr("class", "axis-domain")
-        .attr("x1", 0).attr("x2", 0).attr("y1", 0).attr("y2", ih);
-    g.append("line").attr("class", "axis-domain")
-        .attr("x1", 0).attr("x2", iw).attr("y1", ih).attr("y2", ih);
-    if (layer === "cambio") {
-        g.append("line").attr("class", "axis-line")
-            .attr("x1", 0).attr("x2", iw)
-            .attr("y1", y(0)).attr("y2", y(0));
-    }
-    const lineGen = d3.line().x(d => x(d.year)).y(d => y(d.v)).curve(d3.curveMonotoneX);
-    series.forEach(s => {
-        g.append("path").datum(s.points)
-            .attr("class", "data-line").attr("stroke", s.color).attr("d", lineGen);
-        g.selectAll(`circle.trend-dot-${s.ine}`).data(s.points).enter().append("circle")
-            .attr("class", "data-dot").attr("fill", s.color)
-            .attr("cx", d => x(d.year)).attr("cy", d => y(d.v));
-        const last = s.points[s.points.length - 1];
-        if (last) {
-            g.append("text").attr("class", "series-label")
-                .attr("x", x(last.year) + 6)
-                .attr("y", y(last.v) + 3)
-                .attr("fill", s.color)
-                .text(s.name);
-        }
-    });
-    const cy = currentYear();
-    if (cy >= yearExtent[0] && cy <= yearExtent[1]) {
-        g.append("line").attr("class", "year-marker")
-            .attr("x1", x(cy)).attr("x2", x(cy)).attr("y1", 0).attr("y2", ih);
-    }
-    [yearExtent[0], 1950, 2000, yearExtent[1]].forEach(yr => {
-        if (yr == null || yr < yearExtent[0] || yr > yearExtent[1]) return;
-        g.append("text").attr("class", "axis-label")
-            .attr("x", x(yr)).attr("y", ih + 18).attr("text-anchor", "middle").text(yr);
-    });
-    const hoverLine = g.append("line").attr("class", "chart-hover-line")
-        .attr("y1", 0).attr("y2", ih).style("display", "none");
-    g.append("rect")
-        .attr("class", "chart-hit-area")
-        .attr("x", 0).attr("y", 0).attr("width", iw).attr("height", ih)
-        .on("mousemove", (event) => {
-            const [mx] = d3.pointer(event, g.node());
-            const targetYear = x.invert(Math.max(0, Math.min(iw, mx)));
-            const nearestYear = nearestYearFrom(yrs, targetYear);
-            hoverLine.attr("x1", x(nearestYear)).attr("x2", x(nearestYear)).style("display", null);
-            showChartTooltip(event, chartTooltipHtml(nearestYear, series, fmt));
-        })
-        .on("mouseleave", () => {
-            hoverLine.style("display", "none");
-            hideChartTooltip();
+    const layout = resolveTrendLayout(selected, indicators, series);
+    applyTrendColors(series, selected, indicators, layout);
+    const panels = buildTrendPanels(selected, indicators, series, layout);
+    if (!panels.length) return false;
+
+    const w = svg.node().clientWidth || 720;
+    const xDomain = trendXDomain(series);
+    if (layout === "overlay") {
+        const h = chartHeight;
+        svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+        drawTrendPanel(svg, panels[0], 0, 0, w, h, xDomain, trendYDomain(series), {
+            facet: false,
+            showLabels: series.length <= 8 && w > 650,
         });
+        return true;
+    }
+
+    const cols = w >= 940 && panels.length > 1 ? 2 : 1;
+    const gapX = 28;
+    const gapY = 24;
+    const panelW = (w - gapX * (cols - 1)) / cols;
+    const panelH = 260;
+    const rows = Math.ceil(panels.length / cols);
+    const h = rows * panelH + (rows - 1) * gapY;
+    svg.attr("viewBox", `0 0 ${w} ${h}`).style("height", `${h}px`);
+    const sharedY = layout === "facet-muni" && new Set(series.map(s => s.unit)).size === 1
+        ? trendYDomain(series)
+        : null;
+    panels.forEach((panel, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const px = col * (panelW + gapX);
+        const py = row * (panelH + gapY);
+        drawTrendPanel(svg, panel, px, py, panelW, panelH, xDomain, sharedY || trendYDomain(panel.series), {
+            facet: true,
+            showLabels: false,
+        });
+    });
     return true;
+}
+
+function renderTrendControls() {
+    if (!$("#trend-controls")) return;
+    renderTrendSidebarState();
+    renderTrendSelectedMunis();
+    renderTrendIndicatorChips();
+    renderTrendClimateControls();
+    renderTrendLandMetricControls();
+    renderTrendLayoutControls();
+}
+
+function renderTrendSidebarState() {
+    const workspace = $("#trend-workspace");
+    const toggle = $("#trend-sidebar-toggle");
+    if (!workspace || !toggle) return;
+    workspace.classList.toggle("controls-collapsed", !state.trendSidebarOpen);
+    toggle.setAttribute("aria-label", state.trendSidebarOpen ? "Ocultar controles" : "Mostrar controles");
+    toggle.title = state.trendSidebarOpen ? "Ocultar controles" : "Mostrar controles";
+}
+
+function renderTrendSelectedMunis() {
+    const wrap = $("#trend-selected-munis");
+    if (!wrap) return;
+    const selected = selectedMunicipios();
+    wrap.innerHTML = "";
+    if (!selected.length) {
+        const empty = document.createElement("span");
+        empty.className = "trend-selected-empty";
+        empty.textContent = "Sin municipios seleccionados";
+        wrap.appendChild(empty);
+        return;
+    }
+    selected.forEach((m, i) => {
+        const chip = document.createElement("span");
+        chip.className = "trend-selected-chip";
+        chip.innerHTML = `
+            <span class="selection-dot" style="background:${LINE_COLORS[i % LINE_COLORS.length]}"></span>
+            <span>${m.name}</span>
+            <button type="button" aria-label="Quitar ${m.name}" data-ine="${m.ine}">&times;</button>
+        `;
+        wrap.appendChild(chip);
+    });
+    wrap.querySelectorAll("button[data-ine]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            state.selectedInes = state.selectedInes.filter(ine => ine !== btn.dataset.ine);
+            refreshSelectionStyles();
+            renderSelectionSidebar();
+            renderDataView();
+        });
+    });
+}
+
+function renderTrendIndicatorChips() {
+    const wrap = $("#trend-indicator-chips");
+    if (!wrap) return;
+    const selected = activeTrendIndicators();
+    wrap.innerHTML = "";
+    const options = selectableTrendIndicators().map(ind => {
+        const meta = indicatorMeta(ind.id);
+        return {
+            id: ind.id,
+            label: meta.name,
+            detail: effectiveIndicatorUnit(ind.id, meta.unit || ""),
+            title: meta.desc || meta.name,
+        };
+    });
+    wrap.appendChild(multiDropdownControl(
+        "",
+        options,
+        selected,
+        toggleTrendIndicator,
+        "trend-indicators",
+        trendIndicatorSummary(selected)
+    ));
+}
+
+function renderTrendLandMetricControls() {
+    const wrap = $("#trend-land-metric");
+    if (!wrap) return;
+    const hasLandAreas = activeTrendIndicators().some(isLandUseAreaIndicator);
+    wrap.hidden = !hasLandAreas;
+    wrap.innerHTML = "";
+    if (!hasLandAreas) return;
+    wrap.appendChild(dropdownControl("Metrica", [
+        { id: "absolute", label: "Superficie" },
+        { id: "share", label: "Porcentaje" },
+    ], state.landMetric, setLandMetric, "trend-land-metric-select"));
+}
+
+function renderTrendClimateControls() {
+    const wrap = $("#trend-climate-controls");
+    if (!wrap) return;
+    wrap.hidden = !supportsClimateAnnualViews();
+    wrap.innerHTML = "";
+    if (!supportsClimateAnnualViews()) return;
+    wrap.appendChild(dropdownControl("Visualizacion", [
+        { id: "series", label: "Serie" },
+        { id: "stripes", label: "Anomalias" },
+        { id: "decades", label: "Decadas" },
+        { id: "climogram", label: "Climograma" },
+    ], state.climateTrendMode, (id) => {
+        state.climateTrendMode = id;
+        renderDataView();
+    }, "trend-climate-mode"));
+}
+
+function renderTrendLayoutControls() {
+    const wrap = $("#trend-layout-controls");
+    if (!wrap) return;
+    const selected = selectedMunicipios();
+    const indicators = activeTrendIndicators();
+    wrap.hidden = supportsClimateAnnualViews() && state.climateTrendMode !== "series";
+    if (wrap.hidden) {
+        wrap.innerHTML = "";
+        return;
+    }
+    const options = [
+        { id: "auto", label: "Auto" },
+        { id: "overlay", label: "Superpuesto" },
+    ];
+    if (selected.length > 1) options.push({ id: "facet-muni", label: "Por municipio" });
+    if (indicators.length > 1) options.push({ id: "facet-indicator", label: "Por indicador" });
+    wrap.innerHTML = "";
+    wrap.appendChild(dropdownControl("Facetas", options, state.trendLayout, (id) => {
+        state.trendLayout = id;
+        renderDataView();
+    }, "trend-layout-mode"));
+}
+
+function trendIndicatorSummary(selectedIds) {
+    if (selectedIds.length === 1) return indicatorMeta(selectedIds[0]).name;
+    return `${selectedIds.length} indicadores`;
+}
+
+function closeTrendDropdown() {
+    if (!state.trendOpenDropdown) return false;
+    state.trendOpenDropdown = null;
+    renderTrendControls();
+    return true;
+}
+
+function toggleTrendDropdown(dropdownId) {
+    state.trendOpenDropdown = state.trendOpenDropdown === dropdownId ? null : dropdownId;
+    renderTrendControls();
+}
+
+function dropdownControl(title, options, activeId, onSelect, dropdownId) {
+    const root = document.createElement("div");
+    root.className = "trend-dropdown";
+    root.dataset.dropdownId = dropdownId;
+
+    if (title) {
+        const label = document.createElement("div");
+        label.className = "trend-control-title";
+        label.textContent = title;
+        root.appendChild(label);
+    }
+
+    const active = options.find(opt => opt.id === activeId) || options[0];
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "trend-dropdown-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", String(state.trendOpenDropdown === dropdownId));
+    const current = document.createElement("span");
+    current.className = "trend-dropdown-current";
+    current.textContent = active?.label || "Seleccionar";
+    trigger.appendChild(current);
+    trigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleTrendDropdown(dropdownId);
+    });
+    root.appendChild(trigger);
+
+    if (state.trendOpenDropdown === dropdownId) {
+        const menu = document.createElement("div");
+        menu.className = "trend-dropdown-menu";
+        menu.setAttribute("role", "listbox");
+        options.forEach(opt => {
+            const btn = dropdownOptionButton(opt, opt.id === activeId);
+            btn.setAttribute("role", "option");
+            btn.setAttribute("aria-selected", String(opt.id === activeId));
+            btn.addEventListener("click", (event) => {
+                event.stopPropagation();
+                state.trendOpenDropdown = null;
+                if (opt.id !== activeId) {
+                    onSelect(opt.id);
+                } else {
+                    renderTrendControls();
+                }
+            });
+            menu.appendChild(btn);
+        });
+        root.appendChild(menu);
+    }
+
+    return root;
+}
+
+function multiDropdownControl(title, options, activeIds, onToggle, dropdownId, summaryText) {
+    const root = document.createElement("div");
+    root.className = "trend-dropdown trend-dropdown-multi";
+    root.dataset.dropdownId = dropdownId;
+
+    if (title) {
+        const label = document.createElement("div");
+        label.className = "trend-control-title";
+        label.textContent = title;
+        root.appendChild(label);
+    }
+
+    const activeSet = new Set(activeIds);
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "trend-dropdown-trigger";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", String(state.trendOpenDropdown === dropdownId));
+    const current = document.createElement("span");
+    current.className = "trend-dropdown-current";
+    current.textContent = summaryText || "Seleccionar";
+    trigger.appendChild(current);
+    trigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleTrendDropdown(dropdownId);
+    });
+    root.appendChild(trigger);
+
+    if (state.trendOpenDropdown === dropdownId) {
+        const menu = document.createElement("div");
+        menu.className = "trend-dropdown-menu";
+        menu.setAttribute("role", "listbox");
+        menu.setAttribute("aria-multiselectable", "true");
+        options.forEach(opt => {
+            const active = activeSet.has(opt.id);
+            const btn = dropdownOptionButton(opt, active);
+            btn.title = opt.title || opt.label;
+            btn.setAttribute("role", "option");
+            btn.setAttribute("aria-selected", String(active));
+            btn.addEventListener("click", async (event) => {
+                event.stopPropagation();
+                state.trendOpenDropdown = dropdownId;
+                await onToggle(opt.id);
+                state.trendOpenDropdown = dropdownId;
+            });
+            menu.appendChild(btn);
+        });
+        root.appendChild(menu);
+    }
+
+    return root;
+}
+
+function dropdownOptionButton(opt, active) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "trend-dropdown-option" + (active ? " active" : "");
+    const text = document.createElement("span");
+    text.className = "trend-dropdown-option-label";
+    text.textContent = opt.label;
+    btn.appendChild(text);
+    if (opt.detail) {
+        const detail = document.createElement("span");
+        detail.className = "trend-dropdown-option-detail";
+        detail.textContent = opt.detail;
+        btn.appendChild(detail);
+    }
+    return btn;
+}
+
+function segmentedControl(title, options, activeId, onSelect) {
+    const root = document.createElement("div");
+    const label = document.createElement("div");
+    label.className = "trend-control-title";
+    label.textContent = title;
+    const row = document.createElement("div");
+    row.className = "trend-segmented";
+    options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "trend-segment" + (opt.id === activeId ? " active" : "");
+        btn.textContent = opt.label;
+        btn.addEventListener("click", () => onSelect(opt.id));
+        row.appendChild(btn);
+    });
+    root.appendChild(label);
+    root.appendChild(row);
+    return root;
+}
+
+function appendLandMetricControl(container) {
+    if (!container || !isLandUseAreaIndicator(state.indicator)) return;
+    const wrap = document.createElement("div");
+    wrap.className = "land-metric-inline";
+    wrap.appendChild(segmentedControl("Metrica", [
+        { id: "absolute", label: "Superficie" },
+        { id: "share", label: "%" },
+    ], state.landMetric, setLandMetric));
+    container.appendChild(wrap);
 }
 
 function selectMunicipio(ine, additive = true) {
@@ -1727,33 +2824,53 @@ function selectMunicipio(ine, additive = true) {
 }
 
 function setupMunicipioSearch() {
-    const input = $("#muni-search");
-    const clear = $("#muni-search-clear");
+    setupMunicipioSearchBox("#muni-search", "#muni-search-results", "#muni-search-clear", 8);
+    setupMunicipioSearchBox("#trend-muni-search", "#trend-muni-results", "#trend-muni-search-clear", 10);
+}
+
+function setupMunicipioSearchBox(inputSelector, resultsSelector, clearSelector, limit = 8) {
+    const input = $(inputSelector);
+    const clear = $(clearSelector);
     if (!input) return;
-    input.addEventListener("input", renderMuniSearchResults);
+    input.addEventListener("input", () => renderMuniSearchResults(inputSelector, resultsSelector, limit));
     clear?.addEventListener("click", () => {
         input.value = "";
-        $("#muni-search-results").innerHTML = "";
+        const out = $(resultsSelector);
+        if (out) out.innerHTML = "";
         input.focus();
     });
 }
 
-function renderMuniSearchResults() {
-    const input = $("#muni-search");
-    const out = $("#muni-search-results");
+function renderMuniSearchResults(inputSelector = "#muni-search", resultsSelector = "#muni-search-results", limit = 8) {
+    const input = $(inputSelector);
+    const out = $(resultsSelector);
     if (!input || !out || !state.data?.municipios) return;
-    const q = input.value.trim().toLowerCase();
+    const q = normalizeSearchText(input.value.trim());
     out.innerHTML = "";
     if (q.length < 2) return;
+    const selectedSet = new Set(state.selectedInes);
     const rows = Object.entries(state.data.municipios)
-        .filter(([, m]) => isMuniIncluded(m) && m.name?.toLowerCase().includes(q))
-        .slice(0, 8);
-    rows.forEach(([ine, m]) => {
+        .map(([ine, m]) => {
+            const nameNorm = normalizeSearchText(m.name);
+            return { ine, m, nameNorm };
+        })
+        .filter(({ m, nameNorm }) => isMuniIncluded(m) && nameNorm.includes(q))
+        .sort((a, b) => {
+            const score = (d) => d.nameNorm === q ? 0
+                : d.nameNorm.startsWith(q) ? 1
+                : d.nameNorm.split(/\s+/).some(part => part.startsWith(q)) ? 2
+                : 3;
+            return score(a) - score(b)
+                || a.nameNorm.length - b.nameNorm.length
+                || a.nameNorm.localeCompare(b.nameNorm);
+        })
+        .slice(0, limit);
+    rows.forEach(({ ine, m }) => {
         const prov = state.data.provincias?.[m.prov]?.name || "";
         const btn = document.createElement("button");
-        btn.className = "muni-search-result";
+        btn.className = "muni-search-result" + (selectedSet.has(ine) ? " active" : "");
         btn.type = "button";
-        btn.innerHTML = `<strong>${m.name}</strong><span>${prov}</span>`;
+        btn.innerHTML = `<strong>${m.name}</strong><span>${prov}${selectedSet.has(ine) ? " - seleccionado" : ""}</span>`;
         btn.addEventListener("click", () => {
             selectMunicipio(ine, true);
             input.value = "";
@@ -1789,22 +2906,49 @@ function renderDataView() {
     const tab = state.mainTab;
     document.querySelectorAll(".data-panel").forEach(panel => panel.classList.remove("active"));
     $(`#panel-${tab}`)?.classList.add("active");
+    renderDataHeadControls(tab);
     const selected = selectedMunicipios();
-    $("#data-selection-summary").textContent = selected.length
-        ? selected.map(m => m.name).join(", ")
-        : "Sin municipios seleccionados";
+    const trendIndicators = tab === "trends" ? activeTrendIndicators() : [];
+    const selectionText = selected.length ? selected.map(m => m.name).join(", ") : "Sin municipios seleccionados";
+    const indicatorText = trendIndicators.length > 1 ? ` · ${trendIndicators.length} indicadores` : "";
+    $("#data-selection-summary").textContent = `${selectionText}${indicatorText}`;
     if (tab === "trends") renderTrendsView();
     if (tab === "ranking") renderRankingView();
     if (tab === "table") renderSeriesTableView();
 }
 
+function renderDataHeadControls(tab) {
+    if (tab !== "trends") {
+        state.trendOpenDropdown = null;
+    }
+}
+
 function renderTrendsView() {
-    const meta = indicatorMeta(analysisLayer());
+    renderTrendControls();
+    const indicators = activeTrendIndicators();
+    const meta = indicators.length === 1 ? indicatorMeta(indicators[0]) : null;
     $("#data-view-kicker").textContent = "Evolucion historica";
-    $("#data-view-title").textContent = meta.name;
-    $("#data-view-desc").textContent = "Series historicas para los municipios seleccionados.";
-    const hasChart = drawTrendChart("#trend-chart", 430);
+    const isClimogram = supportsClimateAnnualViews() && state.climateTrendMode === "climogram";
+    $("#data-view-title").textContent = isClimogram ? "Climograma" : (meta ? meta.name : `${indicators.length} indicadores`);
+    const modeLabel = supportsClimateAnnualViews()
+        ? {
+            series: "Series historicas",
+            stripes: "Anomalias",
+            decades: "Decadas",
+            climogram: "Climograma mensual"
+        }[state.climateTrendMode]
+        : "Series historicas";
+    $("#data-view-desc").textContent = isClimogram
+        ? "Temperatura y precipitacion mensual"
+        : (meta?.unit ? `${modeLabel} - ${meta.unit}` : modeLabel);
+    const hasChart = drawTrendChart("#trend-chart", trendChartHeight());
     $("#trend-empty").classList.toggle("visible", !hasChart);
+}
+
+function trendChartHeight() {
+    if ((window.innerWidth || 0) <= 880) return 340;
+    const viewport = window.innerHeight || 760;
+    return Math.max(430, Math.min(560, viewport - 245));
 }
 
 function renderRankingView() {
@@ -1915,6 +3059,7 @@ async function switchCategory(catId) {
     // Pick the default indicator for this category
     const def = CATEGORIES[catId].default;
     state.indicator = def || null;
+    state.selectedTrendIndicators = state.indicator ? [state.indicator] : [];
     if (catId === "transporte") {
         state.activeOverlays = new Set(CATEGORIES[catId].autoOverlays || []);
         await renderActiveOverlays();
@@ -2025,11 +3170,14 @@ function renderIndicatorList() {
     }
     select.addEventListener("change", () => selectIndicatorFromDropdown(select.value));
     list.appendChild(select);
+    appendLandMetricControl(list);
 
     const cur = indList.find(i => i.id === select.value) || indList.find(i => i.kind !== 'overlay' && i.id === state.indicator);
     if (cur) {
         $("#indicator-name").textContent = cur.name;
-        $("#indicator-desc").textContent = cur.desc;
+        $("#indicator-desc").textContent = usesLandShareMetric(cur.id)
+            ? `${cur.name} como porcentaje de la superficie municipal.`
+            : cur.desc;
     } else if (select.value === "__all_routes" || state.category === 'transporte' || indList.every(i => i.kind === 'overlay')) {
         $("#indicator-name").textContent = cat.label;
         $("#indicator-desc").textContent = "Trazados historicos superpuestos sobre el mapa base.";
@@ -2041,6 +3189,7 @@ async function selectIndicatorFromDropdown(value) {
     const ind = cat?.indicators.find(i => i.id === value);
     if (value === "__all_routes") {
         state.indicator = null;
+        state.selectedTrendIndicators = [];
         state.activeOverlays = new Set(OVERLAY_INDICATORS.map(o => o.id));
         await renderActiveOverlays();
         syncCensusToIndicator();
@@ -2053,6 +3202,7 @@ async function selectIndicatorFromDropdown(value) {
     if (!ind) return;
     if (ind.kind === "overlay") {
         state.indicator = ind.id;
+        state.selectedTrendIndicators = [];
         state.activeOverlays = new Set([ind.id]);
         await renderActiveOverlays();
         syncCensusToIndicator();
@@ -2063,6 +3213,7 @@ async function selectIndicatorFromDropdown(value) {
         return;
     }
     state.indicator = ind.id;
+    state.selectedTrendIndicators = [ind.id];
     $("#indicator-name").textContent = ind.name;
     $("#indicator-desc").textContent = ind.desc;
     try {
@@ -2380,6 +3531,24 @@ async function init() {
     setupSidebarResize();
     await loadData();
     setupMunicipioSearch();
+    $("#trend-sidebar-toggle")?.addEventListener("click", () => {
+        state.trendSidebarOpen = !state.trendSidebarOpen;
+        state.trendOpenDropdown = null;
+        renderTrendControls();
+        setTimeout(() => {
+            if (document.body.classList.contains("show-data") && state.mainTab === "trends") {
+                drawTrendChart("#trend-chart", trendChartHeight());
+            }
+        }, 80);
+    });
+    document.addEventListener("click", (event) => {
+        if (!state.trendOpenDropdown) return;
+        if (event.target instanceof Element && event.target.closest(".trend-dropdown")) return;
+        closeTrendDropdown();
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeTrendDropdown();
+    });
     syncCensusToIndicator();
     await renderMapProgressive();
     renderIntroMap();
@@ -2409,6 +3578,9 @@ async function init() {
         resizeTimer = setTimeout(() => {
             renderMapProgressive();
             renderIntroMap();
+            if (document.body.classList.contains("show-data") && state.mainTab === "trends") {
+                renderDataView();
+            }
         }, 200);
     });
 }

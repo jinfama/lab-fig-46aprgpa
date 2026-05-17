@@ -1,46 +1,132 @@
-// Bottom timeline: dual-handle slider + play/pause + speed.
+﻿// Bottom timeline: dual-handle slider + play/pause + speed.
 
 import { State } from './state.js';
+import { getIndicator } from './indicators.js?v=20260517-ui31';
+import { metricYearRange, resolveMetric } from './metric.js?v=20260517-ui31';
 
-const YEAR_MIN = 1961;
-const YEAR_MAX = 2024;
-
+let _domainMin = 1961, _domainMax = 2021;
 let _yearFrom = 1961, _yearTo = 2021;
-let _playInterval = null;
+let _playFrame = null;
 let _speed = 2;
+let _lastMetricKey = null;
 
 function el(id) { return document.getElementById(id); }
 
 function pctFor(year) {
-  return ((year - YEAR_MIN) / (YEAR_MAX - YEAR_MIN)) * 100;
+  if (_domainMin === _domainMax) return 50;
+  return ((year - _domainMin) / (_domainMax - _domainMin)) * 100;
 }
+
 function yearFor(pct) {
-  return Math.round(YEAR_MIN + (pct / 100) * (YEAR_MAX - YEAR_MIN));
+  if (_domainMin === _domainMax) return _domainMin;
+  return Math.round(_domainMin + (pct / 100) * (_domainMax - _domainMin));
+}
+
+function activeMetric() {
+  const ind = getIndicator(State.get('activeCategory'), State.get('activeIndicator'));
+  return resolveMetric(ind, State.get('language'));
 }
 
 function renderTrack() {
   const handleFrom = el('tl-handle-from');
   const handleTo   = el('tl-handle-to');
+  const handleCurrent = el('tl-handle-current');
   const rangeFill  = el('tl-range-fill');
   const pFrom = pctFor(_yearFrom);
   const pTo   = pctFor(_yearTo);
+  const pCurrent = pctFor(State.get('animationYear') ?? State.get('currentYear'));
   handleFrom.style.left = `${pFrom}%`;
   handleTo.style.left   = `${pTo}%`;
-  rangeFill.style.left  = `${pFrom}%`;
-  rangeFill.style.width = `${pTo - pFrom}%`;
+  if (handleCurrent) handleCurrent.style.left = `${pCurrent}%`;
+  rangeFill.style.left  = `${Math.min(pFrom, pTo)}%`;
+  rangeFill.style.width = `${Math.abs(pTo - pFrom)}%`;
   el('tl-label-from').textContent = _yearFrom;
   el('tl-label-to').textContent   = _yearTo;
-  el('tl-year-start').value = _yearFrom;
-  el('tl-year-end').value   = _yearTo;
+  const currentInput = el('tl-year-current');
+  if (currentInput) {
+    currentInput.min = _yearFrom;
+    currentInput.max = _yearTo;
+    currentInput.value = Math.round(State.get('currentYear'));
+  }
   State.set('yearRange', [_yearFrom, _yearTo]);
 }
 
-function setCurrentYear(y) {
-  const yy = Math.max(_yearFrom, Math.min(_yearTo, y));
-  State.set('currentYear', yy);
-  el('tl-year').textContent = yy;
+function syncCurrentYearLabels(y) {
+  const yy = Math.round(Math.max(_yearFrom, Math.min(_yearTo, y)));
+  const currentInput = el('tl-year-current');
+  if (currentInput) currentInput.value = yy;
   const mapYear = el('map-year');
   if (mapYear) mapYear.textContent = yy;
+}
+
+function setCurrentYear(y) {
+  const yy = Math.round(Math.max(_yearFrom, Math.min(_yearTo, y)));
+  State.set('currentYear', yy);
+  State.set('animationYear', yy);
+  syncCurrentYearLabels(yy);
+}
+
+function syncAnimationYearLabels(y) {
+  const yy = Math.max(_yearFrom, Math.min(_yearTo, +y || _yearFrom));
+  const handleCurrent = el('tl-handle-current');
+  if (handleCurrent) handleCurrent.style.left = `${pctFor(yy)}%`;
+  const rounded = Math.round(yy);
+  const currentInput = el('tl-year-current');
+  if (currentInput && document.activeElement !== currentInput) currentInput.value = rounded;
+  const mapYear = el('map-year');
+  if (mapYear) mapYear.textContent = rounded;
+}
+
+function yearForData(y) {
+  if (y >= _yearTo) return _yearTo;
+  return Math.max(_yearFrom, Math.min(_yearTo, Math.floor(y)));
+}
+
+function setAnimationYear(y) {
+  const yy = Math.max(_yearFrom, Math.min(_yearTo, +y || _yearFrom));
+  State.set('animationYear', yy);
+  const dataYear = yearForData(yy);
+  if (State.get('currentYear') !== dataYear) {
+    State.set('currentYear', dataYear);
+  }
+  syncAnimationYearLabels(yy);
+}
+
+function setPlayIcon(playing) {
+  const playIcon = el('tl-play-icon');
+  if (!playIcon) return;
+  playIcon.innerHTML = playing
+    ? '<rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+
+function applyMetricRange() {
+  const metric = activeMetric();
+  const [nextMin, nextMax] = metricYearRange(metric);
+  const metricKey = metric ? `${metric.baseId}:${metric.field}` : 'none';
+  const metricChanged = metricKey !== _lastMetricKey;
+  _lastMetricKey = metricKey;
+  _domainMin = nextMin;
+  _domainMax = nextMax;
+  _yearFrom = Math.max(_domainMin, Math.min(_domainMax, _yearFrom));
+  _yearTo = Math.max(_domainMin, Math.min(_domainMax, _yearTo));
+  if (_yearFrom > _yearTo) _yearFrom = _yearTo = _domainMin;
+
+  // When the previous range was the global default, snap to the variable's real
+  // coverage so maps and the x-axis do not imply missing years.
+  const [curFrom, curTo] = State.get('yearRange');
+  if (metricChanged || curFrom < _domainMin || curTo > _domainMax || curFrom === 1961 && curTo === 2021) {
+    _yearFrom = _domainMin;
+    _yearTo = _domainMax;
+  }
+
+  renderTrack();
+  setCurrentYear(State.get('currentYear'));
+  if (State.get('playing') && _domainMin === _domainMax) {
+    pauseLoop();
+    State.set('playing', false);
+    setPlayIcon(false);
+  }
 }
 
 function dragHandle(which) {
@@ -62,21 +148,39 @@ function dragHandle(which) {
     renderTrack();
     setCurrentYear(State.get('currentYear'));
   });
-  handle.addEventListener('pointerup',    () => { dragging = false; });
-  handle.addEventListener('pointercancel',() => { dragging = false; });
+  handle.addEventListener('pointerup', () => { dragging = false; });
+  handle.addEventListener('pointercancel', () => { dragging = false; });
 }
 
 function playLoop() {
-  if (_playInterval) clearInterval(_playInterval);
-  _playInterval = setInterval(() => {
-    let y = State.get('currentYear') + 1;
-    if (y > _yearTo) y = _yearFrom;
-    setCurrentYear(y);
-  }, 1000 / _speed);
+  pauseLoop();
+  if (_domainMin === _domainMax) {
+    setCurrentYear(_domainMax);
+    State.set('playing', false);
+    setPlayIcon(false);
+    return;
+  }
+  const startYear = Math.max(_yearFrom, Math.min(_yearTo, State.get('animationYear') ?? State.get('currentYear')));
+  const startTime = performance.now();
+  function step(now) {
+    const next = startYear + ((now - startTime) / 1000) * _speed;
+    if (next >= _yearTo) {
+      setAnimationYear(_yearTo);
+      setCurrentYear(_yearTo);
+      pauseLoop();
+      State.set('playing', false);
+      setPlayIcon(false);
+      return;
+    }
+    setAnimationYear(next);
+    _playFrame = requestAnimationFrame(step);
+  }
+  _playFrame = requestAnimationFrame(step);
 }
+
 function pauseLoop() {
-  if (_playInterval) clearInterval(_playInterval);
-  _playInterval = null;
+  if (_playFrame) cancelAnimationFrame(_playFrame);
+  _playFrame = null;
 }
 
 export function initTimeline() {
@@ -90,30 +194,22 @@ export function initTimeline() {
   dragHandle('from');
   dragHandle('to');
 
-  el('tl-year-start').addEventListener('change', e => {
-    const v = Math.max(YEAR_MIN, Math.min(_yearTo, parseInt(e.target.value, 10) || YEAR_MIN));
-    _yearFrom = v;
-    renderTrack();
-    setCurrentYear(State.get('currentYear'));
-  });
-  el('tl-year-end').addEventListener('change', e => {
-    const v = Math.min(YEAR_MAX, Math.max(_yearFrom, parseInt(e.target.value, 10) || YEAR_MAX));
-    _yearTo = v;
-    renderTrack();
-    setCurrentYear(State.get('currentYear'));
+  el('tl-year-current')?.addEventListener('change', e => {
+    const v = Math.max(_yearFrom, Math.min(_yearTo, parseInt(e.target.value, 10) || State.get('currentYear')));
+    setCurrentYear(v);
   });
 
   const playBtn  = el('tl-play');
-  const playIcon = el('tl-play-icon');
   playBtn.addEventListener('click', () => {
     const playing = !State.get('playing');
     State.set('playing', playing);
     if (playing) {
+      setCurrentYear(_yearFrom);
       playLoop();
-      playIcon.innerHTML = '<rect x="6" y="5" width="4" height="14" fill="currentColor"/><rect x="14" y="5" width="4" height="14" fill="currentColor"/>';
+      setPlayIcon(true);
     } else {
       pauseLoop();
-      playIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      setPlayIcon(false);
     }
   });
 
@@ -127,6 +223,14 @@ export function initTimeline() {
     if (State.get('playing')) playLoop();
   });
 
-  renderTrack();
+  applyMetricRange();
   setCurrentYear(2020);
+  State.subscribe('currentYear', syncCurrentYearLabels);
+  State.subscribe('animationYear', syncAnimationYearLabels);
+  State.subscribe('activeCategory', applyMetricRange);
+  State.subscribe('activeIndicator', applyMetricRange);
+  State.subscribe('functionalUnit', applyMetricRange);
+  State.subscribe('productivityLaborInput', applyMetricRange);
+  State.subscribe('productivityDirection', applyMetricRange);
+  State.subscribe('language', applyMetricRange);
 }

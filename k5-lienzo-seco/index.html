@@ -8,131 +8,199 @@
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
-<body>
+<body class="home-page">
 
-<header class="portada-top">
-  <a class="portada-brand" href="index.html" aria-label="CAHE">
-    <img src="img/logo-color.png" alt="CAHE">
-  </a>
-  <a class="portada-link" href="explorer.html" id="cta-quick">
-    <span>Entrar al atlas</span><span class="arrow">â†’</span>
-  </a>
-</header>
+<section class="portada mode-globo" id="portada">
+  <header class="portada-top">
+    <a class="portada-brand" href="index.html" aria-label="CAHE">
+      <img src="img/logo-color.png" alt="CAHE">
+    </a>
+    <nav class="portada-mode-switch" aria-label="Modo">
+      <button data-mode="globo" class="active">Globo</button>
+      <button data-mode="franjas">Franjas climÃ¡ticas</button>
+    </nav>
+  </header>
 
-<section class="portada">
-  <div class="portada-canvas">
-    <!-- Si dejas img/portada.jpg como cuadro, se usa de fondo.
-         Si no existe, queda el gradiente sobrio crema. -->
-    <div class="painting"></div>
+  <!-- Franjas climÃ¡ticas (modo alternativo) -->
+  <div class="stripes-container" id="stripes-container">
+    <svg class="stripes-svg" id="stripes-svg" preserveAspectRatio="none"></svg>
   </div>
 
-  <!-- AnimaciÃ³n discreta: motas de luz flotantes (no procedural-paisaje). -->
-  <svg class="portada-fx" id="portada-fx" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs>
-      <radialGradient id="mote" cx="50%" cy="50%" r="50%">
-        <stop offset="0%"  stop-color="#fff" stop-opacity=".6"/>
-        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <g id="motes"></g>
-  </svg>
-
-  <div class="portada-hero">
-    <div class="kicker">Atlas histÃ³rico ambiental Â· 1860 â€” hoy</div>
-    <h1>Contabilidad ambiental <span class="accent">histÃ³rica</span> de EspaÃ±a</h1>
-    <p class="subtitle">
-      Series largas reconstruidas sobre emisiones, energÃ­a, materiales, suelo y bosques, junto a una comparativa entre EspaÃ±a y el resto del mundo. Cada indicador en un visor Ãºnico â€” mapa, tendencia, tabla â€” sincronizado por una lÃ­nea temporal compartida.
-    </p>
-    <div class="cta-row">
-      <a class="cta" id="cta-explore" href="explorer.html">
-        <span>Explorar los indicadores</span><span class="arrow">â†’</span>
-      </a>
-      <a class="cta ghost" href="explorer.html#perspectivas">
-        <span>Perspectivas y anÃ¡lisis</span>
-      </a>
+  <section class="portada-globe-hero">
+    <div class="portada-globe-text">
+      <div class="portada-kicker" id="hero-kicker">Atlas ambiental histÃ³rico Â· 1860 â€” hoy</div>
+      <h1 class="portada-globe-title" id="hero-title">Contabilidad ambiental <span class="accent">histÃ³rica</span> de EspaÃ±a</h1>
+      <p class="portada-globe-subtitle" id="hero-sub">Series largas sobre uso de recursos, impactos ambientales y desarrollo econÃ³mico en perspectiva histÃ³rica y global</p>
     </div>
-  </div>
 
-  <aside class="portada-quote">
-    <em>â€¦ para que la mirada de largo plazo pueda informar mejor la polÃ­tica ambiental contemporÃ¡nea.</em>
-    <span class="src">CAHE Â· Universidad de Granada</span>
-  </aside>
+    <div class="globe-container">
+      <canvas id="globe-canvas"></canvas>
+    </div>
+
+    <div class="hero-nav-grid">
+      <button class="hero-nav-card" data-section="visualizacion">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div>
+        <span>VisualizaciÃ³n</span>
+      </button>
+      <button class="hero-nav-card" data-section="perspectivas">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <span>Perspectivas</span>
+      </button>
+      <button class="hero-nav-card" data-section="datos">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></div>
+        <span>Datos y metodologÃ­a</span>
+      </button>
+      <button class="hero-nav-card" data-section="equipo">
+        <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <span>Equipo</span>
+      </button>
+    </div>
+
+    <div class="hero-info-stack" id="hero-info">
+      <div class="hero-info-links">
+        <button class="hero-info-link highlight" data-section="acerca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Acerca
+        </button>
+        <span class="hero-info-sep">Â·</span>
+        <button class="hero-info-link" data-section="equipo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          Equipo
+        </button>
+      </div>
+      <div class="hero-info-foot" id="hero-foot">Anillo climÃ¡tico Â· anomalÃ­a global de temperatura, 1850 â€” 2024</div>
+    </div>
+  </section>
 </section>
 
 <iframe class="viewer-frame" id="viewer-frame" title="CAHE â€” explorador" loading="lazy"></iframe>
 
+<script src="js/globe.js"></script>
 <script>
-/* Detect img/portada.jpg â†’ marca el body como has-painting */
+/* ====== Stripes â€” franjas finas (1 por aÃ±o 1850-2024, anomalÃ­as reales) ====== */
 (function(){
-  const img = new Image();
-  img.onload = () => document.body.classList.add('has-painting');
-  img.onerror = () => document.body.classList.remove('has-painting');
-  img.src = 'img/portada.jpg';
-})();
-
-/* Motas de luz: 18 partÃ­culas flotantes muy sutiles */
-(function(){
-  const ns = 'http://www.w3.org/2000/svg';
-  const g = document.getElementById('motes');
-  if(!g) return;
-  const motes = [];
-  for(let i = 0; i < 18; i++){
-    const c = document.createElementNS(ns, 'circle');
-    c.setAttribute('r', 3 + Math.random() * 6);
-    c.setAttribute('fill', 'url(#mote)');
-    c.setAttribute('opacity', .35 + Math.random() * .25);
-    g.appendChild(c);
-    motes.push({
-      el: c,
-      x: Math.random() * 1600,
-      y: 100 + Math.random() * 700,
-      vx: -.15 - Math.random() * .25,
-      vy: -.05 - Math.random() * .12,
-    });
-  }
-  function tick(){
-    motes.forEach(m => {
-      m.x += m.vx; m.y += m.vy;
-      if(m.x < -50){ m.x = 1650; m.y = 100 + Math.random() * 700; }
-      if(m.y < -30){ m.y = 950; }
-      m.el.setAttribute('cx', m.x);
-      m.el.setAttribute('cy', m.y);
-    });
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-})();
-
-/* Viewer iframe â€” same-page transition */
-(function(){
-  const frame = document.getElementById('viewer-frame');
-  const cta = document.getElementById('cta-explore');
-  const quick = document.getElementById('cta-quick');
-  function openViewer(hash){
-    if(!frame.src) frame.src = 'explorer.html' + (hash || '');
-    else if(hash) frame.contentWindow.location.hash = hash.replace('#','');
-    document.body.classList.add('viewer-open');
-    setTimeout(() => { try { frame.contentWindow && frame.contentWindow.focus(); } catch(_){} }, 60);
-  }
-  function closeViewer(){
-    document.body.classList.remove('viewer-open');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  [cta, quick].forEach(a => { if(a) a.addEventListener('click', e => { e.preventDefault(); openViewer(); }); });
-  document.querySelectorAll('.cta.ghost').forEach(a => a.addEventListener('click', e => {
-    if(a.getAttribute('href')?.includes('#')){
-      e.preventDefault();
-      openViewer('#' + a.getAttribute('href').split('#')[1]);
+  // AnomalÃ­as HadCRUT5 anuales aproximadas 1850-2024 (vs 1961-1990)
+  const CLIMATE = [
+    -0.42,-0.23,-0.23,-0.27,-0.29,-0.27,-0.31,-0.46,-0.41,-0.28,
+    -0.32,-0.41,-0.51,-0.31,-0.43,-0.25,-0.27,-0.33,-0.31,-0.31,
+    -0.31,-0.35,-0.30,-0.34,-0.37,-0.37,-0.32,-0.10,-0.14,-0.26,
+    -0.24,-0.20,-0.30,-0.31,-0.40,-0.45,-0.38,-0.41,-0.32,-0.31,
+    -0.46,-0.41,-0.49,-0.45,-0.50,-0.45,-0.27,-0.29,-0.27,-0.17,
+    -0.13,-0.22,-0.40,-0.41,-0.37,-0.43,-0.42,-0.42,-0.48,-0.55,
+    -0.46,-0.46,-0.47,-0.41,-0.27,-0.35,-0.46,-0.39,-0.33,-0.29,
+    -0.30,-0.22,-0.30,-0.30,-0.28,-0.15,-0.21,-0.29,-0.31,-0.30,
+    -0.20,-0.14,-0.15,-0.19,-0.22,-0.20,-0.04,-0.05,-0.10, 0.01,
+    -0.06,-0.10,-0.20,-0.05,-0.07,-0.08, 0.00,-0.08,-0.04,-0.07,
+    -0.14,-0.15,-0.07,-0.04,-0.07,-0.09, 0.05, 0.03, 0.02, 0.10,
+     0.06,-0.13,-0.11,-0.18,-0.06,-0.02,-0.07, 0.03, 0.06,-0.20,
+    -0.07,-0.10,-0.05, 0.06,-0.20,-0.12, 0.06,-0.08, 0.05, 0.03,
+     0.13, 0.27, 0.12, 0.14, 0.31, 0.16, 0.13, 0.18, 0.42, 0.28,
+     0.21, 0.42, 0.23, 0.24, 0.32, 0.45, 0.33, 0.48, 0.61, 0.39,
+     0.40, 0.55, 0.62, 0.54, 0.68, 0.64, 0.67, 0.55, 0.62, 0.69,
+     0.55, 0.62, 0.75, 0.91, 1.01, 0.92, 0.85, 0.98, 1.02, 1.16,
+     1.18, 1.45
+  ];
+  function tempColor(v){
+    const t = Math.max(0, Math.min(1, (v + 0.6) / 2.0));
+    let r,g,b;
+    if(t < 0.5){
+      const s = t * 2;
+      r = Math.round(20 + s * 235); g = Math.round(50 + s * 205); b = Math.round(180 + s * 75);
+    } else {
+      const s = (t - 0.5) * 2;
+      r = 255; g = Math.round(255 - s * 220); b = Math.round(255 - s * 240);
     }
-  }));
-  window.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && document.body.classList.contains('viewer-open')) closeViewer();
+    return `rgb(${r},${g},${b})`;
+  }
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("stripes-svg");
+  if(!svg) return;
+  const N = CLIMATE.length;  // ~175 aÃ±os
+  svg.setAttribute("viewBox", "0 0 1000 600");
+  svg.setAttribute("preserveAspectRatio", "none");
+  const w = 1000 / N;
+  for(let i = 0; i < N; i++){
+    const r = document.createElementNS(ns, "rect");
+    r.setAttribute("x", i * w);
+    r.setAttribute("y", 0);
+    r.setAttribute("width", w + 0.3);
+    r.setAttribute("height", 600);
+    r.setAttribute("fill", tempColor(CLIMATE[i]));
+    r.setAttribute("opacity", 0);
+    r.style.transition = "opacity 1.2s ease";
+    svg.appendChild(r);
+  }
+  function show(){
+    const rects = svg.querySelectorAll("rect");
+    rects.forEach((r, i) => {
+      setTimeout(() => { r.setAttribute("opacity", 1); }, i * 8);
+    });
+    setTimeout(() => {
+      let t = 0;
+      function tick(){
+        t += 0.012;
+        rects.forEach((r, i) => {
+          const op = 0.88 + Math.sin(t + i * 0.04) * 0.10;
+          r.setAttribute("opacity", op.toFixed(3));
+        });
+        requestAnimationFrame(tick);
+      }
+      tick();
+    }, N * 8 + 600);
+  }
+  let started = false;
+  window.addEventListener("portada-mode", e => {
+    if(e.detail === "franjas" && !started){ started = true; show(); }
   });
-  window.addEventListener('message', e => {
-    if(e.data && e.data.type === 'cahe-back') closeViewer();
+})();
+
+/* ====== Portada mode switcher ====== */
+(function(){
+  const portada = document.getElementById("portada");
+  const btns = document.querySelectorAll(".portada-mode-switch button");
+  function apply(mode){
+    portada.classList.toggle("mode-globo", mode === "globo");
+    portada.classList.toggle("mode-franjas", mode === "franjas");
+    btns.forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+    try { localStorage.setItem("cahe_portada_mode", mode); } catch(_){}
+    window.dispatchEvent(new CustomEvent("portada-mode", { detail: mode }));
+  }
+  btns.forEach(b => b.addEventListener("click", () => apply(b.dataset.mode)));
+  let initial = "globo";
+  try { const saved = localStorage.getItem("cahe_portada_mode"); if(saved === "franjas") initial = "franjas"; } catch(_){}
+  apply(initial);
+})();
+
+setTimeout(function(){
+  ['hero-kicker','hero-title','hero-sub','hero-info'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.classList.add('visible');
+  });
+  var cards = document.querySelectorAll('.hero-nav-card');
+  cards.forEach(function(c, i){ setTimeout(function(){ c.classList.add('visible'); }, 600 + i * 120); });
+}, 400);
+
+(function(){
+  var frame = document.getElementById('viewer-frame');
+  function openSection(section){
+    if(!frame.src) frame.src = 'explorer.html#' + section;
+    else { try { frame.contentWindow.location.hash = section; } catch(_){} }
+    document.body.classList.add('viewer-open');
+    setTimeout(function(){ try { frame.contentWindow && frame.contentWindow.focus(); } catch(_){} }, 60);
+  }
+  document.querySelectorAll('[data-section]').forEach(function(el){
+    el.addEventListener('click', function(e){ e.preventDefault(); openSection(el.dataset.section); });
+  });
+  window.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && document.body.classList.contains('viewer-open')){
+      document.body.classList.remove('viewer-open');
+    }
+  });
+  window.addEventListener('message', function(e){
+    if(e.data && e.data.type === 'cahe-back') document.body.classList.remove('viewer-open');
   });
 })();
 </script>

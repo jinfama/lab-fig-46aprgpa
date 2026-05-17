@@ -6,7 +6,10 @@ const _state = {
   activeCategory:     'labour',
   activeIndicator:    'workers',
   selectedCountries: [],              // array of ISO3 codes
+  selectedRegions: ['Africa', 'Americas', 'Asia', 'Europe', 'Oceania'],
+  trendGeoScope: 'country',           // country | region | world
   currentYear:        2020,
+  animationYear:      2020,
   yearRange:         [1961, 2021],
   geoLevel:           'country',
   rightPanelVisible:  true,
@@ -15,6 +18,15 @@ const _state = {
   // Subset of crop categories applied as a filter (null = all).
   cropCategoryFilter: null,
   perCapita:          false,
+  functionalUnit:     'tonne',        // tonne | ha | LU
+  productivityLaborInput: 'hours',    // hours | workers
+  productivityDirection: 'unit_per_hour',  // hours_per_unit | unit_per_hour
+  footprintFlow:      'footprint',    // footprint | imports | exports | domestic
+  footprintFlows:     ['footprint', 'imports', 'exports', 'domestic'], // multi-select flows for footprint trends
+  footprintTrendMode: 'all',          // selected | all
+  trendLayout:        'facet',        // overlay | facet
+  trendFacetBy:       'territory',    // territory | flow
+  treemapMode:        'products',     // products | countries | products_by_country
 };
 
 const _subs = {};
@@ -49,4 +61,27 @@ export const State = {
   },
 
   clearCountries() { this.set('selectedCountries', []); },
+  toggleRegion(region) {
+    const cur = _state.selectedRegions;
+    const next = cur.includes(region) ? cur.filter(r => r !== region) : [...cur, region];
+    this.set('selectedRegions', next);
+  },
+  clearRegions() { this.set('selectedRegions', []); },
+  toggleFootprintFlow(flow) {
+    const cur = _state.footprintFlows || [];
+    const next = cur.includes(flow) ? cur.filter(f => f !== flow) : [...cur, flow];
+    this.setMany({
+      footprintFlows: next,
+      footprintFlow: next[0] || _state.footprintFlow || 'footprint',
+      footprintTrendMode: next.length > 1 ? 'all' : 'selected',
+    });
+  },
+  setFootprintFlows(flows) {
+    const next = [...new Set(flows || [])];
+    this.setMany({
+      footprintFlows: next,
+      footprintFlow: next[0] || _state.footprintFlow || 'footprint',
+      footprintTrendMode: next.length > 1 ? 'all' : 'selected',
+    });
+  },
 };

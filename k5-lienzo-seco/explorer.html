@@ -4,11 +4,11 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAHE â€” Atlas histÃ³rico de EspaÃ±a</title>
+<title>CAHE â€” Contabilidad Ambiental HistÃ³rica de EspaÃ±a</title>
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400;1,500&family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
@@ -18,22 +18,27 @@
   <header class="app-header">
     <a class="brand" href="index.html">
       <img src="img/logo-color.png" alt="CAHE">
-      <span class="brand-text">Atlas histÃ³rico<span class="sub">de EspaÃ±a</span></span>
+      <span class="brand-name">
+        <span class="main">CAHE</span>
+        <span class="sub">Contabilidad Ambiental HistÃ³rica de EspaÃ±a</span>
+      </span>
     </a>
     <nav class="main-nav" id="main-nav">
-      <button class="nav-btn primary active" data-section="visualizacion">VisualizaciÃ³n</button>
+      <button class="nav-btn active" data-section="visualizacion">VisualizaciÃ³n</button>
+      <button class="nav-btn" data-section="datos">Datos y metodologÃ­a</button>
       <button class="nav-btn" data-section="perspectivas">Perspectivas</button>
-      <button class="nav-btn" data-section="datos">Datos &amp; Zenodo</button>
+      <button class="nav-btn" data-section="equipo">Equipo</button>
       <button class="nav-btn" data-section="acerca">Acerca</button>
     </nav>
     <div class="right">
+      <button class="lang-toggle" id="lang-toggle" type="button" aria-label="Change language">EN</button>
       <button class="btn-home" id="btn-home" type="button">
         <span class="arrow">â†‘</span><span>Portada</span>
       </button>
     </div>
   </header>
 
-  <section class="ind-selector" id="ind-selector" style="display:none"></section>
+  <nav class="group-bar" id="group-bar" style="display:none"></nav>
 
   <main class="workspace" id="workspace">
     <div class="loading">

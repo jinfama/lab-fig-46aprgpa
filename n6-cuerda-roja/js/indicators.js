@@ -1,6 +1,6 @@
-// Catalogue of categories × indicators.
+// Catalogue of categories x indicators.
 // Each indicator declares the data field to read, label, unit, and which
-// dataset partition supplies it (regions / countries_categories / conditions / footprints).
+// dataset partition supplies it.
 
 export const CATEGORIES = [
   {
@@ -8,12 +8,12 @@ export const CATEGORIES = [
     label: { es: 'Trabajo agrario', en: 'Agricultural labour' },
     icon: 'workers',
     indicators: [
-      { id: 'workers',          field: 'workers',          label: { es: 'Trabajadores',                 en: 'Workers' },                unit: 'personas',          source: 'regions' },
-      { id: 'hours_total',      field: 'hours_total',      label: { es: 'Horas totales',                en: 'Total hours' },            unit: 'h/año',             source: 'regions' },
-      { id: 'hours_per_worker', field: 'hours_per_worker', label: { es: 'Horas por trabajador',         en: 'Hours per worker' },       unit: 'h',                 source: 'regions' },
-      { id: 'area_harvested',   field: 'area_harvested',   label: { es: 'Superficie cosechada',         en: 'Area harvested' },         unit: 'ha',                source: 'regions' },
-      { id: 'livestock_units',  field: 'livestock_units',  label: { es: 'Unidades de ganado',           en: 'Livestock units' },        unit: 'LU',                source: 'regions' },
-      { id: 'production_tonnes',field: 'production_tonnes',label: { es: 'Producción (toneladas)',       en: 'Production (tonnes)' },    unit: 't',                 source: 'regions' },
+      { id: 'workers',          field: 'workers',          label: { es: 'Trabajadores',           en: 'Workers' },             unit: 'personas', source: 'regions' },
+      { id: 'hours_total',      field: 'hours_total',      label: { es: 'Horas totales',          en: 'Total hours' },         unit: 'h/año',    source: 'regions' },
+      { id: 'hours_per_worker', field: 'hours_per_worker', label: { es: 'Horas por trabajador',   en: 'Hours per worker' },    unit: 'h',        source: 'regions', cropFilter: false },
+      { id: 'area_harvested',   field: 'area_harvested',   label: { es: 'Superficie cosechada',   en: 'Area harvested' },      unit: 'ha',       source: 'regions' },
+      { id: 'livestock_units',  field: 'livestock_units',  label: { es: 'Unidades de ganado',     en: 'Livestock units' },     unit: 'UG',       source: 'regions' },
+      { id: 'production_tonnes',field: 'production_tonnes',label: { es: 'Producción (toneladas)', en: 'Production (tonnes)' }, unit: 't',        source: 'regions' },
     ],
   },
   {
@@ -21,11 +21,7 @@ export const CATEGORIES = [
     label: { es: 'Productividad', en: 'Productivity' },
     icon: 'efficiency',
     indicators: [
-      { id: 'h_per_ha',           field: 'h_per_ha',           label: { es: 'Horas / hectárea',         en: 'Hours / hectare' },        unit: 'h/ha',     source: 'regions' },
-      { id: 'h_per_tonne',        field: 'h_per_tonne',        label: { es: 'Horas / tonelada',         en: 'Hours / tonne' },          unit: 'h/t',      source: 'regions' },
-      { id: 'h_per_LU',           field: 'h_per_LU',           label: { es: 'Horas / unidad ganadera',  en: 'Hours / livestock unit' }, unit: 'h/LU',     source: 'regions' },
-      { id: 'tonnes_per_worker',  field: 'tonnes_per_worker',  label: { es: 'Toneladas / trabajador',   en: 'Tonnes / worker' },        unit: 't/trab.',  source: 'regions' },
-      { id: 'GJ_per_worker',      field: 'GJ_per_worker',      label: { es: 'GJ / trabajador',          en: 'GJ / worker' },            unit: 'GJ/trab.', source: 'regions' },
+      { id: 'h_per_functional_unit', field: 'h_per_tonne', label: { es: 'Relación trabajo / producto', en: 'Labour / product ratio' }, unit: 'h/UF', source: 'regions', functionalUnit: true },
     ],
   },
   {
@@ -33,12 +29,16 @@ export const CATEGORIES = [
     label: { es: 'Condiciones laborales', en: 'Labour conditions' },
     icon: 'scale',
     indicators: [
-      { id: 'monthly_wage',        field: 'monthly_wage',        label: { es: 'Salario mensual',              en: 'Monthly wage' },          unit: 'USD-PPP', source: 'regions' },
-      { id: 'va_per_worker',       field: 'va_per_worker',       label: { es: 'Valor añadido / trabajador',   en: 'Value added / worker' },  unit: 'USD',     source: 'regions' },
-      { id: 'pct_child_labor',     field: 'pct_child_labor',     label: { es: '% trabajo infantil',           en: '% child labour' },        unit: '%',       source: 'regions', warn: true },
-      { id: 'pct_forced_labor',    field: 'pct_forced_labor',    label: { es: '% trabajo forzoso',            en: '% forced labour' },       unit: '%',       source: 'regions', warn: true },
-      { id: 'pct_extreme_poverty', field: 'pct_extreme_poverty', label: { es: '% en pobreza extrema',         en: '% extreme poverty' },     unit: '%',       source: 'regions', warn: true },
-      { id: 'pct_not_covered',     field: 'pct_not_covered',     label: { es: '% sin protección social',      en: '% without social cover' },unit: '%',       source: 'regions', warn: true },
+      { id: 'monthly_wage',        field: 'monthly_wage',        label: { es: 'Salario mensual',            en: 'Monthly wage' },          unit: 'USD-PPP', source: 'regions', cropFilter: false },
+      { id: 'va_per_worker',       field: 'va_per_worker',       label: { es: 'Valor añadido / trabajador', en: 'Value added / worker' },  unit: 'USD',     source: 'regions', cropFilter: false },
+      { id: 'pct_child_labor',     field: 'pct_child_labor',     label: { es: '% trabajo infantil',         en: '% child labour' },        unit: '%',       source: 'regions', cropFilter: false, warn: true },
+      { id: 'hours_child_labor',   field: 'hours_child_labor',   label: { es: 'Horas de trabajo infantil',  en: 'Child labour hours' },    unit: 'h/año',   source: 'regions', cropFilter: false, conditionHours: true, rateField: 'pct_child_labor', warn: true },
+      { id: 'pct_forced_labor',    field: 'pct_forced_labor',    label: { es: '% trabajo forzoso',          en: '% forced labour' },       unit: '%',       source: 'regions', cropFilter: false, warn: true },
+      { id: 'hours_forced_labor',  field: 'hours_forced_labor',  label: { es: 'Horas de trabajo forzoso',   en: 'Forced labour hours' },   unit: 'h/año',   source: 'regions', cropFilter: false, conditionHours: true, rateField: 'pct_forced_labor', warn: true },
+      { id: 'pct_extreme_poverty', field: 'pct_extreme_poverty', label: { es: '% en pobreza extrema',       en: '% extreme poverty' },     unit: '%',       source: 'regions', cropFilter: false, warn: true },
+      { id: 'hours_extreme_poverty', field: 'hours_extreme_poverty', label: { es: 'Horas en pobreza extrema', en: 'Extreme-poverty hours' }, unit: 'h/año',   source: 'regions', cropFilter: false, conditionHours: true, rateField: 'pct_extreme_poverty', warn: true },
+      { id: 'pct_not_covered',     field: 'pct_not_covered',     label: { es: '% sin protección social',    en: '% without social cover' },unit: '%',       source: 'regions', cropFilter: false, warn: true },
+      { id: 'hours_not_covered',   field: 'hours_not_covered',   label: { es: 'Horas sin protección social', en: 'Hours without social cover' }, unit: 'h/año', source: 'regions', cropFilter: false, conditionHours: true, rateField: 'pct_not_covered', warn: true },
     ],
   },
   {
@@ -46,9 +46,9 @@ export const CATEGORIES = [
     label: { es: 'Huellas laborales', en: 'Labour footprints' },
     icon: 'footprint',
     indicators: [
-      { id: 'fp_hours_total',   field: 'hours_total',       label: { es: 'Horas embebidas (total)',   en: 'Embedded hours (total)' },   unit: 'h', source: 'footprints' },
-      { id: 'fp_hours_child',   field: 'hours_child_labor', label: { es: 'Trabajo infantil embebido', en: 'Embedded child labour' },    unit: 'h', source: 'footprints', warn: true },
-      { id: 'fp_hours_forced',  field: 'hours_forced_labor',label: { es: 'Trabajo forzoso embebido',  en: 'Embedded forced labour' },   unit: 'h', source: 'footprints', warn: true },
+      { id: 'fp_hours_total',  field: 'footprint',          label: { es: 'Horas anuales',            en: 'Annual hours' },           unit: 'h/año', source: 'trade_footprint', footprintFlow: true },
+      { id: 'fp_hours_child',  field: 'hours_child_labor',  label: { es: 'Trabajo infantil embebido',en: 'Embedded child labour' },  unit: 'h/año', source: 'footprints', warn: true },
+      { id: 'fp_hours_forced', field: 'hours_forced_labor', label: { es: 'Trabajo forzoso embebido', en: 'Embedded forced labour' }, unit: 'h/año', source: 'footprints', warn: true },
     ],
   },
   {

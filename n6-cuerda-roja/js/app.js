@@ -1,21 +1,22 @@
-// Main controller. Orchestrates landing → app handoff and wires components.
+﻿// Main controller. Orchestrates landing → app handoff and wires components.
 
 import { State } from './state.js';
-import { DataLoader } from './data-loader.js';
-import { CATEGORIES, getCategory, getIndicator } from './indicators.js';
+import { DataLoader } from './data-loader.js?v=20260517-ui31';
+import { getCategory } from './indicators.js?v=20260517-ui31';
 import { initLanding } from './landing.js';
-import { initSidebar } from './sidebar.js';
-import { initQueryBar } from './query-bar.js';
-import { initTimeline } from './timeline.js';
-import { initRightPanel } from './right-panel.js';
-import { initMapView } from './views/map.js';
-import { initTrendView } from './views/trend.js';
-import { initRankingView } from './views/ranking.js';
-import { initTreemapView } from './views/treemap.js';
-import { initTableView } from './views/table.js';
-import { initAboutView } from './views/about.js';
+import { initSidebar } from './sidebar.js?v=20260517-ui31';
+import { initQueryBar } from './query-bar.js?v=20260517-ui31';
+import { initTimeline } from './timeline.js?v=20260517-ui31';
+import { initRightPanel } from './right-panel.js?v=20260517-ui31';
+import { initMapView } from './views/map.js?v=20260517-ui31';
+import { initTrendView } from './views/trend.js?v=20260517-ui31';
+import { initRankingView } from './views/ranking.js?v=20260517-ui31';
+import { initTreemapView } from './views/treemap.js?v=20260517-ui31';
+import { initTableView } from './views/table.js?v=20260517-ui31';
+import { initAboutView } from './views/about.js?v=20260517-ui31';
 
 const VIEWS = ['map', 'trend', 'ranking', 'treemap', 'table', 'about'];
+let _lastDataView = 'map';
 
 function switchView(view) {
   VIEWS.forEach(v => {
@@ -25,7 +26,32 @@ function switchView(view) {
   document.querySelectorAll('.vw-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.view === view);
   });
+  if (view !== 'about') _lastDataView = view;
   State.set('activeView', view);
+}
+
+function returnToDataView() {
+  if (State.get('activeView') === 'about') switchView(_lastDataView || 'map');
+}
+
+function categoryDefaults(catId, firstIndicatorId) {
+  const next = { activeCategory: catId, activeIndicator: firstIndicatorId };
+  if (catId === 'footprints') {
+    Object.assign(next, {
+      trendLayout: 'facet',
+      trendFacetBy: 'territory',
+      footprintFlow: 'footprint',
+      footprintFlows: ['footprint', 'imports', 'exports', 'domestic'],
+      footprintTrendMode: 'all',
+    });
+  } else if (catId === 'productivity') {
+    Object.assign(next, {
+      productivityDirection: 'unit_per_hour',
+      productivityLaborInput: 'hours',
+      functionalUnit: 'tonne',
+    });
+  }
+  return next;
 }
 
 async function bootApp() {
@@ -37,23 +63,25 @@ async function bootApp() {
       // When switching category, fall back to its first indicator.
       const cat = getCategory(catId);
       if (cat && cat.indicators.length) {
-        State.setMany({ activeCategory: catId, activeIndicator: cat.indicators[0].id });
+        State.setMany(categoryDefaults(catId, cat.indicators[0].id));
       } else {
         State.set('activeCategory', catId);
       }
+      returnToDataView();
     },
     onAbout() { switchView('about'); },
   });
 
   initQueryBar({
-    onIndicatorChange(indId) { State.set('activeIndicator', indId); },
+    onIndicatorChange(indId) { State.set('activeIndicator', indId); returnToDataView(); },
     onCategoryChange(catId) {
       const cat = getCategory(catId);
       if (cat && cat.indicators.length) {
-        State.setMany({ activeCategory: catId, activeIndicator: cat.indicators[0].id });
+        State.setMany(categoryDefaults(catId, cat.indicators[0].id));
       } else {
         State.set('activeCategory', catId);
       }
+      returnToDataView();
     },
   });
 
@@ -78,10 +106,18 @@ async function bootApp() {
 
   // Toggle right panel.
   const togglePanel = document.getElementById('btn-toggle-panel');
-  if (togglePanel) togglePanel.addEventListener('click', () => {
-    const rp = document.getElementById('right-panel');
-    rp.classList.toggle('hidden');
-  });
+  if (togglePanel) {
+    togglePanel.classList.add('active');
+    togglePanel.setAttribute('aria-pressed', 'true');
+    togglePanel.addEventListener('click', () => {
+      const rp = document.getElementById('right-panel');
+      if (!rp) return;
+      const collapsed = rp.classList.toggle('collapsed');
+      State.set('rightPanelVisible', !collapsed);
+      togglePanel.classList.toggle('active', !collapsed);
+      togglePanel.setAttribute('aria-pressed', String(!collapsed));
+    });
+  }
 
   // Fullscreen.
   document.getElementById('btn-fs').addEventListener('click', () => {

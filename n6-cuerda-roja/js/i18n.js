@@ -11,10 +11,10 @@ const DICT = {
     'nav.about':       'Acerca',
 
     // Hero
-    'hero.eyebrow':    'AGRICULTURA',
-    'hero.title':      'Los Trabajadores Agrarios<br>del Mundo',
-    'hero.subtitle':   'Una base de datos global sobre el trabajo agrario<br>en perspectiva de largo plazo · 1961–2024',
-    'hero.cta':        'Explorar →',
+    'hero.eyebrow':    '',
+    'hero.title':      'Agricultores del Mundo',
+    'hero.subtitle':   'Base de datos global sobre el trabajo agrario<br>en perspectiva hist\u00f3rica',
+    'hero.cta':        'Explorar',
 
     'kpi.workers':     'trabajadores agrarios (2021)',
     'kpi.hours':       'horas trabajadas / año',
@@ -23,7 +23,7 @@ const DICT = {
 
     // Dashboard
     'dashboard.title':         'Panorama global',
-    'dashboard.lead':          'Trabajadores y horas en la agricultura mundial, desde 1961.',
+    'dashboard.lead':          'Trabajadores y horas en la agricultura mundial en perspectiva hist\u00f3rica.',
     'dashboard.kpi.workers':   'Trabajadores agrarios en 2021',
     'dashboard.kpi.hours':     'Horas anuales trabajadas',
     'dashboard.kpi.child':     'Horas en trabajo infantil',
@@ -37,7 +37,7 @@ const DICT = {
     'workers.title':    'Trabajo agrario en perspectiva de largo plazo',
     'workers.lead':     'Trabajadores y horas por país y categoría de cultivo, 1961–2021.',
     'conditions.title': 'Condiciones laborales',
-    'conditions.lead':  'Salarios, valor añadido, protección social y trabajo infantil/forzoso, 1990–2024.',
+    'conditions.lead':  'Salarios, valor añadido, protección social y trabajo infantil/forzoso, con cobertura temporal variable según indicador.',
     'trade.title':      'Comercio bilateral',
     'trade.lead':       'Flujos comerciales agrarios entre países, con sus huellas de horas y de condiciones.',
     'footprints.title': 'Huellas laborales',
@@ -56,10 +56,10 @@ const DICT = {
     'nav.footprints':  'Footprints',
     'nav.about':       'About',
 
-    'hero.eyebrow':    'AGRICULTURAL',
-    'hero.title':      'Workers<br>of the World',
-    'hero.subtitle':   'A global database on agricultural labour<br>in long-term perspective · 1961–2024',
-    'hero.cta':        'Explore →',
+    'hero.eyebrow':    '',
+    'hero.title':      'Farmers of the World',
+    'hero.subtitle':   'A global database on agricultural labour<br>in historical perspective',
+    'hero.cta':        'Explore',
 
     'kpi.workers':     'agricultural workers (2021)',
     'kpi.hours':       'hours worked / year',
@@ -67,7 +67,7 @@ const DICT = {
     'kpi.forced':      'forced labour',
 
     'dashboard.title':         'Global overview',
-    'dashboard.lead':          'Workers and hours in world agriculture, since 1961.',
+    'dashboard.lead':          'Workers and hours in world agriculture in historical perspective.',
     'dashboard.kpi.workers':   'Agricultural workers in 2021',
     'dashboard.kpi.hours':     'Annual hours worked',
     'dashboard.kpi.child':     'Hours in child labour',
@@ -80,7 +80,7 @@ const DICT = {
     'workers.title':    'Agricultural labour in long-term perspective',
     'workers.lead':     'Workers and hours by country and crop category, 1961–2021.',
     'conditions.title': 'Labour conditions',
-    'conditions.lead':  'Wages, value added, social protection, child and forced labour, 1990–2024.',
+    'conditions.lead':  'Wages, value added, social protection, child and forced labour, with indicator-specific temporal coverage.',
     'trade.title':      'Bilateral trade',
     'trade.lead':       'Agricultural trade flows between countries with their labour and social footprints.',
     'footprints.title': 'Labour footprints',
