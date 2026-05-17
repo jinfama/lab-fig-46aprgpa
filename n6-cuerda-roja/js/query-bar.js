@@ -1,9 +1,9 @@
 ﻿// Top query bar that reads like a sentence: "Category / Indicator".
 
 import { State } from './state.js';
-import { CATEGORIES, getCategory, getIndicator } from './indicators.js?v=20260517-ui31';
-import { indicatorInfo } from './indicator-info.js?v=20260517-ui31';
-import { resolveMetric } from './metric.js?v=20260517-ui31';
+import { CATEGORIES, getCategory, getIndicator } from './indicators.js?v=20260517-ui33';
+import { indicatorInfo } from './indicator-info.js?v=20260517-ui33';
+import { resolveMetric } from './metric.js?v=20260517-ui33';
 
 export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
   const catBtn      = document.getElementById('query-cat');
@@ -28,7 +28,7 @@ export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
       const info = indicatorInfo(ind, lang(), metric);
       infoBtn.hidden = !info;
       infoBtn.dataset.info = info || '';
-      infoBtn.title = info || '';
+      infoBtn.removeAttribute('title');
       infoBtn.setAttribute(
         'aria-label',
         metric
@@ -49,6 +49,7 @@ export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
       it.addEventListener('click', () => {
         const cat = getCategory(it.dataset.cat);
         if (cat.blocked) return;
+        if (infoBtn) infoBtn.blur();
         onCategoryChange(it.dataset.cat);
         catDropdown.classList.remove('open');
       });
@@ -72,6 +73,7 @@ export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
     }).join('');
     indDropdown.querySelectorAll('.qd-item').forEach(it => {
       it.addEventListener('click', () => {
+        if (infoBtn) infoBtn.blur();
         onIndicatorChange(it.dataset.ind);
         indDropdown.classList.remove('open');
       });
@@ -174,6 +176,7 @@ export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
     indDropdown.classList.toggle('open');
     catDropdown.classList.remove('open');
   });
+  infoBtn?.addEventListener('click', () => infoBtn.blur());
   document.addEventListener('click', e => {
     if (!e.target.closest('.query-segment')) {
       catDropdown.classList.remove('open');

@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AndalucÃ­a en Datos</title>
+<title>Andalucía en Datos</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -77,7 +77,7 @@
     <!-- Sidebar -->
     <nav class="sidebar">
         <div class="sb-categories" id="sidebar"></div>
-        <button class="sb-info-btn" id="btn-info" title="InformaciÃ³n">
+        <button class="sb-info-btn" id="btn-info" title="Información">
             <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
         </button>
     </nav>
@@ -89,7 +89,7 @@
     <div class="main">
         <!-- Header: Title -->
         <div class="header">
-            <div class="app-title">AndalucÃ­a <span id="category-label">Clima</span></div>
+            <div class="app-title">Andalucía <span id="category-label">Clima</span></div>
         </div>
 
         <!-- Subheader: Territory + View tabs + Settings -->
@@ -114,7 +114,7 @@
             </div>
             <div class="subheader-section options-section">
                 <span class="section-label">&nbsp;</span>
-                <button class="settings-pill" id="btn-settings" title="Opciones de visualizaciÃ³n">
+                <button class="settings-pill" id="btn-settings" title="Opciones de visualización">
                     <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.611 3.611 0 0112 15.6z"/></svg>
                     <span>Opciones</span>
                 </button>
@@ -148,14 +148,14 @@
             <div class="viz-panel" id="panel-line">
                 <div class="chart-container" id="line-chart-container">
                     <svg class="chart-svg" id="line-svg"></svg>
-                    <div class="chart-empty" id="line-empty">Selecciona uno o mÃ¡s territorios para ver la evoluciÃ³n</div>
+                    <div class="chart-empty" id="line-empty">Selecciona uno o más territorios para ver la evolución</div>
                 </div>
                 <div class="facet-grid" id="facet-grid" style="display:none"></div>
             </div>
             <div class="viz-panel" id="panel-area">
                 <div class="chart-container">
                     <svg class="chart-svg" id="area-svg"></svg>
-                    <div class="chart-empty" id="area-empty">Selecciona dos o mÃ¡s territorios para ver composiciÃ³n</div>
+                    <div class="chart-empty" id="area-empty">Selecciona dos o más territorios para ver composición</div>
                 </div>
             </div>
             <div class="viz-panel" id="panel-ranking">
@@ -167,7 +167,7 @@
             <div class="viz-panel" id="panel-stripes">
                 <div class="chart-container stripes-container" id="stripes-container">
                     <div class="stripes-wrapper" id="stripes-wrapper"></div>
-                    <div class="chart-empty" id="stripes-empty" style="display:none">Selecciona territorios o cambia a un indicador climÃ¡tico</div>
+                    <div class="chart-empty" id="stripes-empty" style="display:none">Selecciona territorios o cambia a un indicador climático</div>
                 </div>
             </div>
             <div class="viz-panel" id="panel-climogram">
@@ -182,7 +182,7 @@
             </div>
             <div class="viz-panel" id="panel-ridge">
                 <div class="chart-container ridge-container" id="ridge-container">
-                    <div class="chart-empty" id="ridge-empty" style="display:none">Selecciona un territorio para ver la distribuciÃ³n de temperaturas</div>
+                    <div class="chart-empty" id="ridge-empty" style="display:none">Selecciona un territorio para ver la distribución de temperaturas</div>
                 </div>
             </div>
             <div class="viz-panel" id="panel-palimpsesto">
@@ -206,11 +206,11 @@
             <div class="viz-panel" id="panel-about">
                 <div class="about-container" id="about-container">
                     <div class="about-content">
-                        <h1>Atlas HistÃ³rico Municipal de AndalucÃ­a</h1>
-                        <p class="about-lead">Plataforma de datos histÃ³ricos a escala municipal desarrollada en el Laboratorio de Historia de los Agroecosistemas de la Universidad Pablo de Olavide, en el marco de diversas investigaciones sobre cambio agrario y poblacional en AndalucÃ­a.</p>
+                        <h1>Atlas Histórico Municipal de Andalucía</h1>
+                        <p class="about-lead">Plataforma de datos históricos a escala municipal desarrollada en el Laboratorio de Historia de los Agroecosistemas de la Universidad Pablo de Olavide, en el marco de diversas investigaciones sobre cambio agrario y poblacional en Andalucía.</p>
 
                         <div class="about-nav" id="about-nav">
-                            <button class="about-nav-btn active" data-section="metodologia">MetodologÃ­a</button>
+                            <button class="about-nav-btn active" data-section="metodologia">Metodología</button>
                             <button class="about-nav-btn" data-section="equipo">Equipo</button>
                             <button class="about-nav-btn" data-section="publicaciones">Publicaciones</button>
                         </div>
@@ -275,11 +275,11 @@
                         </div>
 
                         <div class="about-section" id="about-publicaciones">
-                            <p class="about-placeholder">Listado de publicaciones prÃ³ximamente.</p>
+                            <p class="about-placeholder">Listado de publicaciones próximamente.</p>
                         </div>
 
                         <div class="about-footer-text">
-                            <p>Los datos y visualizaciones son de acceso abierto. Para citar este recurso, consultar la nota metodolÃ³gica de cada indicador.</p>
+                            <p>Los datos y visualizaciones son de acceso abierto. Para citar este recurso, consultar la nota metodológica de cada indicador.</p>
                         </div>
                     </div>
                 </div>
@@ -292,7 +292,7 @@
                 <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <button class="tl-speed" id="tl-speed">4x</button>
-            <input class="tl-year-input" id="tl-year-start" type="number" title="AÃ±o inicio">
+            <input class="tl-year-input" id="tl-year-start" type="number" title="Año inicio">
             <div class="tl-track" id="tl-track">
                 <div class="tl-rail"></div>
                 <div class="tl-range-fill" id="tl-range-fill"></div>
@@ -303,13 +303,13 @@
                     <div class="tl-handle-label" id="tl-label-to"></div>
                 </div>
             </div>
-            <input class="tl-year-input" id="tl-year-end" type="number" title="AÃ±o fin">
+            <input class="tl-year-input" id="tl-year-end" type="number" title="Año fin">
             <div class="tl-year" id="tl-year">2023</div>
         </div>
 
         <!-- Footer -->
         <div class="footer">
-            <span>Fuente: INE &middot; Censos histÃ³ricos &middot; PadrÃ³n municipal</span>
+            <span>Fuente: INE &middot; Censos históricos &middot; Padrón municipal</span>
             <div class="footer-actions">
                 <button class="footer-btn" id="btn-csv">CSV</button>
                 <button class="footer-btn" id="btn-fs">Pantalla completa</button>

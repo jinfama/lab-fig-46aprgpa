@@ -3,10 +3,10 @@
 // precomputed country_year_indicators.json bundle.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui31';
-import { getIndicator } from '../indicators.js?v=20260517-ui31';
+import { DataLoader } from '../data-loader.js?v=20260517-ui33';
+import { getIndicator } from '../indicators.js?v=20260517-ui33';
 import { escapeHtml, formatCategoryLabel } from '../labels.js';
-import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui31';
+import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui33';
 
 const PALETTES = {
   workers_hours: ['#edf5f5', '#d7e8ea', '#b8d3d8', '#92b8c0', '#6798a2', '#3f717b', '#21454d'],

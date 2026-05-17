@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta name="robots" content="noindex,nofollow,noarchive">
@@ -18,15 +18,15 @@
 
 <!-- Landing / Hero page -->
 <div class="landing mode-globo" id="landing">
-    <!-- Portada 1: GLOBO (default) â€” Three.js Earth + LATAM zoom + retro map -->
+    <!-- Portada 1: GLOBO (default) — Three.js Earth + LATAM zoom + retro map -->
     <canvas class="landing-globe" id="landing-globe"></canvas>
     <canvas class="landing-particles" id="landing-particles"></canvas>
     <div class="landing-retro-map" id="landing-retro-map"></div>
     <div class="landing-cursor" id="landing-cursor" aria-hidden="true"></div>
 
-    <!-- Portada 2: PAISAJE â€” pintura agraria con humo, nubes y brillos del r&iacute;o animados.
+    <!-- Portada 2: PAISAJE — pintura agraria con humo, nubes y brillos del r&iacute;o animados.
          All FX live inside one SVG whose viewBox matches the painting's natural pixel
-         dimensions (1774x887) and uses xMidYMid slice â€” same crop behaviour as the
+         dimensions (1774x887) and uses xMidYMid slice — same crop behaviour as the
          image's background-size: cover, so positions stay anchored to the chimneys
          and the river regardless of viewport aspect ratio. -->
     <div class="landing-paisaje" aria-hidden="true">
@@ -64,10 +64,10 @@
             <!-- ============ SMOKE COLUMNS ============
                  Each <g> is anchored at a chimney/locomotive on the painting (image-pixel
                  coords). Inside, 3 circles cycle through animateTransform/animate so a
-                 continuous column of puffs rises. Three smoke palettes â€” pf-white for the
+                 continuous column of puffs rises. Three smoke palettes — pf-white for the
                  sugar mill, pf-grey for the factory, pf-dark for the locomotive. -->
 
-            <!-- LEFT â€” sugar mill / ingenio at top-left of painting -->
+            <!-- LEFT — sugar mill / ingenio at top-left of painting -->
             <g class="smoke-src" transform="translate(115 200)">
                 <circle r="32" fill="url(#pf-white)" filter="url(#pf-blur)" opacity="0">
                     <animate attributeName="opacity" values="0;0.85;0.55;0" keyTimes="0;0.12;0.6;1" dur="5.2s" repeatCount="indefinite"/>
@@ -93,7 +93,7 @@
                 </circle>
             </g>
 
-            <!-- RIGHT â€” factory cluster (4 chimneys) -->
+            <!-- RIGHT — factory cluster (4 chimneys) -->
             <g class="smoke-src" transform="translate(1320 200)">
                 <circle r="28" fill="url(#pf-grey)" filter="url(#pf-blur)" opacity="0">
                     <animate attributeName="opacity" values="0;0.78;0.45;0" keyTimes="0;0.12;0.6;1" dur="5.6s" repeatCount="indefinite"/>
@@ -151,7 +151,7 @@
                 </circle>
             </g>
 
-            <!-- TRAIN â€” locomotive on the lower-right tracks, dark coal smoke drifting strongly right -->
+            <!-- TRAIN — locomotive on the lower-right tracks, dark coal smoke drifting strongly right -->
             <g class="smoke-src" transform="translate(1620 360)">
                 <circle r="34" fill="url(#pf-dark)" filter="url(#pf-blur)" opacity="0">
                     <animate attributeName="opacity" values="0;0.88;0.55;0" keyTimes="0;0.1;0.6;1" dur="4.2s" repeatCount="indefinite"/>
@@ -193,7 +193,7 @@
             <!-- ============ RIVER SPARKLES ============
                  Tiny warm dots scattered along the river curve; each one fades in/out
                  with a staggered cycle so the water appears to glint without a visible
-                 line. No path, no stroke â€” just sun reflections. -->
+                 line. No path, no stroke — just sun reflections. -->
             <g class="river-sparkles">
                 <circle cx="1290" cy="295" r="6" fill="url(#pf-spark)" filter="url(#pf-blur-tight)">
                     <animate attributeName="opacity" values="0;1;0.4;0" keyTimes="0;0.4;0.7;1" dur="3.0s" repeatCount="indefinite"/>
@@ -225,14 +225,14 @@
             </g>
         </svg>
 
-        <!-- Title backdrop â€” strong dark veil concentrated where the ATLAS title sits,
+        <!-- Title backdrop — strong dark veil concentrated where the ATLAS title sits,
              so the cream typography reads clearly over the painted sky. -->
         <div class="paisaje-veil" aria-hidden="true"></div>
-        <!-- Soft sunset glow on the right edge â€” pulses gently -->
+        <!-- Soft sunset glow on the right edge — pulses gently -->
         <div class="paisaje-rays" aria-hidden="true"></div>
     </div>
 
-    <!-- Switcher: 2 portadas â€” top-right corner -->
+    <!-- Switcher: 2 portadas — top-right corner -->
     <nav class="landing-switcher" id="landing-switcher" aria-label="Estilo de portada">
         <span class="ls-label">Portada</span>
         <button data-mode="globo" class="active" type="button">Globo</button>
@@ -290,7 +290,7 @@
             <!-- Selection chips (inline inside query bar) -->
             <div class="selection-bar" id="selection-bar"></div>
             <div class="query-spacer"></div>
-            <button class="query-icon-btn indicator-info-btn" id="btn-indicator-info" type="button" title="QuÃ© mide este indicador" aria-label="InformaciÃ³n del indicador">i</button>
+            <button class="query-icon-btn indicator-info-btn" id="btn-indicator-info" type="button" title="Qué mide este indicador" aria-label="Información del indicador">i</button>
             <button class="query-icon-btn" id="btn-toggle-panel" title="Mostrar/ocultar panel">
                 <svg viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
             </button>
@@ -309,7 +309,7 @@
                 <div class="map-container" id="map-container-2" style="flex:1; display:none; position:relative;">
                     <div class="map-year" id="map-year-2"></div>
                     <svg class="map-svg" id="map-svg-2"></svg>
-                    <button id="btn-close-compare" style="position:absolute; top:12px; right:16px; padding:4px 10px; background:var(--c-bg); border:1px solid var(--c-border); cursor:pointer; border-radius:4px; font-size:11px; z-index:10; opacity:0.7;" title="Cerrar comparaciÃ³n">&times;</button>
+                    <button id="btn-close-compare" style="position:absolute; top:12px; right:16px; padding:4px 10px; background:var(--c-bg); border:1px solid var(--c-border); cursor:pointer; border-radius:4px; font-size:11px; z-index:10; opacity:0.7;" title="Cerrar comparación">&times;</button>
                 </div>
             </div>
             <div class="viz-panel" id="panel-trend">
@@ -545,14 +545,14 @@
     <div class="download-header">
       <div>
         <div class="download-eyebrow">Panel actual</div>
-        <h2 id="download-title">Descarga y documentaciÃ³n</h2>
+        <h2 id="download-title">Descarga y documentación</h2>
       </div>
       <button class="download-close" id="download-close" type="button" aria-label="Cerrar">&times;</button>
     </div>
     <div class="download-tabs" role="tablist">
       <button class="download-tab active" type="button" data-download-tab="data">Datos</button>
-      <button class="download-tab" type="button" data-download-tab="sources">Fuentes y mÃ©todo</button>
-      <button class="download-tab" type="button" data-download-tab="citation">Cita y crÃ©ditos</button>
+      <button class="download-tab" type="button" data-download-tab="sources">Fuentes y método</button>
+      <button class="download-tab" type="button" data-download-tab="citation">Cita y créditos</button>
     </div>
     <div class="download-body" id="download-body"></div>
     <div class="download-actions">

@@ -1,19 +1,19 @@
 ﻿// Main controller. Orchestrates landing → app handoff and wires components.
 
 import { State } from './state.js';
-import { DataLoader } from './data-loader.js?v=20260517-ui31';
-import { getCategory } from './indicators.js?v=20260517-ui31';
+import { DataLoader } from './data-loader.js?v=20260517-ui33';
+import { getCategory } from './indicators.js?v=20260517-ui33';
 import { initLanding } from './landing.js';
-import { initSidebar } from './sidebar.js?v=20260517-ui31';
-import { initQueryBar } from './query-bar.js?v=20260517-ui31';
-import { initTimeline } from './timeline.js?v=20260517-ui31';
-import { initRightPanel } from './right-panel.js?v=20260517-ui31';
-import { initMapView } from './views/map.js?v=20260517-ui31';
-import { initTrendView } from './views/trend.js?v=20260517-ui31';
-import { initRankingView } from './views/ranking.js?v=20260517-ui31';
-import { initTreemapView } from './views/treemap.js?v=20260517-ui31';
-import { initTableView } from './views/table.js?v=20260517-ui31';
-import { initAboutView } from './views/about.js?v=20260517-ui31';
+import { initSidebar } from './sidebar.js?v=20260517-ui33';
+import { initQueryBar } from './query-bar.js?v=20260517-ui33';
+import { initTimeline } from './timeline.js?v=20260517-ui33';
+import { initRightPanel } from './right-panel.js?v=20260517-ui33';
+import { initMapView } from './views/map.js?v=20260517-ui33';
+import { initTrendView } from './views/trend.js?v=20260517-ui33';
+import { initRankingView } from './views/ranking.js?v=20260517-ui33';
+import { initTreemapView } from './views/treemap.js?v=20260517-ui33';
+import { initTableView } from './views/table.js?v=20260517-ui33';
+import { initAboutView } from './views/about.js?v=20260517-ui33';
 
 const VIEWS = ['map', 'trend', 'ranking', 'treemap', 'table', 'about'];
 let _lastDataView = 'map';

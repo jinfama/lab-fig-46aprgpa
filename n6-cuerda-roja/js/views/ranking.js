@@ -1,9 +1,9 @@
 ﻿// Ranking view — horizontal bars top-N for the active metric at currentYear.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui31';
-import { getIndicator } from '../indicators.js?v=20260517-ui31';
-import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui31';
+import { DataLoader } from '../data-loader.js?v=20260517-ui33';
+import { getIndicator } from '../indicators.js?v=20260517-ui33';
+import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui33';
 
 let _aggregates = null;
 let _countryNames = null;

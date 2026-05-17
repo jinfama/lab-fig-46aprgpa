@@ -88,7 +88,8 @@ const UI = {
 const LABEL_EN = {
   "Perspectiva global": "Global perspective", "Indicadores macro": "Macro indicators", "Indicadores sectoriales": "Sectoral indicators",
   "Energía": "Energy", "Emisiones GEI": "GHG emissions", "Emisiones CO₂": "CO₂ emissions", "Materiales": "Materials", "Tierra": "Land",
-  "Forestal": "Forestry", "Cultivos": "Crops", "Industria": "Industry", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood",
+  "Forestal": "Forestry", "Bosques": "Forests", "Cultivos": "Crops", "Industria": "Industry", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood",
+  "Dataset integrado": "Integrated dataset", "Consumo de energía": "Energy consumption", "Emisiones de CO₂": "CO₂ emissions", "Flujos materiales": "Material flows", "Usos del suelo": "Land use",
   "Tendencias": "Trends", "Correlación": "Correlation", "Descomposición · LMDI": "Decomposition · LMDI", "Desacoplamiento · Tapio": "Decoupling · Tapio",
   "Series por área y variable": "Series by area and variable", "Scatter bivariado": "Bivariate scatter", "Descomposición Kaya": "Kaya decomposition", "Escenarios de elasticidad": "Elasticity scenarios",
   "España": "Spain", "Mundo": "World", "Ambos": "Both", "Absoluto": "Absolute", "Acumulado": "Cumulative", "Intensidad": "Intensity",
@@ -98,6 +99,14 @@ const LABEL_EN = {
   "Superficie forestal por categorías de monte (alto, bajo, abierto), densidad y stock de carbono. Incluye mapa provincial.": "Forest area by forest categories, density and carbon stock. Includes provincial map.",
   "Superficie cultivada y grandes grupos de cultivos (cereales, frutales, leguminosas, industriales, olivos). Incluye mapa provincial.": "Cropland area and major crop groups. Includes provincial map.",
   "Grandes usos del suelo en España. Incluye mapa provincial de cobertura.": "Major land uses in Spain. Includes provincial land-cover map.",
+  "Base longitudinal completa con las principales series de energía, materiales, emisiones, usos del suelo, bosques y cultivos, preparada para reproducir las visualizaciones.": "Complete longitudinal dataset with the main energy, material, emissions, land-use, forest and crop series used to reproduce the visualizations.",
+  "Consumo de energía primaria: fuentes modernas (petróleo, gas, electricidad) y tradicionales (leña, alimentos y forraje).": "Primary energy consumption: modern sources (oil, gas, electricity) and traditional sources (fuelwood, food and fodder).",
+  "Gases de efecto invernadero (CO₂, CH₄, N₂O y F-gases) expresados en CO₂ equivalente.": "Greenhouse gases (CO₂, CH₄, N₂O and F-gases) expressed as CO₂ equivalent.",
+  "Emisiones de CO₂ por combustibles fósiles (carbón, petróleo y gas) y por usos del suelo.": "CO₂ emissions from fossil fuels (coal, oil and gas) and land use.",
+  "Extracción, comercio y consumo aparente de biomasa, fósiles, minerales metálicos y minerales no metálicos.": "Extraction, trade and apparent consumption of biomass, fossil fuels, metallic and non-metallic minerals.",
+  "Grandes coberturas del territorio español y reconstrucción de usos del suelo en perspectiva histórica.": "Major Spanish land-cover categories and historical land-use reconstruction.",
+  "Superficie forestal por categorías de monte, densidad y stock de carbono, con lectura nacional y provincial.": "Forest area by categories, density and carbon stock, at national and provincial scale.",
+  "Superficie cultivada y principales grupos de cultivos, incluyendo cereales, frutales, leguminosas, industriales y olivar.": "Cropland area and major crop groups, including cereals, fruit trees, legumes, industrial crops and olive groves.",
 };
 function t(key){ return (UI[state.lang] && UI[state.lang][key]) || UI.es[key] || key; }
 function tx(value){ return state.lang === "en" ? (LABEL_EN[value] || value) : value; }
@@ -871,15 +880,15 @@ function renderLanding(){
 
 function groupLandingItems(){
   if(state.group === "global") return {
-    eyebrow: "Perspectiva global",
-    title: "España en perspectiva global",
-    intro: "Series internacionales y herramientas de análisis para comparar España y mundo.",
+    eyebrow: tx("Perspectiva global"),
+    title: state.lang === "en" ? "Spain in global perspective" : "España en perspectiva global",
+    intro: state.lang === "en" ? "International series and analysis tools to compare Spain and the world." : "Series internacionales y herramientas de análisis para comparar España y mundo.",
     items: GLOBAL_ANALYSES.map(a => ({ ...a, meta: a.sub, desc: MODAL_INFO[a.id]?.datos || a.sub, group: "global" }))
   };
   const map = {
-    macro: ["Indicadores macro", "Indicadores macro", "Energía, emisiones, materiales y tierra en serie nacional y, cuando existe, mapa provincial."],
-    sectorial: ["Indicadores sectoriales", "Indicadores sectoriales", "Bosques, cultivos e industria con navegación unificada."],
-    commodities: ["Commodities", "Commodities", "Productos y recursos singulares con entrada propia."]
+    macro: [t("macroEyebrow"), t("macroEyebrow"), state.lang === "en" ? "Energy, emissions, materials and land in national series and provincial maps when available." : "Energía, emisiones, materiales y tierra en serie nacional y, cuando existe, mapa provincial."],
+    sectorial: [t("sectorEyebrow"), t("sectorEyebrow"), state.lang === "en" ? "Forestry, crops and industry with unified navigation." : "Forestal, cultivos e industria con navegación unificada."],
+    commodities: [t("commodities"), t("commodities"), state.lang === "en" ? "Specific products and resources with their own entry point." : "Productos y recursos singulares con entrada propia."]
   };
   const [eyebrow, title, intro] = map[state.group] || map.macro;
   return { eyebrow, title, intro, items: CATALOG_OTHER[state.group] || [] };
@@ -891,14 +900,14 @@ function panelEntryCard(item){
   return `<button class="panel-entry-card${cls}" data-panel-entry="${item.id}" type="button"${disabled}>
     <div class="panel-entry-inner">
       <div class="panel-entry-front">
-        <span class="panel-entry-meta">${item.meta || item.sub || ""}</span>
+        <span class="panel-entry-meta">${tx(item.meta || item.sub || "")}</span>
         <span class="panel-entry-icon">${item.icon ? `<img src="${item.icon}" alt="">` : ""}</span>
-        <span class="panel-entry-title">${item.label}</span>
+        <span class="panel-entry-title">${itemTitle(item)}</span>
       </div>
       <div class="panel-entry-back">
-        <span class="panel-entry-title">${item.label}</span>
-        <p>${compact(item.desc || item.sub || "", 118)}</p>
-        <span class="panel-entry-open">${item.comingSoon ? "Próximamente" : "Abrir figura →"}</span>
+        <span class="panel-entry-title">${itemTitle(item)}</span>
+        <p>${compact(tx(item.desc || item.sub || ""), 118)}</p>
+        <span class="panel-entry-open">${item.comingSoon ? t("comingSoon") : `${t("openViewer")} →`}</span>
       </div>
     </div>
   </button>`;
@@ -967,11 +976,11 @@ function renderSidebar(){
 
 function indicatorViewButtons(hasMap, activeMode){
   const items = [
-    { id: "linea", label: "Tend.", icon: `<svg viewBox="0 0 20 16"><polyline points="2 13 6 9 9 11 13 5 18 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-    { id: "area", label: "Área", icon: `<svg viewBox="0 0 20 16"><path d="M2 13 6 9 9 11 13 5 18 6v8H2z" fill="currentColor" opacity=".78"/></svg>` },
-    { id: "tabla", label: "Tabla", icon: `<svg viewBox="0 0 20 16"><rect x="2" y="2" width="16" height="12" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M2 6h16M2 10h16M7 2v12M13 2v12" stroke="currentColor" stroke-width=".95"/></svg>` },
+    { id: "linea", label: t("trend"), icon: `<svg viewBox="0 0 20 16"><polyline points="2 13 6 9 9 11 13 5 18 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+    { id: "area", label: t("area"), icon: `<svg viewBox="0 0 20 16"><path d="M2 13 6 9 9 11 13 5 18 6v8H2z" fill="currentColor" opacity=".78"/></svg>` },
+    { id: "tabla", label: t("table"), icon: `<svg viewBox="0 0 20 16"><rect x="2" y="2" width="16" height="12" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M2 6h16M2 10h16M7 2v12M13 2v12" stroke="currentColor" stroke-width=".95"/></svg>` },
   ];
-  if(hasMap) items.unshift({ id: "mapa", label: "Mapa", icon: `<svg viewBox="0 0 20 16"><path d="M2.5 3.2 7.2 1.7l5.6 1.8 4.7-1.7v10.9l-4.7 1.6-5.6-1.8-4.7 1.7z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M7.2 1.7v10.8M12.8 3.5v10.8" fill="none" stroke="currentColor" stroke-width="1.05"/></svg>` });
+  if(hasMap) items.unshift({ id: "mapa", label: t("map"), icon: `<svg viewBox="0 0 20 16"><path d="M2.5 3.2 7.2 1.7l5.6 1.8 4.7-1.7v10.9l-4.7 1.6-5.6-1.8-4.7 1.7z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M7.2 1.7v10.8M12.8 3.5v10.8" fill="none" stroke="currentColor" stroke-width="1.05"/></svg>` });
   return `<div class="view-tabs viz-mode-tabs">${items.map(it => `<button class="view-tab${activeMode === it.id ? " active" : ""}" data-view-mode="${it.id}" type="button"><span class="view-icon">${it.icon}</span><span class="view-label">${it.label}</span></button>`).join("")}</div>`;
 }
 
@@ -1066,7 +1075,7 @@ async function renderIndicatorViz(){
         <div class="chart-area" id="ind-chart"></div>
         <div class="chart-legend" id="ind-legend"></div>
         <div class="viz-timeline" id="ind-timeline" style="display:none">
-          <button class="play-btn" id="play-btn" type="button" aria-label="Reproducir timelapse"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+          <button class="play-btn" id="play-btn" type="button" aria-label="${t("play")}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
           ${speedMenuMarkup(state.speed, [1,2,4,8])}
           <div class="year-readout" id="year-readout">${state.year}</div>
           <input class="year-slider" id="year-slider" type="range">
@@ -1100,19 +1109,19 @@ function renderIndicatorTendencia(item, data){
   }
   ctrls.innerHTML = `
     <div class="filter-bar compact-controls unified-controls">
-      <div class="field field-view"><label>Vista</label>${indicatorViewButtons(!!item.mapSlug, state.ind_display)}</div>
-      ${miniSelectMarkup("f-var-select", "Variable", state.ind_variable, data.variables)}
-      ${tipo2s.length ? miniSelectMarkup("f-tipo2-select", "Tipo", state.ind_tipo2, tipo2s) : ""}
+      <div class="field field-view"><label>${t("view")}</label>${indicatorViewButtons(!!item.mapSlug, state.ind_display)}</div>
+      ${miniSelectMarkup("f-var-select", t("variable"), state.ind_variable, data.variables)}
+      ${tipo2s.length ? miniSelectMarkup("f-tipo2-select", t("types"), state.ind_tipo2, tipo2s) : ""}
       ${tipos.length ? `<div class="field field-components inline-components">
-        <label>Componentes</label>
+        <label>${t("components")}</label>
         <div class="comp-chips" id="f-tipos">
-          ${tipos.map(t => `<button type="button" class="comp-chip${state.ind_tipoMulti.includes(t) ? " active" : ""}" data-tipo="${escAttr(t)}"><span class="sw" style="background:${typeColorFromData(data, t, item)}"></span>${t}</button>`).join("")}
+          ${tipos.map(t => `<button type="button" class="comp-chip${state.ind_tipoMulti.includes(t) ? " active" : ""}" data-tipo="${escAttr(t)}"><span class="sw" style="background:${typeColorFromData(data, t, item)}"></span>${tx(t)}</button>`).join("")}
         </div>
       </div>` : ""}
-      <div class="field"><label>Escala</label>
+      <div class="field"><label>${t("scale")}</label>
         <div class="mode-toggle" id="f-scale">
-          <button data-scale="linear" class="${state.ind_scale === "linear" ? "active" : ""}">Lineal</button>
-          <button data-scale="log" class="${state.ind_scale === "log" ? "active" : ""}">Log</button>
+          <button data-scale="linear" class="${state.ind_scale === "linear" ? "active" : ""}">${t("lineal")}</button>
+          <button data-scale="log" class="${state.ind_scale === "log" ? "active" : ""}">${t("log")}</button>
         </div>
       </div>
     </div>`;
@@ -1175,9 +1184,9 @@ function renderIndicatorTendencia(item, data){
 
   // Info strip
   info.innerHTML = `
-    <span class="info-eyebrow">${item.meta}</span>
-    <span class="info-text"><strong>${item.label}.</strong> ${item.desc}</span>
-    <span style="font-size:10px;letter-spacing:1px;color:var(--ink-mute);font-weight:700;text-transform:uppercase">v3 · nativo</span>`;
+    <span class="info-eyebrow">${tx(item.meta)}</span>
+    <span class="info-text"><strong>${itemTitle(item)}.</strong> ${itemDescription(item)}</span>
+    <span style="font-size:10px;letter-spacing:1px;color:var(--ink-mute);font-weight:700;text-transform:uppercase">${t("native")}</span>`;
 }
 
 function drawIndicatorChart(container, years, series, item, opts){
@@ -1237,9 +1246,9 @@ function drawIndicatorChart(container, years, series, item, opts){
       .attr("fill", "transparent")
       .style("pointer-events", "all")
       .on("mouseenter mousemove", (event, d) => {
-        const rowsTooltip = colored.map(s => [s.tipo, fmt(d[s.id], unit)]);
+        const rowsTooltip = colored.map(s => [tx(s.tipo), fmt(d[s.id], unit)]);
         const total = d3.sum(colored, s => d[s.id] || 0);
-        showTooltip(event, `${item.label} · ${d.year}`, [["Total", fmt(total, unit)], ...rowsTooltip]);
+        showTooltip(event, `${itemTitle(item)} · ${d.year}`, [[tx("Total"), fmt(total, unit)], ...rowsTooltip]);
       })
       .on("mouseleave", hideTooltip);
     const labelPositions = [];
@@ -1247,7 +1256,7 @@ function drawIndicatorChart(container, years, series, item, opts){
       const stackTop = stack[i]?.[stack[i].length - 1];
       if(stackTop){
         const yPos = (yScale(stackTop[0]) + yScale(stackTop[1])) / 2;
-        labelPositions.push({ x: x(stackTop.data.year) + 6, y: yPos, color: s._color, text: compact(s.tipo, 18) });
+        labelPositions.push({ x: x(stackTop.data.year) + 6, y: yPos, color: s._color, text: compact(tx(s.tipo), 18) });
       }
     });
     protectActiveYearLabel(labelPositions, opts.year == null ? -Infinity : x(opts.year), innerW);
@@ -1291,8 +1300,8 @@ function drawIndicatorChart(container, years, series, item, opts){
         .attr("r", 7)
         .attr("fill", "transparent")
         .style("pointer-events", "all")
-        .on("mouseenter mousemove", (event, d) => showTooltip(event, s.tipo, [
-          ["Año", d.y],
+        .on("mouseenter mousemove", (event, d) => showTooltip(event, tx(s.tipo), [
+          [t("year"), d.y],
           ["Valor", fmt(d.v, unit)]
         ]))
         .on("mouseleave", hideTooltip);
@@ -1304,7 +1313,7 @@ function drawIndicatorChart(container, years, series, item, opts){
       let lastV = null, lastY = idx;
       while(lastY >= 0 && lastV == null){ if(s.values[lastY] != null) lastV = s.values[lastY]; else lastY--; }
       if(lastV != null){
-        labelPositions.push({ x: x(years[lastY]) + 6, y: yScale(lastV), color: s._color, text: compact(s.tipo, 18) });
+        labelPositions.push({ x: x(years[lastY]) + 6, y: yScale(lastV), color: s._color, text: compact(tx(s.tipo), 18) });
       }
     });
     protectActiveYearLabel(labelPositions, opts.year == null ? -Infinity : x(opts.year), innerW);
@@ -1326,8 +1335,8 @@ function drawIndicatorTable(container, years, series, item, opts = {}){
   const unit = series[0]?.variableUnit || series[0]?.unit || "";
   wrap.innerHTML = `<table class="data-table year-rows">
     <thead><tr>
-      <th>Año</th>
-      ${series.map(s => `<th title="${escAttr([s.tipo, s.tipo2, unit].filter(Boolean).join(" · "))}">${compact([s.tipo, s.tipo2].filter(Boolean).join(" · "), 26)}</th>`).join("")}
+      <th>${t("year")}</th>
+      ${series.map(s => `<th title="${escAttr([tx(s.tipo), tx(s.tipo2), unit].filter(Boolean).join(" · "))}">${compact([tx(s.tipo), tx(s.tipo2)].filter(Boolean).join(" · "), 26)}</th>`).join("")}
     </tr></thead>
     <tbody>${visibleYears.map(y => {
       const idx = years.indexOf(y);
@@ -1352,9 +1361,9 @@ function preferredMapCombo(combos, indicator, category){
     combos[0];
 }
 function mapCategoryLabel(item){
-  if(item?.id === "cultivos") return "Cultivo";
-  if(item?.id === "bosques") return "Categoría";
-  return "Componente";
+  if(item?.id === "cultivos") return t("crop");
+  if(item?.id === "bosques") return t("category");
+  return t("component");
 }
 
 function renderIndicatorMapa(item, mapData){
@@ -1365,8 +1374,8 @@ function renderIndicatorMapa(item, mapData){
   const categories = uniqueMapValues(combos.filter(c => c.indicator === activeCombo.indicator), "category");
   ctrls.innerHTML = `
     <div class="filter-bar compact-controls unified-controls">
-      <div class="field field-view"><label>Vista</label>${indicatorViewButtons(true, "mapa")}</div>
-      ${miniSelectMarkup("f-mapindicator-select", "Indicador", activeCombo.indicator, indicators)}
+      <div class="field field-view"><label>${t("view")}</label>${indicatorViewButtons(true, "mapa")}</div>
+      ${miniSelectMarkup("f-mapindicator-select", t("indicator"), activeCombo.indicator, indicators)}
       ${miniSelectMarkup("f-mapcategory-select", mapCategoryLabel(item), activeCombo.category, categories)}
       <div class="spacer"></div>
     </div>`;
@@ -1401,9 +1410,9 @@ function renderIndicatorMapa(item, mapData){
 
   legend.innerHTML = "";
   info.innerHTML = `
-    <span class="info-eyebrow">${item.meta}</span>
-    <span class="info-text"><strong>Mapa provincial:</strong> ${combos.find(c => c.id === state.ind_mapCombo)?.label || ""}. Color escala fija sobre todo el rango temporal. Pasa el ratón sobre una provincia para ver su valor.</span>
-    <span style="font-size:10px;letter-spacing:1px;color:var(--ink-mute);font-weight:700;text-transform:uppercase">v3 · nativo</span>`;
+    <span class="info-eyebrow">${tx(item.meta)}</span>
+    <span class="info-text"><strong>${t("mapProvince")}:</strong> ${tx(combos.find(c => c.id === state.ind_mapCombo)?.label || "")}. ${t("mapInfo")}</span>
+    <span style="font-size:10px;letter-spacing:1px;color:var(--ink-mute);font-weight:700;text-transform:uppercase">${t("native")}</span>`;
 }
 
 function renderMap(container, mapData, item){
@@ -1444,7 +1453,7 @@ function renderMap(container, mapData, item){
       const v = values.get(iso);
       showTooltip(event, name, [
         [combo.indicator, fmt(v, combo.unit)],
-        ["Año", state.year]
+        [t("year"), state.year]
       ]);
     }).on("mousemove", moveTooltip).on("mouseleave", hideTooltip);
   }
@@ -1480,7 +1489,7 @@ function renderMap(container, mapData, item){
   const swatches = mapPalette.map(c => `<span style="display:block;flex:1;height:12px;background:${c}"></span>`).join("");
   document.getElementById("ind-legend").innerHTML = `
     <div style="display:flex;flex-direction:column;width:100%;gap:4px;font-family:var(--ff-sans)">
-      <div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mute);font-weight:700">${combo.indicator} · ${combo.category}${combo.unit ? ` (${combo.unit})` : ""}</div>
+      <div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mute);font-weight:700">${tx(combo.indicator)} · ${tx(combo.category)}${combo.unit ? ` (${combo.unit})` : ""}</div>
       <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums">
         <span>${fmt(extent[0])}</span>
         <div style="flex:1;display:flex;border:1px solid var(--rule)">${swatches}</div>
@@ -1516,7 +1525,7 @@ function drawMapMiniChart(container, mapData, combo){
   panel.className = "map-mini-chart";
   panel.innerHTML = `
     <button type="button" title="Ocultar serie temporal" aria-label="Ocultar serie temporal">×</button>
-    <div class="map-mini-title">${combo.indicator} · ${combo.category}</div>
+    <div class="map-mini-title">${tx(combo.indicator)} · ${tx(combo.category)}</div>
     <svg class="map-mini-svg"></svg>`;
   container.appendChild(panel);
   panel.querySelector("button").addEventListener("click", () => {
@@ -1552,12 +1561,18 @@ function drawMapMiniChart(container, mapData, combo){
 function openIndicatorModal(item, data){
   const dataLink = item.data ? `${V1_DOCS}/${item.data}` : null;
   const methodLink = item.method ? `${V1_DOCS}/${item.method}` : null;
+  const intro = state.lang === "en"
+    ? "This viewer rebuilds the series with local CAHE v3 code and keeps the core controls from the original version: variable selection, components, scale, time view, table and provincial map when spatial information exists. The series should be read as long-term historical estimates, not as isolated administrative annual statistics."
+    : "Este visor reconstruye la serie con código local de CAHE v3 y conserva los controles centrales de la versión original: selección de variable, componentes, escala, vista temporal, tabla y mapa provincial cuando existe información espacial. La lectura debe hacerse como una serie histórica comparable en el largo plazo, no como una estadística administrativa anual aislada.";
+  const selectionNote = state.lang === "en"
+    ? "Component selection allows several series to be activated simultaneously when the indicator has internal breakdowns. Variables, types and territorial combinations are kept as single selections when mixing them would combine non-comparable units or categories."
+    : "La selección de componentes permite activar varias series simultáneamente cuando el indicador tiene desagregación interna. Las variables, tipos o combinaciones territoriales son selecciones únicas para evitar mezclar unidades o categorías no comparables dentro de la misma figura.";
   els.modalContent.innerHTML = `
     <span class="modal-eyebrow">${t("infoMethod")} — ${tx(item.meta)}</span>
     <h2>${itemTitle(item)}</h2>
     <p>${itemDescription(item)}</p>
-    <p>Este visor reconstruye la serie con código local de CAHE v3 y conserva los controles centrales de la versión original: selección de variable, componentes, escala, vista temporal, tabla y mapa provincial cuando existe información espacial. La lectura debe hacerse como una serie histórica comparable en el largo plazo, no como una estadística administrativa anual aislada.</p>
-    <p>La selección de componentes permite activar varias series simultáneamente cuando el indicador tiene desagregación interna. Las variables, tipos o combinaciones territoriales son selecciones únicas para evitar mezclar unidades o categorías no comparables dentro de la misma figura.</p>
+    <p>${intro}</p>
+    <p>${selectionNote}</p>
     <h3>${t("coverage")}</h3>
     <ul>
       <li>${t("nationalSeries")}: <strong>${data.years[0]}–${data.years.at(-1)}</strong> (${data.series.length} series).</li>
@@ -1604,7 +1619,7 @@ async function renderGlobalViz(){
   clearIndicatorTimer();
   clearGlobalTimer();
   const globalCitation = citationForGlobal();
-  const globalTools = renderPanelTools(`${V1_DOCS}/cahe_datos_integrados.xlsx`, `${V1_DOCS}/globales_metodologia.pdf`, true, null, globalCitation);
+  const globalTools = renderPanelTools(`${V1_DOCS}/cahe_datos_integrados.xlsx`, `${V1_DOCS}/globales_metodologia.pdf`, true, "https://zenodo.org/communities/cahe", globalCitation);
   main.innerHTML = `
     <div class="viz">
       <div class="indicator-head with-tools global-head">
@@ -1634,14 +1649,14 @@ async function renderGlobalViz(){
 function openGlobalModal(id){
   const m = MODAL_INFO[id] || {};
   els.modalContent.innerHTML = `
-    <span class="modal-eyebrow">Información</span>
-    <h2>${m.titulo || "—"}</h2>
-    ${m.datos ? `<h3>Datos</h3><p>${m.datos}</p>` : ""}
-    ${m.fuentes ? `<h3>Metodología y fuentes</h3><p>${m.fuentes}</p>` : ""}
-    ${m.interpretacion ? `<h3>Claves para la interpretación</h3><p>${m.interpretacion}</p>` : ""}
-    ${m.referencias ? `<h3>Referencias</h3><ul>${m.referencias.map(ref => `<li>${ref}</li>`).join("")}</ul>` : ""}
-    <p style="margin-top:14px;font-style:italic;color:var(--ink-mute);font-size:12px">Actualización: ${m.actualizacion || "—"}</p>
-    <div class="cta-row"><a class="cta" href="${V1_DOCS}/globales_metodologia.pdf" target="_blank" rel="noopener">Metodología completa <span>↗</span></a></div>`;
+    <span class="modal-eyebrow">${state.lang === "en" ? "Information" : "Información"}</span>
+    <h2>${tx(m.titulo || "—")}</h2>
+    ${m.datos ? `<h3>${t("dataXlsx")}</h3><p>${m.datos}</p>` : ""}
+    ${m.fuentes ? `<h3>${state.lang === "en" ? "Methods and sources" : "Metodología y fuentes"}</h3><p>${m.fuentes}</p>` : ""}
+    ${m.interpretacion ? `<h3>${state.lang === "en" ? "Interpretation" : "Claves para la interpretación"}</h3><p>${m.interpretacion}</p>` : ""}
+    ${m.referencias ? `<h3>${state.lang === "en" ? "References" : "Referencias"}</h3><ul>${m.referencias.map(ref => `<li>${ref}</li>`).join("")}</ul>` : ""}
+    <p style="margin-top:14px;font-style:italic;color:var(--ink-mute);font-size:12px">${state.lang === "en" ? "Updated" : "Actualización"}: ${m.actualizacion || "—"}</p>
+    <div class="cta-row"><a class="cta" href="${V1_DOCS}/globales_metodologia.pdf" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a></div>`;
   els.modal.classList.add("open");
 }
 function closeModal(){ els.modal.classList.remove("open"); }
@@ -1745,7 +1760,7 @@ function bindGlobalTimeline(body, years, rerender){
 
 function globalTimelineMarkup(){
   return `<div class="viz-timeline global-timeline" id="global-timeline">
-    <button class="play-btn${state.globalPlaying ? " active" : ""}" id="global-play" type="button" aria-label="Reproducir timelapse"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
+    <button class="play-btn${state.globalPlaying ? " active" : ""}" id="global-play" type="button" aria-label="${t("play")}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
     ${speedMenuMarkup(state.globalSpeed, [1,2,4,8])}
     <div class="year-readout" id="global-year-readout">${state.globalYear ?? ""}</div>
     <input class="year-slider" id="global-year-slider" type="range">
@@ -1763,41 +1778,41 @@ function renderTendencias(body){
   body.innerHTML = `
     <div class="controls-shell${state.globalOptionsOpen ? " open" : ""}" id="global-controls-shell">
       <div class="filter-bar compact-controls global-controls">
-        ${miniSelectMarkup("t-ind-select", "Indicador", i, INDICATORS)}
-        ${miniSelectMarkup("t-var-select", "Métrica", v, variableOptions)}
+        ${miniSelectMarkup("t-ind-select", t("indicator"), i, INDICATORS)}
+        ${miniSelectMarkup("t-var-select", t("metric"), v, variableOptions)}
         <div class="field">
-          <label>Área geográfica</label>
+          <label>${t("geographicArea")}</label>
           <div class="mode-toggle" id="t-area-toggle">
-            <button data-area="Both" class="${a === "Both" ? "active" : ""}">Ambos</button>
-            <button data-area="España" class="${a === "España" ? "active" : ""}">España</button>
-            <button data-area="Mundo" class="${a === "Mundo" ? "active" : ""}">Mundo</button>
+            <button data-area="Both" class="${a === "Both" ? "active" : ""}">${tx("Ambos")}</button>
+            <button data-area="España" class="${a === "España" ? "active" : ""}">${tx("España")}</button>
+            <button data-area="Mundo" class="${a === "Mundo" ? "active" : ""}">${tx("Mundo")}</button>
           </div>
         </div>
         <div class="spacer"></div>
         <button class="options-toggle${state.globalOptionsOpen ? " active" : ""}" id="global-options-toggle" type="button" aria-expanded="${state.globalOptionsOpen}">
-          Ajustes <span>${state.trendMA === "none" ? "sin media" : `${state.trendMA}a`}</span>
+          ${state.lang === "en" ? "Settings" : "Ajustes"} <span>${state.trendMA === "none" ? (state.lang === "en" ? "no average" : "sin media") : `${state.trendMA}a`}</span>
         </button>
       </div>
-      <aside class="controls-drawer global-drawer" id="global-options-drawer" aria-label="Opciones de perspectiva global">
+      <aside class="controls-drawer global-drawer" id="global-options-drawer" aria-label="${state.lang === "en" ? "Global perspective options" : "Opciones de perspectiva global"}">
         <div class="drawer-head">
           <div><span>Ajustes</span></div>
-          <button class="drawer-close" id="global-drawer-close" type="button" aria-label="Cerrar opciones">×</button>
+          <button class="drawer-close" id="global-drawer-close" type="button" aria-label="${t("close")}">×</button>
         </div>
         <div class="drawer-section">
-          <label>Media móvil</label>
+          <label>${state.lang === "en" ? "Moving average" : "Media móvil"}</label>
           <div class="analysis-buttons">
             ${["none","5","10","20"].map(ma => `<button class="analysis-btn${state.trendMA === ma ? " active" : ""}" data-ma="${ma}" type="button" title="${ma === "none" ? "Sin media móvil" : `Media móvil ${ma} años`}">${ma === "none" ? "—" : ma}</button>`).join("")}
           </div>
         </div>
         <div class="drawer-section">
-          <label>Análisis de tendencia</label>
+          <label>${state.lang === "en" ? "Trend analysis" : "Análisis de tendencia"}</label>
           <div class="analysis-buttons">
             <button class="analysis-btn${state.trendShowR2 ? " active" : ""}" data-trend-flag="trendShowR2" type="button" title="Mostrar R²">R²</button>
             <button class="analysis-btn${state.trendShowLine ? " active" : ""}" data-trend-flag="trendShowLine" type="button" title="Mostrar línea de tendencia">↗</button>
           </div>
         </div>
         <div class="drawer-section">
-          <label>Análisis exploratorio</label>
+          <label>${state.lang === "en" ? "Exploratory analysis" : "Análisis exploratorio"}</label>
           <div class="analysis-buttons wrap">
             <button class="analysis-btn${state.trendShowMax ? " active" : ""}" data-trend-flag="trendShowMax" type="button" title="Máximo y mínimo">MAX<br>MIN</button>
             <button class="analysis-btn${state.trendShowToday ? " active" : ""}" data-trend-flag="trendShowToday" type="button" title="Relación con el valor actual">←</button>
@@ -1805,7 +1820,7 @@ function renderTendencias(body){
           </div>
         </div>
         <div class="drawer-section">
-          <label>Principales periodos de crecimiento</label>
+          <label>${state.lang === "en" ? "Main growth periods" : "Principales periodos de crecimiento"}</label>
           <div class="analysis-buttons wrap">
             ${[5,10,25].map(w => `<button class="analysis-btn period-btn${state.trendPeriodWindows.includes(w) ? " active" : ""}" data-period-window="${w}" type="button" title="Periodos extremos ${w} años">${w}a</button>`).join("")}
           </div>
@@ -2201,32 +2216,32 @@ function renderCorrelacion(body){
 function renderLMDI(body){
   const lmdiAreas = ["España", "Mundo"];
   const lmdiViews = [
-    { id: "waterfall-additive", label: "Waterfall · aditivo" },
-    { id: "bar-additive", label: "Barras · aditivo" },
-    { id: "bar-multiplicative", label: "Barras · multiplicativo" }
+    { id: "waterfall-additive", label: state.lang === "en" ? "Waterfall · additive" : "Waterfall · aditivo" },
+    { id: "bar-additive", label: state.lang === "en" ? "Bars · additive" : "Barras · aditivo" },
+    { id: "bar-multiplicative", label: state.lang === "en" ? "Bars · multiplicative" : "Barras · multiplicativo" }
   ];
   const lmdiPeriods = [
-    { id: "40years", label: "Cada 40 años" },
-    { id: "20years", label: "Cada 20 años" },
-    { id: "full", label: "Periodo completo" },
-    { id: "custom", label: "Manual" }
+    { id: "40years", label: state.lang === "en" ? "Every 40 years" : "Cada 40 años" },
+    { id: "20years", label: state.lang === "en" ? "Every 20 years" : "Cada 20 años" },
+    { id: "full", label: state.lang === "en" ? "Full period" : "Periodo completo" },
+    { id: "custom", label: state.lang === "en" ? "Manual" : "Manual" }
   ];
   const viewLabel = (lmdiViews.find(v => v.id === state.lmdiChart) || lmdiViews[0]).label;
   const periodLabel = (lmdiPeriods.find(p => p.id === state.lmdiPeriod) || lmdiPeriods[0]).label;
   body.innerHTML = `
     <div class="filter-bar compact-controls unified-controls">
-      ${miniSelectMarkup("l-ind-select", "Indicador", state.lmdiIndicator, INDICATORS)}
+      ${miniSelectMarkup("l-ind-select", t("indicator"), state.lmdiIndicator, INDICATORS)}
       <div class="field">
-        <label>Área</label>
+        <label>${t("area")}</label>
         <div class="mode-toggle" id="l-area-toggle">
-          ${lmdiAreas.map(a => `<button data-lmdi-area="${a}" class="${state.lmdiArea === a ? "active" : ""}" type="button">${a}</button>`).join("")}
+          ${lmdiAreas.map(a => `<button data-lmdi-area="${a}" class="${state.lmdiArea === a ? "active" : ""}" type="button">${tx(a)}</button>`).join("")}
         </div>
       </div>
-      ${miniSelectMarkup("l-view-select", "Vista", viewLabel, lmdiViews.map(v => v.label))}
-      ${miniSelectMarkup("l-period-select", "Periodos", periodLabel, lmdiPeriods.map(p => p.label))}
+      ${miniSelectMarkup("l-view-select", t("view"), viewLabel, lmdiViews.map(v => v.label))}
+      ${miniSelectMarkup("l-period-select", state.lang === "en" ? "Periods" : "Periodos", periodLabel, lmdiPeriods.map(p => p.label))}
       ${state.lmdiPeriod === "custom" ? `<div class="field lmdi-custom-field">
-        <label>Años</label>
-        <input class="period-input" id="l-custom-years" type="text" value="${escAttr(state.lmdiCustomYears)}" placeholder="1860,1900,1940,1980,2020" title="Años separados por comas">
+        <label>${state.lang === "en" ? "Years" : "Años"}</label>
+        <input class="period-input" id="l-custom-years" type="text" value="${escAttr(state.lmdiCustomYears)}" placeholder="1860,1900,1940,1980,2020" title="${state.lang === "en" ? "Comma-separated years" : "Años separados por comas"}">
       </div>` : ""}
     </div>
     <div class="canvas"><div class="chart-area" id="l-chart"></div><div class="chart-legend" id="l-legend"></div></div>`;
@@ -2503,18 +2518,18 @@ function renderLMDI(body){
 
 function renderTapio(body){
   const tapioAreas = ["España", "Mundo"];
-  const tapioWindows = [1,3,5,10].map(w => ({ id: w, label: `${w} año${w === 1 ? "" : "s"}` }));
+  const tapioWindows = [1,3,5,10].map(w => ({ id: w, label: state.lang === "en" ? `${w} year${w === 1 ? "" : "s"}` : `${w} año${w === 1 ? "" : "s"}` }));
   const tapioWindowLabel = (tapioWindows.find(w => w.id === state.tapioWindow) || tapioWindows[2]).label;
   body.innerHTML = `
     <div class="filter-bar compact-controls unified-controls">
-      ${miniSelectMarkup("tp-ind-select", "Indicador", state.tapioIndicator, INDICATORS)}
+      ${miniSelectMarkup("tp-ind-select", t("indicator"), state.tapioIndicator, INDICATORS)}
       <div class="field">
-        <label>Área</label>
+        <label>${t("area")}</label>
         <div class="mode-toggle" id="tp-area-toggle">
-          ${tapioAreas.map(a => `<button data-tapio-area="${a}" class="${state.tapioArea === a ? "active" : ""}" type="button">${a}</button>`).join("")}
+          ${tapioAreas.map(a => `<button data-tapio-area="${a}" class="${state.tapioArea === a ? "active" : ""}" type="button">${tx(a)}</button>`).join("")}
         </div>
       </div>
-      ${miniSelectMarkup("tp-w-select", "Ventana", tapioWindowLabel, tapioWindows.map(w => w.label))}
+      ${miniSelectMarkup("tp-w-select", t("window"), tapioWindowLabel, tapioWindows.map(w => w.label))}
     </div>
     <div class="canvas"><div class="chart-area" id="tp-chart"></div><div class="chart-legend" id="tp-legend"></div></div>`;
   bindMiniSelect(body, "tp-ind-select", value => { state.tapioIndicator = value; renderTapio(body); });
@@ -2615,24 +2630,24 @@ function openVizFromStatic(vizId){
 }
 
 const PERSPECTIVAS = [
-  { viz: "emisiones-gei", title: "Emisiones históricas de España", summary: "Trayectoria de las emisiones de gases de efecto invernadero desde el siglo XIX.", cat: "Emisiones" },
-  { viz: "emisiones-co2", title: "El balance histórico de emisiones", summary: "CO₂ fósil y usos del suelo para leer ritmos, acumulación y cambios de composición.", cat: "Emisiones" },
-  { viz: "desacoplamiento", title: "Desacoplamiento: ¿mito o realidad?", summary: "Escenarios Tapio para comparar crecimiento económico e impactos ambientales.", cat: "Análisis" },
-  { viz: "correlacion", title: "Crecimiento y eficiencia", summary: "Relaciones bivariadas entre PIB, población e indicadores ambientales.", cat: "Análisis" },
-  { viz: "materiales", title: "La huella acumulada de España", summary: "Flujos materiales, comercio y composición del metabolismo económico.", cat: "Materiales" },
-  { viz: "materiales", title: "España se construye", summary: "Peso de minerales, materiales de construcción y ciclos de expansión económica.", cat: "Materiales" },
-  { viz: "bosques", title: "La transición forestal", summary: "Superficie forestal, densidad y stock de carbono a escala nacional y provincial.", cat: "Bosques" },
+  { viz: "emisiones-gei", title: "Emisiones históricas de España", title_en: "Spain's historical emissions", summary: "Trayectoria de las emisiones de gases de efecto invernadero desde el siglo XIX.", summary_en: "The trajectory of greenhouse gas emissions since the nineteenth century.", cat: "Emisiones", cat_en: "Emissions" },
+  { viz: "emisiones-co2", title: "El balance histórico de emisiones", title_en: "The historical emissions balance", summary: "CO₂ fósil y usos del suelo para leer ritmos, acumulación y cambios de composición.", summary_en: "Fossil CO₂ and land use to read rhythms, accumulation and compositional change.", cat: "Emisiones", cat_en: "Emissions" },
+  { viz: "desacoplamiento", title: "Desacoplamiento: ¿mito o realidad?", title_en: "Decoupling: myth or reality?", summary: "Escenarios Tapio para comparar crecimiento económico e impactos ambientales.", summary_en: "Tapio scenarios to compare economic growth and environmental impacts.", cat: "Análisis", cat_en: "Analysis" },
+  { viz: "correlacion", title: "Crecimiento y eficiencia", title_en: "Growth and efficiency", summary: "Relaciones bivariadas entre PIB, población e indicadores ambientales.", summary_en: "Bivariate relationships between GDP, population and environmental indicators.", cat: "Análisis", cat_en: "Analysis" },
+  { viz: "materiales", title: "La huella acumulada de España", title_en: "Spain's accumulated footprint", summary: "Flujos materiales, comercio y composición del metabolismo económico.", summary_en: "Material flows, trade and the composition of the economic metabolism.", cat: "Materiales", cat_en: "Materials" },
+  { viz: "materiales", title: "España se construye", title_en: "Spain gets built", summary: "Peso de minerales, materiales de construcción y ciclos de expansión económica.", summary_en: "The role of minerals, construction materials and expansion cycles.", cat: "Materiales", cat_en: "Materials" },
+  { viz: "bosques", title: "La transición forestal", title_en: "The forest transition", summary: "Superficie forestal, densidad y stock de carbono a escala nacional y provincial.", summary_en: "Forest area, density and carbon stock at national and provincial scale.", cat: "Bosques", cat_en: "Forestry" },
 ];
 function renderPerspectivas(){
-  els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">Perspectivas</div><h1>Textos, análisis y debates</h1><p>Entradas internas hacia los visores de CAHE v3. Sin miniaturas ni enlaces heredados de la web anterior.</p></div>
-    <div class="card-grid perspective-grid">${PERSPECTIVAS.map(p => `<article class="card perspective-card"><span class="card-eyebrow">${p.cat}</span><h3>${p.title}</h3><p>${p.summary}</p><button class="card-action" type="button" data-perspective-viz="${p.viz}">Abrir visor interno →</button></article>`).join("")}</div></div>`;
+  els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("perspectivas")}</div><h1>${t("perspectivesTitle")}</h1><p>${t("perspectivesIntro")}</p></div>
+    <div class="card-grid perspective-grid">${PERSPECTIVAS.map(p => `<article class="card perspective-card"><span class="card-eyebrow">${state.lang === "en" ? p.cat_en : p.cat}</span><h3>${state.lang === "en" ? p.title_en : p.title}</h3><p>${state.lang === "en" ? p.summary_en : p.summary}</p><button class="card-action" type="button" data-perspective-viz="${p.viz}">${t("openViewer")} →</button></article>`).join("")}</div></div>`;
   els.workspace.querySelectorAll("[data-perspective-viz]").forEach(btn => {
     btn.addEventListener("click", () => openVizFromStatic(btn.dataset.perspectiveViz));
   });
 }
 
 const DATASETS = [
-  { label: "Dataset integrado", file: "cahe_datos_integrados.xlsx", desc: "Base longitudinal completa con las principales series de energía, materiales, emisiones, usos del suelo, bosques y cultivos, preparada para reproducir las visualizaciones.", scope: "Integrado" },
+  { label: "Dataset integrado", file: "cahe_datos_integrados.xlsx", desc: "Base longitudinal completa con las principales series de energía, materiales, emisiones, usos del suelo, bosques y cultivos, preparada para reproducir las visualizaciones.", scope: "Integrado", zenodo: "https://zenodo.org/communities/cahe" },
   { label: "Consumo de energía", file: "cahe_datos_energía.xlsx", desc: "Consumo de energía primaria: fuentes modernas (petróleo, gas, electricidad) y tradicionales (leña, alimentos y forraje).", scope: "Nacional", method: "energia_metodologia.pdf" },
   { label: "Emisiones GEI", file: "cahe_datos_emisiones_gei.xlsx", desc: "Gases de efecto invernadero (CO₂, CH₄, N₂O y F-gases) expresados en CO₂ equivalente.", scope: "Nacional", method: "emisiones_metodologia.pdf" },
   { label: "Emisiones de CO₂", file: "cahe_datos_emisiones_co2.xlsx", desc: "Emisiones de CO₂ por combustibles fósiles (carbón, petróleo y gas) y por usos del suelo.", scope: "Nacional", method: "emisiones_metodologia.pdf" },
@@ -2642,9 +2657,9 @@ const DATASETS = [
   { label: "Cultivos", file: "cahe_datos_cultivos.xlsx", desc: "Superficie cultivada y principales grupos de cultivos, incluyendo cereales, frutales, leguminosas, industriales y olivar.", scope: "Nacional · provincial", method: "cultivos_metodos_esp.docx" },
 ];
 function renderDatos(){
-  els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">Datos y metodología</div><h1>Descargas, métodos y Zenodo</h1><p>Descarga de series, documentos metodológicos y depósitos asociados. Cada serie resume brevemente qué mide y su escala de uso.</p></div>
-    <section class="section-block"><h2>Series — datos y método</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div><div class="label">${d.label}</div><div class="desc">${d.desc}</div></div><div class="meta">${d.scope || "XLSX"}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">Datos ↓</a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">Método</a>` : `<span></span>`}</div>`).join("")}</div></section>
-    <section class="section-block"><h2>Depósitos Zenodo</h2><div class="sub">Pendientes.</div><div class="card-grid" style="margin-top:8px"><a class="card" href="https://zenodo.org/communities/cahe" target="_blank" rel="noopener"><span class="card-eyebrow">Comunidad</span><h3>CAHE en Zenodo</h3><p>Pendiente.</p><div class="card-foot"><span>zenodo.org/communities/cahe</span><span class="arrow">→</span></div></a></div></section></div>`;
+  els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("datos")}</div><h1>${t("dataPageTitle")}</h1><p>${t("dataPageIntro")}</p></div>
+    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><span class="zenodo-mark">Z</span>${t("zenodo")}</a>` : `<span></span>`}</div>`).join("")}</div></section>
+    <section class="section-block"><h2>${t("zenodoDeposits")}</h2><div class="sub">${state.lang === "en" ? "Item-level Zenodo links appear in the series table when a deposit is ready." : "Los enlaces Zenodo por serie aparecen en la tabla cuando el depósito está preparado."}</div><div class="card-grid" style="margin-top:8px"><a class="card" href="https://zenodo.org/communities/cahe" target="_blank" rel="noopener"><span class="card-eyebrow">${t("community")}</span><h3>CAHE Zenodo</h3><p>zenodo.org/communities/cahe</p><div class="card-foot"><span class="zenodo-mark">Z</span><span class="arrow">→</span></div></a></div></section></div>`;
 }
 
 function renderNovedades(){
@@ -2665,11 +2680,32 @@ function teamCardsMarkup(){
   return TEAM.map(t => `<div class="team-card team-card-round"><img class="photo" src="${V1_IMG}/${t.photo}" alt="${t.name}" onerror="this.style.display='none'"><div class="body"><div class="name">${t.name}</div><div class="aff">${t.aff}</div><div class="links">${t.links.map(l => `<a href="${l.href}" target="_blank" rel="noopener" title="${l.title}"><img src="${V1_IMG}/${l.icon}" alt="${l.title}"></a>`).join("")}</div></div></div>`).join("");
 }
 function renderEquipo(){
-  els.workspace.innerHTML = `<div class="page equipo-page"><div class="page-head"><div class="eyebrow">Equipo</div><h1>Equipo CAHE</h1><p>Investigadores responsables de la Contabilidad Ambiental Histórica de España.</p></div>
+  els.workspace.innerHTML = `<div class="page equipo-page"><div class="page-head"><div class="eyebrow">${t("equipo")}</div><h1>${t("teamTitle")}</h1><p>${t("teamIntro")}</p></div>
     <div class="team-grid cahe-team-row">${teamCardsMarkup()}</div></div>`;
 }
 function renderAcerca(){
-  els.workspace.innerHTML = `<div class="page acerca-page"><div class="page-head"><div class="eyebrow">Acerca</div><h1>Sobre esta web</h1></div>
+  if(state.lang === "en"){
+    els.workspace.innerHTML = `<div class="page acerca-page"><div class="page-head"><div class="eyebrow">${t("acerca")}</div><h1>${t("aboutTitle")}</h1></div>
+      <div class="acordion" id="acordion">
+        <div class="acordion-item"><button class="acordion-head open" data-toggle><span>CAHE</span><span class="ico"></span></button>
+          <div class="acordion-body open"><div class="prose">
+            <p>The Historical Environmental Accounts of Spain (CAHE) is a research project that reconstructs long-term statistical series on natural resource use, environmental impacts and economic development in Spain.</p>
+            <p>The project extends modern environmental accounts backwards in time to provide a broad historical perspective on energy use, material flows, land use, forests, crops and greenhouse gas emissions from the nineteenth century to the present.</p>
+            <p>The results are estimates based on historical sources and quantitative reconstruction methods. They are intended to document robust temporal and spatial trajectories rather than administrative annual figures with absolute precision.</p>
+          </div></div></div>
+        <div class="acordion-item"><button class="acordion-head" data-toggle><span>News</span><span class="ico"></span></button><div class="acordion-body">
+          <div class="update-item update-latest"><span class="badge">Latest</span><span class="date">15/03/2026</span><h3>Historical emissions series</h3><p>Update of Spain's emissions series to 2023.</p></div>
+          <div class="update-item"><span class="date">15/03/2026</span><h3>Website launch</h3></div>
+        </div></div>
+        <div class="acordion-item"><button class="acordion-head" data-toggle><span>Funding</span><span class="ico"></span></button><div class="acordion-body"><div class="prose">
+          <p>This website has been developed within the DESIMPACTA project (PID2021-123220NB-I00), funded by the Spanish State Research Agency and FEDER. Principal investigators: Juan Infante-Amate and Iñaki Iriarte-Goñi.</p>
+          <p>The historical series have also benefited from related research projects and collaborations, including HEDEC, Fundación Ramón Areces and the BBVA Foundation Leonardo grants.</p>
+        </div></div></div>
+      </div></div>`;
+    bindAccordion();
+    return;
+  }
+  els.workspace.innerHTML = `<div class="page acerca-page"><div class="page-head"><div class="eyebrow">${t("acerca")}</div><h1>${t("aboutTitle")}</h1></div>
     <div class="acordion" id="acordion">
       <div class="acordion-item"><button class="acordion-head open" data-toggle><span>La CAHE</span><span class="ico"></span></button>
         <div class="acordion-body open"><div class="prose">
@@ -2709,13 +2745,39 @@ function renderAcerca(){
 }
 
 /* ====== Nav ====== */
+function bindAccordion(){
+  els.workspace.querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", () => {
+    const head = btn, body = head.nextElementSibling, open = head.classList.contains("open");
+    els.workspace.querySelectorAll(".acordion-head").forEach(h => h.classList.remove("open"));
+    els.workspace.querySelectorAll(".acordion-body").forEach(b => b.classList.remove("open"));
+    if(!open){ head.classList.add("open"); body.classList.add("open"); }
+  }));
+}
+function updateChrome(){
+  document.documentElement.lang = state.lang;
+  document.title = state.lang === "en" ? "CAHE — Historical Environmental Accounts of Spain" : "CAHE — Contabilidad Ambiental Histórica de España";
+  const brandSub = document.querySelector(".brand-name .sub");
+  if(brandSub) brandSub.textContent = t("brandSub");
+  els.nav.querySelector('[data-section="visualizacion"]').textContent = t("visualizacion");
+  els.nav.querySelector('[data-section="datos"]').textContent = t("datos");
+  els.nav.querySelector('[data-section="perspectivas"]').textContent = t("perspectivas");
+  els.nav.querySelector('[data-section="equipo"]').textContent = t("equipo");
+  els.nav.querySelector('[data-section="acerca"]').textContent = t("acerca");
+  const homeLabel = els.home?.querySelector("span:last-child");
+  if(homeLabel) homeLabel.textContent = t("portada");
+  if(els.lang){
+    els.lang.textContent = state.lang === "es" ? "EN" : "ES";
+    els.lang.setAttribute("aria-label", state.lang === "es" ? "Change language to English" : "Cambiar idioma a español");
+  }
+}
 function setNavActive(section){ els.nav.querySelectorAll("[data-section]").forEach(b => b.classList.toggle("active", b.dataset.section === section)); }
 function bindNav(){ els.nav.querySelectorAll("[data-section]").forEach(btn => { btn.addEventListener("click", () => { const s = btn.dataset.section; setNavActive(s); state.section = s; if(s === "visualizacion") state.subsection = "landing"; window.location.hash = s; renderMain(); }); }); }
+function bindLanguage(){ if(!els.lang) return; els.lang.addEventListener("click", () => { state.lang = state.lang === "es" ? "en" : "es"; localStorage.setItem("cahe_lang", state.lang); updateChrome(); renderMain(); }); }
 function bindHome(){ els.home.addEventListener("click", () => { if(window.parent !== window) window.parent.postMessage({ type: "cahe-back" }, "*"); else window.location.href = "index.html"; }); }
 function bindModal(){ document.querySelectorAll("[data-modal-close]").forEach(el => el.addEventListener("click", closeModal)); window.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); }); }
 
 function init(){
-  bindNav(); bindHome(); bindModal();
+  bindNav(); bindLanguage(); bindHome(); bindModal(); updateChrome();
   const hash = window.location.hash.replace("#","");
   if(["perspectivas","datos","novedades","equipo","acerca"].includes(hash)) state.section = hash;
   if(["global","macro","sectorial","commodities"].includes(hash)){

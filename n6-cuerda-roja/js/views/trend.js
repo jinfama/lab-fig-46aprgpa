@@ -1,10 +1,10 @@
 ﻿// Trend view — line chart of selected countries' indicator over time.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui31';
-import { getIndicator } from '../indicators.js?v=20260517-ui31';
+import { DataLoader } from '../data-loader.js?v=20260517-ui33';
+import { getIndicator } from '../indicators.js?v=20260517-ui33';
 import { formatCategoryLabel } from '../labels.js';
-import { metricValue, resolveMetric, selectedFootprintFlows, supportsCropCategory } from '../metric.js?v=20260517-ui31';
+import { metricValue, resolveMetric, selectedFootprintFlows, supportsCropCategory } from '../metric.js?v=20260517-ui33';
 
 const COLORS = ['#214B52', '#A5534E', '#2F4D63', '#B78B55', '#62735A', '#6F4B8B', '#2D7B7C', '#111827'];
 const INK = '#162123';
@@ -244,8 +244,9 @@ function drawChart(allSeries, metric, category) {
   const xDomain = oneYear ? [dataFrom - 1, dataFrom + 1] : [dataFrom, dataTo];
   const x = d3.scaleLinear().domain(xDomain).range([0, iw]);
 
-  let [yMin, yMax] = d3.extent(allPoints, d => d.value);
-  const forceZeroFloor = sparseMode && yMin >= 0;
+  const [rawYMin, rawYMax] = d3.extent(allPoints, d => d.value);
+  let [yMin, yMax] = [rawYMin, rawYMax];
+  const forceZeroFloor = sparseMode && rawYMin >= 0;
   if (forceZeroFloor) {
     yMin = 0;
     yMax = yMax === 0 ? 1 : yMax * 1.08;
@@ -258,6 +259,7 @@ function drawChart(allSeries, metric, category) {
     yMin -= pad;
     yMax += pad;
   }
+  if (rawYMin >= 0 && yMin < 0) yMin = 0;
   if (!forceZeroFloor && yMin > 0 && yMin / Math.max(yMax, 1) < 0.18) yMin = 0;
   const y = d3.scaleLinear()
     .domain([yMin, yMax]).nice()
@@ -379,7 +381,8 @@ function drawFacetedChart(allSeries, metric, category, W, H) {
   const dataTo = years[years.length - 1];
   const oneYear = dataFrom === dataTo;
   const playbackYear = playbackYearFor(dataFrom, dataTo);
-  let [yMin, yMax] = d3.extent(allPoints, d => d.value);
+  const [rawYMin, rawYMax] = d3.extent(allPoints, d => d.value);
+  let [yMin, yMax] = [rawYMin, rawYMax];
   if (yMin === yMax) {
     const delta = Math.abs(yMin || 1) * 0.08 || 1;
     yMin -= delta;
@@ -389,6 +392,7 @@ function drawFacetedChart(allSeries, metric, category, W, H) {
     yMin -= pad;
     yMax += pad;
   }
+  if (rawYMin >= 0 && yMin < 0) yMin = 0;
   if (yMin > 0 && yMin / Math.max(yMax, 1) < 0.18) yMin = 0;
 
   _svg.append('text')
@@ -558,7 +562,8 @@ function drawSingleYearBars(rangedSeries, metric, category, W, H, year) {
     .range([0, iw])
     .padding(Math.min(0.42, Math.max(0.16, 0.8 / Math.max(1, bars.length))));
 
-  let [yMin, yMax] = d3.extent(bars, d => d.value);
+  const [rawYMin, rawYMax] = d3.extent(bars, d => d.value);
+  let [yMin, yMax] = [rawYMin, rawYMax];
   if (yMin === yMax) {
     const delta = Math.abs(yMin || 1) * 0.08 || 1;
     yMin -= delta;
@@ -568,6 +573,7 @@ function drawSingleYearBars(rangedSeries, metric, category, W, H, year) {
     yMin -= pad;
     yMax += pad;
   }
+  if (rawYMin >= 0 && yMin < 0) yMin = 0;
   if (yMin > 0) yMin = 0;
 
   const y = d3.scaleLinear().domain([yMin, yMax]).nice().range([ih, 0]);

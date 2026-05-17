@@ -1,9 +1,9 @@
 ﻿// Right panel: controls, crop categories and countries.
 
 import { State } from './state.js';
-import { DataLoader } from './data-loader.js?v=20260517-ui31';
-import { getCategory, getIndicator } from './indicators.js?v=20260517-ui31';
-import { indicatorInfo } from './indicator-info.js?v=20260517-ui31';
+import { DataLoader } from './data-loader.js?v=20260517-ui33';
+import { getCategory, getIndicator } from './indicators.js?v=20260517-ui33';
+import { indicatorInfo } from './indicator-info.js?v=20260517-ui33';
 import { escapeHtml, formatCategoryLabel, normalizeSearchText } from './labels.js';
 import {
   FUNCTIONAL_UNITS,
@@ -15,7 +15,7 @@ import {
   resolveMetric,
   selectedFootprintFlows,
   supportsCropCategory,
-} from './metric.js?v=20260517-ui31';
+} from './metric.js?v=20260517-ui33';
 
 export async function initRightPanel() {
   initPanelSections();
@@ -68,6 +68,9 @@ function renderOptions() {
   const metric = resolveMetric(ind, lang);
   const selectedFlows = selectedFootprintFlows().map(f => f.id);
   const canShowProducts = supportsCropCategory(ind);
+  const isConditions = cat?.id === 'conditions';
+  const conditionOption = isConditions ? conditionOptionForIndicator(ind?.id) : null;
+  const conditionMeasure = conditionOption ? conditionMeasureForIndicator(conditionOption, ind?.id) : null;
   const treemapMode = canShowProducts ? State.get('treemapMode') : 'countries';
   const trendViewMode = State.get('trendLayout') === 'facet'
     ? `facet_${State.get('trendFacetBy') || 'territory'}`
@@ -76,22 +79,43 @@ function renderOptions() {
     window.setTimeout(() => State.set('treemapMode', 'countries'), 0);
   }
   const labels = lang === 'en'
-    ? { indicator: 'Indicator', laborInput: 'Labour input', unitChoice: 'Functional unit', readingChoice: 'Reading', footprintFlow: 'Footprint flow', all: 'All', clear: 'Clear', noIndicators: 'No indicators available', layout: 'View', overlay: 'One panel', facetTerritory: 'One panel per country/region', facetFlow: 'One panel per flow', composition: 'Composition', products: 'Products', countries: 'Countries', productsByCountry: 'Products by country' }
-    : { indicator: 'Indicador', laborInput: 'Trabajo', unitChoice: 'Unidad funcional', readingChoice: 'Lectura', footprintFlow: 'Flujo de huella', all: 'Todos', clear: 'Limpiar', noIndicators: 'Sin indicadores disponibles', layout: 'Vista', overlay: 'Un panel', facetTerritory: 'Un panel por país/región', facetFlow: 'Un panel por flujo', composition: 'Composición', products: 'Productos', countries: 'Países', productsByCountry: 'Productos por país' };
+    ? { indicator: 'Indicator', conditionUnit: 'Unit', laborInput: 'Labour input', unitChoice: 'Functional unit', readingChoice: 'Reading', footprintFlow: 'Footprint flow', all: 'All', clear: 'Clear', noIndicators: 'No indicators available', layout: 'View', overlay: 'One panel', facetTerritory: 'One panel per country/region', facetFlow: 'One panel per flow', composition: 'Composition', products: 'Products', countries: 'Countries', productsByCountry: 'Products by country' }
+    : { indicator: 'Indicador', conditionUnit: 'Unidad', laborInput: 'Trabajo', unitChoice: 'Unidad funcional', readingChoice: 'Lectura', footprintFlow: 'Flujo de huella', all: 'Todos', clear: 'Limpiar', noIndicators: 'Sin indicadores disponibles', layout: 'Vista', overlay: 'Un panel', facetTerritory: 'Un panel por país/región', facetFlow: 'Un panel por flujo', composition: 'Composición', products: 'Productos', countries: 'Países', productsByCountry: 'Productos por país' };
+
+  const indicatorControl = isConditions
+    ? `
+      <label class="rp-select-row" title="${escapeHtml(indicatorInfo(ind, lang, metric) || '')}">
+        <span>${labels.indicator}</span>
+        <select data-condition-topic>
+          ${CONDITION_OPTIONS.map(opt => `<option value="${escapeHtml(opt.id)}" ${opt.id === conditionOption.id ? 'selected' : ''}>${escapeHtml(opt.label[lang])}</option>`).join('')}
+        </select>
+      </label>
+      ${conditionOption.measures.length > 1 ? `
+        <label class="rp-select-row" title="${lang === 'en' ? 'Choose whether the indicator is read as hours or as a share.' : 'Elige si el indicador se lee como horas o como porcentaje.'}">
+          <span>${labels.conditionUnit}</span>
+          <select data-condition-measure>
+            ${conditionOption.measures.map(m => `<option value="${escapeHtml(m.id)}" ${m.id === conditionMeasure.id ? 'selected' : ''}>${escapeHtml(m.label[lang])}</option>`).join('')}
+          </select>
+        </label>
+      ` : ''}
+    `
+    : `
+      <label class="rp-select-row" title="${escapeHtml(indicatorInfo(ind, lang, metric) || '')}">
+        <span>${labels.indicator}</span>
+        ${cat && cat.indicators.length
+          ? `<select data-option-ind>
+            ${cat.indicators.map(i => {
+              const m = resolveMetric(i, lang);
+              const info = indicatorInfo(i, lang, m) || `${m.labelText} (${m.unit})`;
+              return `<option value="${escapeHtml(i.id)}" ${i.id === State.get('activeIndicator') ? 'selected' : ''} title="${escapeHtml(info)}">${escapeHtml(m.labelText)} - ${escapeHtml(m.unit)}</option>`;
+            }).join('')}
+          </select>`
+          : `<div class="rp-empty">${labels.noIndicators}</div>`}
+      </label>
+    `;
 
   body.innerHTML = `
-    <label class="rp-select-row" title="${escapeHtml(indicatorInfo(ind, lang, metric) || '')}">
-      <span>${labels.indicator}</span>
-      ${cat && cat.indicators.length
-        ? `<select data-option-ind>
-          ${cat.indicators.map(i => {
-            const m = resolveMetric(i, lang);
-            const info = indicatorInfo(i, lang, m) || `${m.labelText} (${m.unit})`;
-            return `<option value="${escapeHtml(i.id)}" ${i.id === State.get('activeIndicator') ? 'selected' : ''} title="${escapeHtml(info)}">${escapeHtml(m.labelText)} - ${escapeHtml(m.unit)}</option>`;
-          }).join('')}
-        </select>`
-        : `<div class="rp-empty">${labels.noIndicators}</div>`}
-    </label>
+    ${indicatorControl}
 
     ${State.get('activeView') === 'trend' ? `
       <label class="rp-select-row" title="${lang === 'en' ? 'Choose one chart or small multiples.' : 'Elige una gráfica única o pequeños paneles.'}">
@@ -156,6 +180,16 @@ function renderOptions() {
   `;
 
   body.querySelector('[data-option-ind]')?.addEventListener('change', e => State.set('activeIndicator', e.target.value));
+  body.querySelector('[data-condition-topic]')?.addEventListener('change', e => {
+    const nextOption = CONDITION_OPTIONS.find(opt => opt.id === e.target.value) || CONDITION_OPTIONS[0];
+    const preferredMeasure = conditionMeasure?.id || nextOption.measures[0].id;
+    const nextMeasure = nextOption.measures.find(m => m.id === preferredMeasure) || nextOption.measures[0];
+    State.set('activeIndicator', nextMeasure.indicator);
+  });
+  body.querySelector('[data-condition-measure]')?.addEventListener('change', e => {
+    const nextMeasure = conditionOption?.measures.find(m => m.id === e.target.value) || conditionOption?.measures[0];
+    if (nextMeasure) State.set('activeIndicator', nextMeasure.indicator);
+  });
   body.querySelector('[data-option-unit]')?.addEventListener('change', e => State.set('functionalUnit', e.target.value));
   body.querySelector('[data-option-labor-input]')?.addEventListener('change', e => State.set('productivityLaborInput', e.target.value));
   body.querySelector('[data-option-direction]')?.addEventListener('change', e => State.set('productivityDirection', e.target.value));
@@ -290,6 +324,59 @@ function renderOptionsLegacy() {
   body.querySelectorAll('[data-option-fp-trend]').forEach(btn => {
     btn.addEventListener('click', () => State.set('footprintTrendMode', btn.dataset.optionFpTrend));
   });
+}
+
+const CONDITION_OPTIONS = [
+  {
+    id: 'monthly_wage',
+    label: { es: 'Salario mensual', en: 'Monthly wage' },
+    measures: [{ id: 'value', indicator: 'monthly_wage', label: { es: 'USD-PPP', en: 'USD-PPP' } }],
+  },
+  {
+    id: 'va_per_worker',
+    label: { es: 'Valor añadido / trabajador', en: 'Value added / worker' },
+    measures: [{ id: 'value', indicator: 'va_per_worker', label: { es: 'USD', en: 'USD' } }],
+  },
+  {
+    id: 'child_labor',
+    label: { es: 'Trabajo infantil', en: 'Child labour' },
+    measures: [
+      { id: 'hours', indicator: 'hours_child_labor', label: { es: 'Horas', en: 'Hours' } },
+      { id: 'percent', indicator: 'pct_child_labor', label: { es: 'Porcentaje', en: 'Share' } },
+    ],
+  },
+  {
+    id: 'forced_labor',
+    label: { es: 'Trabajo forzoso', en: 'Forced labour' },
+    measures: [
+      { id: 'hours', indicator: 'hours_forced_labor', label: { es: 'Horas', en: 'Hours' } },
+      { id: 'percent', indicator: 'pct_forced_labor', label: { es: 'Porcentaje', en: 'Share' } },
+    ],
+  },
+  {
+    id: 'extreme_poverty',
+    label: { es: 'Pobreza extrema', en: 'Extreme poverty' },
+    measures: [
+      { id: 'hours', indicator: 'hours_extreme_poverty', label: { es: 'Horas', en: 'Hours' } },
+      { id: 'percent', indicator: 'pct_extreme_poverty', label: { es: 'Porcentaje', en: 'Share' } },
+    ],
+  },
+  {
+    id: 'not_covered',
+    label: { es: 'Sin protección social', en: 'Without social protection' },
+    measures: [
+      { id: 'hours', indicator: 'hours_not_covered', label: { es: 'Horas', en: 'Hours' } },
+      { id: 'percent', indicator: 'pct_not_covered', label: { es: 'Porcentaje', en: 'Share' } },
+    ],
+  },
+];
+
+function conditionOptionForIndicator(indicatorId) {
+  return CONDITION_OPTIONS.find(opt => opt.measures.some(m => m.indicator === indicatorId)) || CONDITION_OPTIONS[0];
+}
+
+function conditionMeasureForIndicator(option, indicatorId) {
+  return option.measures.find(m => m.indicator === indicatorId) || option.measures[0];
 }
 
 async function renderTerritoriesLegacy() {

@@ -1,10 +1,10 @@
 ﻿// Treemap view: composition by product category or by countries.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui31';
-import { getIndicator } from '../indicators.js?v=20260517-ui31';
+import { DataLoader } from '../data-loader.js?v=20260517-ui33';
+import { getIndicator } from '../indicators.js?v=20260517-ui33';
 import { formatCategoryLabel } from '../labels.js';
-import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui31';
+import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui33';
 
 const PALETTE = ['#214B52', '#8DBBC8', '#2F4D63', '#A5534E', '#62735A', '#B78B55', '#6F4B8B', '#2D7B7C', '#7D8B72', '#263F46'];
 let _countryData = null;

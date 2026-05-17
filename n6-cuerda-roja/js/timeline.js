@@ -1,8 +1,8 @@
 ﻿// Bottom timeline: dual-handle slider + play/pause + speed.
 
 import { State } from './state.js';
-import { getIndicator } from './indicators.js?v=20260517-ui31';
-import { metricYearRange, resolveMetric } from './metric.js?v=20260517-ui31';
+import { getIndicator } from './indicators.js?v=20260517-ui33';
+import { metricYearRange, resolveMetric } from './metric.js?v=20260517-ui33';
 
 let _domainMin = 1961, _domainMax = 2021;
 let _yearFrom = 1961, _yearTo = 2021;
@@ -37,7 +37,10 @@ function renderTrack() {
   const pCurrent = pctFor(State.get('animationYear') ?? State.get('currentYear'));
   handleFrom.style.left = `${pFrom}%`;
   handleTo.style.left   = `${pTo}%`;
-  if (handleCurrent) handleCurrent.style.left = `${pCurrent}%`;
+  if (handleCurrent) {
+    handleCurrent.style.left = `${pCurrent}%`;
+    handleCurrent.dataset.year = Math.round(State.get('animationYear') ?? State.get('currentYear'));
+  }
   rangeFill.style.left  = `${Math.min(pFrom, pTo)}%`;
   rangeFill.style.width = `${Math.abs(pTo - pFrom)}%`;
   el('tl-label-from').textContent = _yearFrom;
@@ -68,9 +71,12 @@ function setCurrentYear(y) {
 
 function syncAnimationYearLabels(y) {
   const yy = Math.max(_yearFrom, Math.min(_yearTo, +y || _yearFrom));
-  const handleCurrent = el('tl-handle-current');
-  if (handleCurrent) handleCurrent.style.left = `${pctFor(yy)}%`;
   const rounded = Math.round(yy);
+  const handleCurrent = el('tl-handle-current');
+  if (handleCurrent) {
+    handleCurrent.style.left = `${pctFor(yy)}%`;
+    handleCurrent.dataset.year = rounded;
+  }
   const currentInput = el('tl-year-current');
   if (currentInput && document.activeElement !== currentInput) currentInput.value = rounded;
   const mapYear = el('map-year');
