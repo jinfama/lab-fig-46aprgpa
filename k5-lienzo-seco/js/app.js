@@ -6,6 +6,7 @@
 
 const els = {
   nav: document.getElementById("main-nav"),
+  groupNav: document.getElementById("header-group-nav"),
   groupBar: document.getElementById("group-bar"),
   workspace: document.getElementById("workspace"),
   tooltip: document.getElementById("tooltip"),
@@ -30,23 +31,29 @@ const state = {
   trendMA: "none", trendShowR2: false, trendShowLine: false,
   trendShowMax: false, trendShowToday: false, trendShowBreaks: false, trendPeriodWindow: null, trendPeriodWindows: [],
   globalOptionsOpen: true,
-  corrXInd: "PIB", corrXVar: "Per cápita", corrYInd: "Emisiones de CO₂", corrYVar: "Per cápita",
-  corrLog: false, corrArea: "Both",
+  corrXInd: "PIB", corrXVar: "Per cápita", corrXScale: "linear",
+  corrYInd: "Emisiones de CO₂", corrYVar: "Per cápita", corrYScale: "linear",
+  corrArea: "Both",
   lmdiIndicator: "Emisiones de CO₂", lmdiArea: "España",
   lmdiChart: "waterfall-additive", lmdiPeriod: "40years", lmdiCustomYears: "1860,1900,1940,1980,2020",
   tapioIndicator: "Emisiones de CO₂", tapioArea: "España", tapioWindow: 5,
+  perspectiveTopic: "all", perspectiveAuthor: "all", perspectiveSort: "newest", perspectiveEntry: null,
   /* Timeline */
-  year: 2020, speed: 1, playing: false,
-  globalYear: null, globalSpeed: 8, globalPlaying: false,
+  year: 2020, speed: 4, playing: false,
+  globalYear: null, globalSpeed: 4, globalPlaying: false,
+  yearStart: null, yearEnd: null, globalYearStart: null, globalYearEnd: null,
   mapMiniOpen: true,
   lang: localStorage.getItem("cahe_lang") || "es",
 };
 
-const V1_VIZ = "../web_cahe/site/visualizaciones";
-const V1_DOCS = "../web_cahe/site/assets/docs";
-const V1_IMG = "../web_cahe/site/assets/img";
-const V1_ICONS = "../web_cahe/site/assets/img/icons";
-const V1_RAW = "../web_cahe/web_graficas/data_raw";
+const IS_BETA_HUB = (location.hostname === "jinfama.github.io" && location.pathname.includes("/lab-fig-46aprgpa/")) || location.pathname.includes("/k5-lienzo-seco/");
+const V1_SITE_BASE = IS_BETA_HUB ? "../x9-bruma-cobre" : "../web_cahe/site";
+const V1_VIZ = `${V1_SITE_BASE}/visualizaciones`;
+const V1_DOCS = `${V1_SITE_BASE}/assets/docs`;
+const V1_IMG = `${V1_SITE_BASE}/assets/img`;
+const V1_ICONS = `${V1_IMG}/icons`;
+const V1_RAW = IS_BETA_HUB ? "data/global" : "../web_cahe/web_graficas/data_raw";
+const ZENODO_CAHE_URL = "https://zenodo.org/search?q=Contabilidad%20Ambiental%20Hist%C3%B3rica%20de%20Espa%C3%B1a";
 
 const UI = {
   es: {
@@ -55,13 +62,16 @@ const UI = {
     dataXlsx: "Datos", method: "Método", infoMethod: "Información y metodología", cite: "Citar", howToCite: "Cómo citar", zenodo: "Zenodo",
     choosePanel: "Elige un panel", landingIntro: "Mapas, tendencias y tablas desde una entrada común.", openViewer: "Abrir visor", comingSoon: "Próximamente",
     macroEyebrow: "Indicadores macro", sectorEyebrow: "Indicadores sectoriales", commodities: "Commodities", analysis: "Análisis",
-    view: "Vista", variable: "Variable", components: "Componentes", scale: "Escala", indicator: "Indicador", metric: "Métrica", geographicArea: "Área geográfica",
+    view: "Vista", variable: "Variable", components: "Componentes", scale: "Escala", indicator: "Indicador", metric: "Métrica", geographicArea: "Área",
     area: "Área", window: "Ventana", category: "Categoría", crop: "Cultivo", component: "Componente", map: "Mapa", trend: "Tend.", table: "Tabla",
     lineal: "Lineal", log: "Log", play: "Reproducir timelapse", pause: "Pausar timelapse", speed: "Velocidad", year: "Año",
     nationalSeries: "Serie nacional", variables: "Variables", types: "Tipos", coverage: "Cobertura", fullMethod: "Metodología completa",
     dataPageTitle: "Descargas, métodos y Zenodo", dataPageIntro: "Descarga de series, documentos metodológicos y depósitos asociados. Cada serie resume brevemente qué mide y su escala de uso.",
-    dataSeriesTitle: "Series — datos y método", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.",
-    perspectivesTitle: "Textos, análisis y debates", perspectivesIntro: "Entradas internas hacia los visores de CAHE v3. Sin miniaturas ni enlaces heredados de la web anterior.",
+    dataSeriesTitle: "Series — datos y método", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.", pendingOne: "pendiente",
+    perspectivesTitle: "Perspectivas", perspectivesIntro: "Entradas breves con fecha, autor y lectura de los principales debates de CAHE.",
+    topic: "Tema", author: "Autor", orderBy: "Orden", allTopics: "Todos los temas", allAuthors: "Todos los autores",
+    newest: "Más recientes", oldest: "Más antiguas", titleOrder: "Título A-Z", noEntries: "Sin entradas para este filtro.",
+    coordination: "Coordinación", teamMembers: "Equipo",
     teamTitle: "Equipo CAHE", teamIntro: "Investigadores responsables de la Contabilidad Ambiental Histórica de España.", aboutTitle: "Sobre esta web",
     noData: "Sin datos.", noSeries: "Sin series para la selección.", mapProvince: "Mapa provincial", mapInfo: "Color escala fija sobre todo el rango temporal. Pasa el ratón sobre una provincia para ver su valor.",
     native: "v3 · nativo", close: "Cerrar", copied: "Copiado",
@@ -72,13 +82,16 @@ const UI = {
     dataXlsx: "Data", method: "Method", infoMethod: "Information and methods", cite: "Cite", howToCite: "How to cite", zenodo: "Zenodo",
     choosePanel: "Choose a panel", landingIntro: "Maps, trends and tables from a common entry point.", openViewer: "Open viewer", comingSoon: "Coming soon",
     macroEyebrow: "Macro indicators", sectorEyebrow: "Sectoral indicators", commodities: "Commodities", analysis: "Analysis",
-    view: "View", variable: "Variable", components: "Components", scale: "Scale", indicator: "Indicator", metric: "Metric", geographicArea: "Geographic area",
+    view: "View", variable: "Variable", components: "Components", scale: "Scale", indicator: "Indicator", metric: "Metric", geographicArea: "Area",
     area: "Area", window: "Window", category: "Category", crop: "Crop", component: "Component", map: "Map", trend: "Trend", table: "Table",
     lineal: "Linear", log: "Log", play: "Play timelapse", pause: "Pause timelapse", speed: "Speed", year: "Year",
     nationalSeries: "National series", variables: "Variables", types: "Types", coverage: "Coverage", fullMethod: "Full methodology",
     dataPageTitle: "Downloads, methods and Zenodo", dataPageIntro: "Series downloads, methodology documents and associated deposits. Each series briefly states what it measures and its scale.",
-    dataSeriesTitle: "Series — data and method", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.",
-    perspectivesTitle: "Essays, analysis and debates", perspectivesIntro: "Internal links to CAHE v3 viewers. No thumbnails or inherited links from the previous website.",
+    dataSeriesTitle: "Series — data and method", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.", pendingOne: "pending",
+    perspectivesTitle: "Perspectives", perspectivesIntro: "Short dated entries with authorship and readings of CAHE's main debates.",
+    topic: "Topic", author: "Author", orderBy: "Order", allTopics: "All topics", allAuthors: "All authors",
+    newest: "Newest", oldest: "Oldest", titleOrder: "Title A-Z", noEntries: "No entries for this filter.",
+    coordination: "Coordination", teamMembers: "Team",
     teamTitle: "CAHE team", teamIntro: "Researchers responsible for the Historical Environmental Accounts of Spain.", aboutTitle: "About this website",
     noData: "No data.", noSeries: "No series for the current selection.", mapProvince: "Provincial map", mapInfo: "Fixed color scale over the whole time range. Hover over a province to see its value.",
     native: "v3 · native", close: "Close", copied: "Copied",
@@ -87,9 +100,11 @@ const UI = {
 
 const LABEL_EN = {
   "Perspectiva global": "Global perspective", "Indicadores macro": "Macro indicators", "Indicadores sectoriales": "Sectoral indicators",
+  "España vs Mundo": "Spain vs World", "Forestal · Cultivos · Industria": "Forestry · Crops · Industry", "Olivo · Leña · Potasa": "Olive · Fuelwood · Potash",
   "Energía": "Energy", "Emisiones GEI": "GHG emissions", "Emisiones CO₂": "CO₂ emissions", "Materiales": "Materials", "Tierra": "Land",
-  "Forestal": "Forestry", "Bosques": "Forests", "Cultivos": "Crops", "Industria": "Industry", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood",
+  "Forestal": "Forestry", "Bosques": "Forests", "Cultivos": "Crops", "Industria": "Industry", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood", "Ahorro Genuino": "Genuine savings",
   "Dataset integrado": "Integrated dataset", "Consumo de energía": "Energy consumption", "Emisiones de CO₂": "CO₂ emissions", "Flujos materiales": "Material flows", "Usos del suelo": "Land use",
+  "PIB": "GDP", "Población": "Population", "IDH": "HDI", "IDH-A": "AHDI", "Agua": "Water", "Nitrógeno": "Nitrogen", "Tierras de cultivo": "Cropland",
   "Tendencias": "Trends", "Correlación": "Correlation", "Descomposición · LMDI": "Decomposition · LMDI", "Desacoplamiento · Tapio": "Decoupling · Tapio",
   "Series por área y variable": "Series by area and variable", "Scatter bivariado": "Bivariate scatter", "Descomposición Kaya": "Kaya decomposition", "Escenarios de elasticidad": "Elasticity scenarios",
   "España": "Spain", "Mundo": "World", "Ambos": "Both", "Absoluto": "Absolute", "Acumulado": "Cumulative", "Intensidad": "Intensity",
@@ -108,10 +123,103 @@ const LABEL_EN = {
   "Superficie forestal por categorías de monte, densidad y stock de carbono, con lectura nacional y provincial.": "Forest area by categories, density and carbon stock, at national and provincial scale.",
   "Superficie cultivada y principales grupos de cultivos, incluyendo cereales, frutales, leguminosas, industriales y olivar.": "Cropland area and major crop groups, including cereals, fruit trees, legumes, industrial crops and olive groves.",
 };
+Object.assign(LABEL_EN, {
+  "Macro indicators": "Macro indicators",
+  "Sectoral indicators": "Sectoral indicators",
+  "Global perspective": "Global perspective",
+  "Área": "Area",
+  "Eje X": "X axis",
+  "Eje Y": "Y axis",
+  "Variable X": "X variable",
+  "Variable Y": "Y variable",
+  "Escala": "Scale",
+  "Vista": "View",
+  "Categoría": "Category",
+  "Combinación": "Combination",
+  "Componentes": "Components",
+  "Tipos": "Types",
+  "Año inicio": "Start year",
+  "Año fin": "End year",
+  "Absolutos": "Absolute",
+  "Carbón": "Coal",
+  "Petróleo": "Oil",
+  "Gas": "Gas",
+  "Electricidad": "Electricity",
+  "Leña": "Fuelwood",
+  "Alimentos y forraje": "Food and fodder",
+  "Hidráulica y eólica": "Hydro and wind",
+  "Uso del suelo": "Land use",
+  "CO₂ fósiles": "Fossil CO₂",
+  "CO₂ uso del suelo": "Land-use CO₂",
+  "CH₄ Bio": "CH₄ bio",
+  "CH₄ energía/industria": "CH₄ energy/industry",
+  "N₂O Bio": "N₂O bio",
+  "N₂O energía/industria": "N₂O energy/industry",
+  "Otros": "Other",
+  "Biomasa": "Biomass",
+  "Materiales fósiles": "Fossil materials",
+  "Minerales metálicos": "Metal ores",
+  "Minerales no metálicos": "Non-metallic minerals",
+  "Extracción": "Extraction",
+  "Consumo aparente": "Apparent consumption",
+  "Importaciones": "Imports",
+  "Exportaciones": "Exports",
+  "Superficie": "Area",
+  "Stock de C": "Carbon stock",
+  "Densidad de C": "Carbon density",
+  "% de superficie": "% of area",
+  "Monte abierto": "Open woodland",
+  "Monte alto": "High forest",
+  "Monte bajo": "Low forest",
+  "Dehesa": "Dehesa",
+  "Cultivo herbáceo": "Herbaceous cropland",
+  "Cultivo leñoso": "Woody cropland",
+  "Pastizal y matorral": "Pasture and shrubland",
+  "Herbáceo": "Herbaceous",
+  "Leñoso": "Woody crops",
+  "Producción": "Production",
+  "Rendimiento": "Yield",
+  "Barbecho": "Fallow",
+  "Cereales y granos": "Cereals and grains",
+  "Frutas y frutos secos": "Fruit and nuts",
+  "Hortalizas y tubérculos": "Vegetables and tubers",
+  "Industriales y otros": "Industrial crops and others",
+  "Olivos": "Olives",
+  "Energía Final": "Final energy",
+  "Energía Primaria": "Primary energy",
+  "Manufacturas": "Manufacturing",
+  "Línea": "Line",
+  "Área": "Area",
+  "Tabla": "Table",
+  "Mapa": "Map",
+  "Tend.": "Trend",
+  "Lineal": "Linear",
+  "Log": "Log",
+  "Serie": "Series",
+  "Valor": "Value",
+  "datos": "data",
+  "método": "method",
+  "citar": "cite",
+  "Información": "Information",
+  "Gases de efecto invernadero (CO₂, CH₄, N₂O, F-gases) en CO₂ equivalente.": "Greenhouse gases (CO₂, CH₄, N₂O and F-gases) expressed as CO₂ equivalent.",
+  "CO₂ por combustibles fósiles (petróleo, carbón, gas) y usos del suelo.": "CO₂ from fossil fuels (oil, coal and gas) and land use.",
+  "Flujos materiales: biomasa, fósiles, minerales metálicos y no metálicos. Incluye comercio (extracción, consumo aparente, importaciones, exportaciones).": "Material flows: biomass, fossil materials, metal ores and non-metallic minerals. Includes trade: extraction, apparent consumption, imports and exports.",
+  "Energía primaria y final, y emisiones de CO₂ por subsectores industriales.": "Primary and final energy, and CO₂ emissions by industrial subsector.",
+  "Ahorro Genuino — indicador macro de sostenibilidad débil (próximamente).": "Genuine savings — weak sustainability macro indicator (coming soon).",
+  "Olivo: superficie, producción, comercio (próximamente).": "Olive: area, production and trade (coming soon).",
+  "Leña: aprovechamiento forestal, energía tradicional y comercio (próximamente).": "Fuelwood: forest use, traditional energy and trade (coming soon).",
+  "Potasa: extracción y flujos (próximamente).": "Potash: extraction and flows (coming soon).",
+});
 function t(key){ return (UI[state.lang] && UI[state.lang][key]) || UI.es[key] || key; }
-function tx(value){ return state.lang === "en" ? (LABEL_EN[value] || value) : value; }
+function tx(value){
+  const raw = value == null ? "" : String(value);
+  if(state.lang !== "en") return raw;
+  if(LABEL_EN[raw]) return LABEL_EN[raw];
+  if(raw.includes(" · ")) return raw.split(" · ").map(part => LABEL_EN[part] || part).join(" · ");
+  return raw;
+}
 function itemTitle(item){ return tx(item?.label || ""); }
-function itemDescription(item){ return tx(item?.desc || ""); }
+function itemDescription(item){ return state.lang === "en" && item?.descEn ? item.descEn : tx(item?.desc || ""); }
 
 /* Grupos principales; los mapas se integran como sub-vista en su indicador. */
 const GROUPS = [
@@ -128,6 +236,7 @@ const LANDING_GROUPS = [
     label: "Perspectiva global",
     meta: "España vs Mundo",
     desc: "Panel internacional con tendencias, correlación, descomposición LMDI/IPAT y desacoplamiento Tapio. Incluye reproducción temporal en las vistas evolutivas.",
+    descEn: "International panel with trends, correlation, LMDI/IPAT decomposition and Tapio decoupling, including temporal playback in evolving views.",
     icon: `${V1_ICONS}/ic-tendencias.png`,
     cls: "global"
   },
@@ -137,6 +246,7 @@ const LANDING_GROUPS = [
     label: "Indicadores macro",
     meta: "Nacional · Provincial",
     desc: "Energía, emisiones, materiales y tierra. Cada indicador abre una pantalla propia con controles de serie nacional y, cuando existe, mapa provincial sincronizado.",
+    descEn: "Energy, emissions, materials and land. Each indicator opens a dedicated view with national series controls and synchronized provincial maps when available.",
     icon: `${V1_ICONS}/ic-energia.png`,
     cls: "macro"
   },
@@ -146,6 +256,7 @@ const LANDING_GROUPS = [
     label: "Indicadores sectoriales",
     meta: "Forestal · Cultivos · Industria",
     desc: "Lectura sectorial forestal, agraria e industrial, con mapas provinciales en los sectores territoriales y tendencias nacionales en todos ellos.",
+    descEn: "Sectoral forestry, crop and industry views, with provincial maps for territorial sectors and national trends for all of them.",
     icon: `${V1_ICONS}/ic-bosques.png`,
     cls: "sectorial"
   },
@@ -153,8 +264,9 @@ const LANDING_GROUPS = [
     group: "commodities",
     id: "olivo",
     label: "Commodities",
-    meta: "Olivo · Potasa",
+    meta: "Olivo · Leña · Potasa",
     desc: "Entrada específica para productos y recursos singulares. Olivo y potasa quedan fuera de los indicadores sectoriales generales y se agrupan aquí.",
+    descEn: "A dedicated entry for specific products and resources. Olive, fuelwood and potash sit outside the general sectoral indicators.",
     icon: `${V1_ICONS}/ic-materiales.png`,
     cls: "commodities"
   },
@@ -197,7 +309,8 @@ const CATALOG_OTHER = {
       mapSlug: "uso-suelo" },
     { id: "ahorro-genuino", label: "Ahorro Genuino",  meta: "En construcción",
       icon: `${V1_ICONS}/ic-materiales.png`,
-      desc: "Ahorro Genuino — indicador macro de sostenibilidad débil (próximamente).", comingSoon: true },
+      desc: "Ahorro Genuino — indicador macro de sostenibilidad débil (próximamente).",
+      descEn: "Genuine savings — weak sustainability macro indicator (coming soon).", comingSoon: true },
   ],
   sectorial: [
     { id: "bosques",   dataSlug: "bosques",  label: "Forestal",   meta: "Nacional · Provincial",
@@ -213,26 +326,30 @@ const CATALOG_OTHER = {
     { id: "industria", dataSlug: "industria", label: "Industria", meta: "Nacional",
       icon: `${V1_ICONS}/ic-industria.png`,
       desc: "Energía primaria y final, y emisiones de CO₂ por subsectores industriales.",
+      descEn: "Primary and final energy, and CO₂ emissions by industrial subsector.",
       method: "agricultura_territorio_metodologia.pdf", data: "cahe_datos_integrados.xlsx" },
   ],
   commodities: [
     { id: "olivo",  label: "Olivo",   meta: "En construcción",
-      icon: `${V1_ICONS}/ic-cultivos.png`,
-      desc: "Olivo: superficie, producción, comercio (próximamente).", comingSoon: true },
+      icon: `assets/icons/ic-olivo.svg`,
+      desc: "Olivo: superficie, producción, comercio (próximamente).",
+      descEn: "Olive: area, production and trade (coming soon).", comingSoon: true },
     { id: "lena",  label: "Leña",   meta: "En construcción",
-      icon: `${V1_ICONS}/ic-energia.png`,
-      desc: "Leña: aprovechamiento forestal, energía tradicional y comercio (próximamente).", comingSoon: true },
+      icon: `assets/icons/ic-lenas.svg`,
+      desc: "Leña: aprovechamiento forestal, energía tradicional y comercio (próximamente).",
+      descEn: "Fuelwood: forest use, traditional energy and trade (coming soon).", comingSoon: true },
     { id: "potasa", label: "Potasa",  meta: "En construcción",
       icon: `${V1_ICONS}/ic-industria.png`,
-      desc: "Potasa: extracción y flujos (próximamente).", comingSoon: true },
+      desc: "Potasa: extracción y flujos (próximamente).",
+      descEn: "Potash: extraction and flows (coming soon).", comingSoon: true },
   ],
 };
 
 const DEFAULT_CITATION = "Infante-Amate, J., Iriarte-Goñi, I., & Aguilera, E. Series de la Contabilidad Ambiental Histórica de España. CAHE — Contabilidad Ambiental Histórica de España. www.cahe.es";
 const CITATIONS = {
-  "energia": DEFAULT_CITATION,
-  "emisiones-gei": DEFAULT_CITATION,
-  "emisiones-co2": DEFAULT_CITATION,
+  "energia": "Muñoz-Delgado, B., & Rubio-Varas, M. (2024). Transiciones energéticas en España. En I. Iriarte-Goñi & J. Infante-Amate (Coords.), Impactos ambientales del crecimiento económico en España: una perspectiva histórica (pp. 123–144). Prensas de la Universidad de Zaragoza; Infante-Amate, J., & Aguilera, E. (2024). Beyond fossil fuels: Considering land-based emissions reshapes the carbon intensity of modern economic growth (Spain, 1860–2017). Historical Methods: A Journal of Quantitative and Interdisciplinary History, 57(4), 226–241.",
+  "emisiones-gei": "Infante-Amate, J., & Aguilera, E. (2024). Beyond fossil fuels: Considering land-based emissions reshapes the carbon intensity of modern economic growth (Spain, 1860–2017). Historical Methods: A Journal of Quantitative and Interdisciplinary History, 57(4), 226–241.",
+  "emisiones-co2": "Infante-Amate, J., & Aguilera, E. (2024). Beyond fossil fuels: Considering land-based emissions reshapes the carbon intensity of modern economic growth (Spain, 1860–2017). Historical Methods: A Journal of Quantitative and Interdisciplinary History, 57(4), 226–241.",
   "materiales": "Infante-Amate, J., Vila, J., Aguilera, E., Sanjuán, Á., Oropesa, F., & de Molina, M. G. (2021). Las bases materiales del desarrollo económico en España (1860-2016). Un estudio desde el metabolismo social. Cuadernos Económicos de ICE, 101.",
   "tierra": "Infante-Amate, J., Aguilera, E., Vila, J., & González de Molina, M. (2025). Serie histórica de cobertura del suelo (España, 1860-2020). Contabilidad Ambiental Histórica de España.",
   "bosques": "Infante-Amate, J., Iriarte-Goñi, I., Urrego-Mesa, A., & Gingrich, S. (2022). From woodfuel to industrial wood: a socio-metabolic reading of the forest transition in Spain (1860-2010). Ecological Economics, 201, 107548.",
@@ -597,7 +714,7 @@ function stopPlayback(){
 }
 
 function timelineDelay(speed){
-  return Math.max(70, 520 / Math.max(1, speed || 1));
+  return Math.max(45, 360 / Math.max(1, speed || 1));
 }
 
 function nearestTimelineYear(years, value){
@@ -606,6 +723,142 @@ function nearestTimelineYear(years, value){
   if(y <= years[0]) return years[0];
   if(y >= years.at(-1)) return years.at(-1);
   return years.reduce((best, cur) => Math.abs(cur - y) < Math.abs(best - y) ? cur : best, years[0]);
+}
+
+function timelineKeys(kind){
+  return kind === "global"
+    ? { start: "globalYearStart", end: "globalYearEnd", current: "globalYear" }
+    : { start: "yearStart", end: "yearEnd", current: "year" };
+}
+
+function yearsWithinRange(years, start, end){
+  return years.filter(y => y >= start && y <= end);
+}
+
+function getTimelineRange(kind, years){
+  const keys = timelineKeys(kind);
+  if(!years.length) return { min: null, max: null, start: null, end: null, years: [] };
+  const min = years[0], max = years.at(-1);
+  let start = state[keys.start] == null ? min : nearestTimelineYear(years, state[keys.start]);
+  let end = state[keys.end] == null ? max : nearestTimelineYear(years, state[keys.end]);
+  let startIdx = Math.max(0, years.indexOf(start));
+  let endIdx = Math.max(0, years.indexOf(end));
+  if(startIdx > endIdx) [startIdx, endIdx] = [endIdx, startIdx];
+  if(startIdx === endIdx && years.length > 1){
+    if(endIdx < years.length - 1) endIdx += 1;
+    else startIdx -= 1;
+  }
+  start = years[Math.max(0, startIdx)];
+  end = years[Math.min(years.length - 1, endIdx)];
+  state[keys.start] = start;
+  state[keys.end] = end;
+  const activeYears = yearsWithinRange(years, start, end);
+  if(activeYears.length){
+    state[keys.current] = nearestTimelineYear(activeYears, state[keys.current] ?? end);
+  }
+  return { min, max, start, end, years: activeYears };
+}
+
+function setTimelineEndpoint(kind, years, side, rawYear){
+  const keys = timelineKeys(kind);
+  const range = getTimelineRange(kind, years);
+  if(!years.length) return range;
+  let startIdx = years.indexOf(range.start);
+  let endIdx = years.indexOf(range.end);
+  const targetIdx = Math.max(0, years.indexOf(nearestTimelineYear(years, rawYear)));
+  if(side === "start"){
+    startIdx = years.length > 1 ? Math.min(targetIdx, endIdx - 1) : targetIdx;
+  }else{
+    endIdx = years.length > 1 ? Math.max(targetIdx, startIdx + 1) : targetIdx;
+  }
+  state[keys.start] = years[Math.max(0, startIdx)];
+  state[keys.end] = years[Math.min(years.length - 1, endIdx)];
+  return getTimelineRange(kind, years);
+}
+
+function updateTimelineRangeUi(timeline, slider, years, kind){
+  if(!timeline || !slider || !years.length) return;
+  const range = getTimelineRange(kind, years);
+  const denom = range.max - range.min || 1;
+  const pct = y => Math.max(0, Math.min(100, ((y - range.min) / denom) * 100));
+  const startPct = pct(range.start);
+  const endPct = pct(range.end);
+  const selection = timeline.querySelector("[data-range-selection]");
+  if(selection){
+    selection.style.left = `${startPct}%`;
+    selection.style.width = `${Math.max(0, endPct - startPct)}%`;
+  }
+  timeline.querySelectorAll("[data-range-handle]").forEach(handle => {
+    const side = handle.dataset.rangeHandle;
+    const y = side === "start" ? range.start : range.end;
+    const p = pct(y);
+    handle.style.left = `${p}%`;
+    handle.classList.toggle("edge-start", p < 3);
+    handle.classList.toggle("edge-end", p > 97);
+    handle.setAttribute("aria-valuemin", String(range.min));
+    handle.setAttribute("aria-valuemax", String(range.max));
+    handle.setAttribute("aria-valuenow", String(y));
+    handle.setAttribute("title", state.lang === "en" ? `Drag to select ${side} year` : `Arrastra para seleccionar el año ${side === "start" ? "inicial" : "final"}`);
+    const label = handle.querySelector(".timeline-handle-year");
+    if(label) label.textContent = y;
+  });
+  const startLabel = timeline.querySelector(".timeline-start");
+  const endLabel = timeline.querySelector(".timeline-end");
+  if(startLabel) startLabel.textContent = range.start;
+  if(endLabel) endLabel.textContent = range.end;
+  updateTimelineBubble(timeline, slider, state[timelineKeys(kind).current]);
+}
+
+function yearFromTimelinePoint(track, years, clientX){
+  const rect = track.getBoundingClientRect();
+  const pct = rect.width ? Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) : 0;
+  return years[0] + pct * (years.at(-1) - years[0]);
+}
+
+function bindTimelineRangeHandles(timeline, years, kind, onChange){
+  const track = timeline?.querySelector(".timeline-track-wrap");
+  if(!track || !years.length || timeline.__rangeHandlesBound) return;
+  timeline.__rangeHandlesBound = true;
+  let activeHandle = null;
+  const slider = timeline.querySelector(".year-slider");
+  function move(clientX){
+    if(!activeHandle) return;
+    stopPlayback();
+    setTimelineEndpoint(kind, years, activeHandle.dataset.rangeHandle, yearFromTimelinePoint(track, years, clientX));
+    updateTimelineRangeUi(timeline, slider, years, kind);
+    onChange?.();
+  }
+  function onMove(event){ move(event.clientX); }
+  function onUp(){
+    if(activeHandle) activeHandle.classList.remove("dragging");
+    activeHandle = null;
+    document.removeEventListener("pointermove", onMove);
+    document.removeEventListener("pointerup", onUp);
+  }
+  timeline.querySelectorAll("[data-range-handle]").forEach(handle => {
+    handle.addEventListener("pointerdown", event => {
+      event.preventDefault();
+      activeHandle = handle;
+      activeHandle.classList.add("dragging");
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp, { once: true });
+      move(event.clientX);
+    });
+    handle.addEventListener("keydown", event => {
+      const delta = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+      if(!delta) return;
+      event.preventDefault();
+      stopPlayback();
+      const range = getTimelineRange(kind, years);
+      const side = handle.dataset.rangeHandle;
+      const current = side === "start" ? range.start : range.end;
+      const idx = Math.max(0, years.indexOf(current));
+      const next = years[Math.max(0, Math.min(years.length - 1, idx + delta))];
+      setTimelineEndpoint(kind, years, side, next);
+      updateTimelineRangeUi(timeline, slider, years, kind);
+      onChange?.();
+    });
+  });
 }
 
 function setPlayButtonState(button, playing){
@@ -653,13 +906,43 @@ function bindSpeedMenu(root, getSpeed, setSpeed, onChange){
 
 function miniSelectMarkup(id, label, value, options){
   return `<div class="field mini-select-field">
-    <label>${label}</label>
+    <label>${tx(label)}</label>
     <div class="mini-select" id="${id}" data-mini-select>
       <button class="mini-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
         <span>${tx(value)}</span><span class="mini-chevron"></span>
       </button>
       <div class="mini-select-menu" role="listbox">
         ${options.map(opt => `<button type="button" role="option" data-value="${escAttr(opt)}" class="${opt === value ? "active" : ""}">${tx(opt)}</button>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function componentMultiSelectMarkup(id, label, options, selected, colorFn){
+  const selectedSet = new Set(selected || []);
+  const selectedOptions = options.filter(opt => selectedSet.has(opt));
+  const summary = selectedOptions.length
+    ? `${selectedOptions.length} ${state.lang === "en" ? "selected" : "seleccionados"}`
+    : (state.lang === "en" ? "Select" : "Seleccionar");
+  const hasTotal = options.includes("Total");
+  const regularOptions = options.filter(opt => opt !== "Total");
+  const optionMarkup = opt => `<button type="button" role="option" aria-selected="${selectedSet.has(opt)}" class="comp-option${opt === "Total" ? " total-option" : ""}${selectedSet.has(opt) ? " active" : ""}" data-tipo="${escAttr(opt)}"><span class="check">${selectedSet.has(opt) ? "✓" : ""}</span><span class="sw" style="background:${colorFn(opt)}"></span><span>${tx(opt)}</span></button>`;
+  return `<div class="field field-components inline-components">
+    <label>${tx(label)}</label>
+    <div class="comp-select" id="${id}" data-comp-select>
+      <button class="comp-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span>${summary}</span><span class="mini-chevron"></span>
+      </button>
+      <div class="comp-select-menu" role="listbox" aria-multiselectable="true">
+        <div class="comp-menu-actions">
+          <button type="button" data-component-action="all">${state.lang === "en" ? "All" : "Todos"}</button>
+          <button type="button" data-component-action="clear">${state.lang === "en" ? "Clear" : "Limpiar"}</button>
+        </div>
+        ${hasTotal ? `<div class="comp-option-block comp-total-block">${optionMarkup("Total")}</div>` : ""}
+        <div class="comp-option-block">${regularOptions.map(optionMarkup).join("")}</div>
+      </div>
+      <div class="comp-chips selected-components">
+        ${selectedOptions.map(opt => `<button type="button" class="comp-chip active" data-tipo="${escAttr(opt)}" title="${state.lang === "en" ? "Remove" : "Quitar"} ${escAttr(tx(opt))}"><span class="sw" style="background:${colorFn(opt)}"></span>${tx(opt)}<span class="chip-x">×</span></button>`).join("")}
       </div>
     </div>
   </div>`;
@@ -688,6 +971,40 @@ function bindMiniSelect(root, id, onChange){
     btn.setAttribute("aria-expanded", "false");
     onChange(option.dataset.value);
   }));
+}
+
+function bindComponentSelect(root, id){
+  const box = root.querySelector(`#${id}`);
+  if(!box) return;
+  const btn = box.querySelector(".comp-select-btn");
+  btn.addEventListener("click", () => {
+    stopPlayback();
+    root.querySelectorAll("[data-mini-select],[data-comp-select]").forEach(x => {
+      if(x !== box){
+        x.classList.remove("open");
+        x.querySelector(".mini-select-btn,.comp-select-btn")?.setAttribute("aria-expanded", "false");
+      }
+    });
+    const open = !box.classList.contains("open");
+    box.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", String(open));
+  });
+}
+
+function updateTimelineBubble(timeline, slider, year){
+  const bubble = timeline?.querySelector("[data-year-bubble]");
+  if(!bubble || !slider) return;
+  const min = Number(slider.min), max = Number(slider.max);
+  const denom = max - min || 1;
+  const pct = Math.max(0, Math.min(100, ((Number(year) - min) / denom) * 100));
+  const startYear = Number(timeline.querySelector('[data-range-handle="start"]')?.getAttribute("aria-valuenow") ?? min);
+  const endYear = Number(timeline.querySelector('[data-range-handle="end"]')?.getAttribute("aria-valuenow") ?? max);
+  const atBoundary = Number(year) === startYear || Number(year) === endYear;
+  bubble.textContent = atBoundary ? "" : year;
+  bubble.style.left = `${pct}%`;
+  bubble.classList.toggle("boundary", atBoundary);
+  bubble.classList.toggle("edge-start", pct < 5);
+  bubble.classList.toggle("edge-end", pct > 95);
 }
 
 function startIndicatorTimer(years, onTick, onStop){
@@ -730,25 +1047,43 @@ function startIndicatorTimer(years, onTick, onStop){
 
 function setupIndicatorTimeline(timeline, years, onTick){
   if(!timeline || !years.length) return;
-  if(state.year < years[0] || state.year > years.at(-1)) state.year = years.at(-1);
-  state.year = nearestTimelineYear(years, state.year);
+  const initialRange = getTimelineRange("indicator", years);
+  if(state.year < initialRange.start || state.year > initialRange.end) state.year = initialRange.end;
+  state.year = nearestTimelineYear(initialRange.years, state.year);
   const slider = timeline.querySelector("#year-slider");
   const readout = timeline.querySelector("#year-readout");
   const range = timeline.querySelector("#year-range");
+  const start = timeline.querySelector("#year-start");
+  const end = timeline.querySelector("#year-end");
   const play = timeline.querySelector("#play-btn");
   slider.min = years[0];
   slider.max = years.at(-1);
   slider.step = 1;
   slider.value = state.year;
+  if(start) start.textContent = initialRange.start;
+  if(end) end.textContent = initialRange.end;
   readout.textContent = state.year;
-  range.textContent = `${years[0]}–${years.at(-1)}`;
+  if(range) range.textContent = `${initialRange.start}–${initialRange.end}`;
+  updateTimelineRangeUi(timeline, slider, years, "indicator");
+  updateTimelineBubble(timeline, slider, state.year);
   setPlayButtonState(play, state.playing);
   function updateReadout(y){
     slider.value = y;
     readout.textContent = y;
+    updateTimelineRangeUi(timeline, slider, years, "indicator");
+    updateTimelineBubble(timeline, slider, y);
   }
+  bindTimelineRangeHandles(timeline, years, "indicator", () => {
+    const active = getTimelineRange("indicator", years);
+    state.year = nearestTimelineYear(active.years, state.year);
+    updateReadout(state.year);
+    setPlayButtonState(play, false);
+    clearIndicatorTimer();
+    onTick(state.year);
+  });
   slider.addEventListener("input", e => {
-    state.year = nearestTimelineYear(years, e.target.value);
+    const active = getTimelineRange("indicator", years);
+    state.year = nearestTimelineYear(active.years, e.target.value);
     state.playing = false;
     updateReadout(state.year);
     setPlayButtonState(play, false);
@@ -758,7 +1093,8 @@ function setupIndicatorTimeline(timeline, years, onTick){
   play.addEventListener("click", () => {
     state.playing = !state.playing;
     setPlayButtonState(play, state.playing);
-    if(state.playing) startIndicatorTimer(years, y => {
+    const activeYears = getTimelineRange("indicator", years).years;
+    if(state.playing) startIndicatorTimer(activeYears, y => {
       updateReadout(y);
       onTick(y);
     }, () => setPlayButtonState(play, false));
@@ -768,7 +1104,7 @@ function setupIndicatorTimeline(timeline, years, onTick){
     }
   });
   bindSpeedMenu(timeline, () => state.speed, v => { state.speed = v; }, () => {
-    if(state.playing) startIndicatorTimer(years, y => {
+    if(state.playing) startIndicatorTimer(getTimelineRange("indicator", years).years, y => {
       updateReadout(y);
       onTick(y);
     }, () => setPlayButtonState(play, false));
@@ -782,18 +1118,17 @@ function cutoffSeries(series, years, year){
   }));
 }
 
+function sliceSeriesByRange(series, years, start, end){
+  const indexes = years.map((year, i) => ({ year, i })).filter(d => d.year >= start && d.year <= end);
+  return series.map(s => ({ ...s, values: indexes.map(d => s.values[d.i]) }));
+}
+
 /* ====== Group bar ====== */
 function renderGroupBar(){
-  const inViz = state.section === "visualizacion" && (state.subsection === "viz" || state.subsection === "group");
-  if(!inViz){ els.groupBar.style.display = "none"; return; }
-  els.groupBar.style.display = "";
-  els.groupBar.innerHTML = GROUPS.map(g => `
-    <button class="group-btn ${g.cls} ${g.id === state.group ? "active" : ""}" data-group="${g.id}">
-      <span class="dot"></span>${tx(g.label)}
-    </button>`).join("");
-  els.groupBar.querySelectorAll("[data-group]").forEach(btn => {
-    btn.addEventListener("click", () => switchGroup(btn.dataset.group));
-  });
+  if(els.groupBar) els.groupBar.style.display = "none";
+  if(!els.groupNav) return;
+  els.groupNav.style.display = "none";
+  els.groupNav.innerHTML = "";
 }
 
 function switchGroup(groupId){
@@ -812,12 +1147,11 @@ function defaultVizId(groupId){
 }
 
 function renderPanelTools(dataLink, methodLink, info = true, zenodoLink = null, citation = null){
-  if(!dataLink && !methodLink && !info && !zenodoLink && !citation) return "";
+  if(!dataLink && !info && !zenodoLink && !citation) return "";
   return `<div class="tools panel-tools">
     ${dataLink ? `<a class="btn-download" href="${dataLink}" target="_blank" rel="noopener" title="${t("dataXlsx")}" aria-label="${t("dataXlsx")}"><span class="arr">↓</span><span class="tool-text">${t("dataXlsx")}</span></a>` : ""}
-    ${methodLink ? `<a class="btn-method" href="${methodLink}" target="_blank" rel="noopener" title="${t("method")}" aria-label="${t("method")}"><span class="icon">M</span><span class="tool-text">${t("method")}</span></a>` : ""}
-    ${zenodoLink ? `<a class="btn-zenodo" href="${zenodoLink}" target="_blank" rel="noopener" title="${t("zenodo")}" aria-label="${t("zenodo")}"><span class="zenodo-mark">Z</span><span class="tool-text">${t("zenodo")}</span></a>` : ""}
-    ${citation ? `<button class="btn-cite" id="btn-cite" type="button" title="${t("howToCite")}" aria-label="${t("howToCite")}"><span class="icon">“</span><span class="tool-text">${t("cite")}</span></button>` : ""}
+    ${zenodoLink ? `<a class="btn-zenodo" href="${zenodoLink}" target="_blank" rel="noopener" title="${t("zenodo")}" aria-label="${t("zenodo")}"><span class="zenodo-letter">Z</span><span class="tool-text">${t("zenodo")}</span></a>` : ""}
+    ${citation ? `<button class="btn-cite" id="btn-cite" type="button" title="${t("howToCite")}" aria-label="${t("howToCite")}"><span class="quote-icon" aria-hidden="true"><span>“</span><span>”</span></span><span class="tool-text">${t("cite")}</span></button>` : ""}
     ${info ? `<button class="btn-info" id="btn-info" type="button" title="${t("infoMethod")}" aria-label="${t("infoMethod")}" data-method-link="${methodLink || ""}"><span class="icon">i</span><span class="tool-text">${t("infoMethod")}</span></button>` : ""}
   </div>`;
 }
@@ -839,6 +1173,7 @@ function renderMain(){
 function flipCard(opts){
   const { id, group, label, meta, desc, icon, comingSoon, cls } = opts;
   const csCls = comingSoon ? " coming-soon" : "";
+  const description = state.lang === "en" && opts.descEn ? opts.descEn : tx(desc);
   return `<button class="flip-card ${cls || ""}${csCls}" ${comingSoon ? "" : `data-enter="${id}" data-group="${group}"`} type="button"${comingSoon ? " disabled" : ""}>
     <div class="flip-inner">
       <div class="flip-front">
@@ -848,7 +1183,7 @@ function flipCard(opts){
         <span class="swatch"></span>
       </div>
       <div class="flip-back">
-        <p>${compact(tx(desc), 118)}</p>
+        <p>${compact(description, 118)}</p>
         ${comingSoon ? `<span class="open" style="color:var(--warm)">${t("comingSoon")}</span>` : `<span class="open">${t("openViewer")} <span class="arrow">→</span></span>`}
       </div>
     </div>
@@ -878,12 +1213,24 @@ function renderLanding(){
   });
 }
 
+function globalAnalysisDescription(id){
+  const es = MODAL_INFO[id]?.datos || "";
+  if(state.lang !== "en") return es;
+  const en = {
+    tendencias: "Annual Spain and world series with metric, area, moving-average, trend and exploratory controls.",
+    correlacion: "Bivariate scatter view for Spain and world, with yearly points connected through time.",
+    descomposicion: "IPAT/LMDI decomposition of environmental indicators in additive, multiplicative and waterfall form.",
+    desacoplamiento: "Tapio decoupling scenarios comparing environmental impacts and GDP growth with moving windows."
+  };
+  return en[id] || tx(es);
+}
+
 function groupLandingItems(){
   if(state.group === "global") return {
     eyebrow: tx("Perspectiva global"),
     title: state.lang === "en" ? "Spain in global perspective" : "España en perspectiva global",
     intro: state.lang === "en" ? "International series and analysis tools to compare Spain and the world." : "Series internacionales y herramientas de análisis para comparar España y mundo.",
-    items: GLOBAL_ANALYSES.map(a => ({ ...a, meta: a.sub, desc: MODAL_INFO[a.id]?.datos || a.sub, group: "global" }))
+    items: GLOBAL_ANALYSES.map(a => ({ ...a, meta: a.sub, desc: globalAnalysisDescription(a.id), group: "global" }))
   };
   const map = {
     macro: [t("macroEyebrow"), t("macroEyebrow"), state.lang === "en" ? "Energy, emissions, materials and land in national series and provincial maps when available." : "Energía, emisiones, materiales y tierra en serie nacional y, cuando existe, mapa provincial."],
@@ -906,7 +1253,7 @@ function panelEntryCard(item){
       </div>
       <div class="panel-entry-back">
         <span class="panel-entry-title">${itemTitle(item)}</span>
-        <p>${compact(tx(item.desc || item.sub || ""), 118)}</p>
+        <p>${compact(item.desc ? itemDescription(item) : tx(item.sub || ""), 118)}</p>
         <span class="panel-entry-open">${item.comingSoon ? t("comingSoon") : `${t("openViewer")} →`}</span>
       </div>
     </div>
@@ -955,7 +1302,16 @@ function renderSidebar(){
   else if(state.group === "sectorial"){ items = CATALOG_OTHER.sectorial; eyebrow = t("sectorEyebrow"); }
   else { items = CATALOG_OTHER.commodities; eyebrow = t("commodities"); }
 
-  sidebar.innerHTML = `<div class="eyebrow">${eyebrow}</div>` + items.map(it => {
+  sidebar.className = `viz-sidebar sidebar-${state.group}`;
+  const groupSwitch = LANDING_GROUPS.map(g => `
+    <button class="side-group-btn ${g.cls || ""}${g.group === state.group ? " active" : ""}" data-side-group="${g.group}" type="button">
+      <span class="side-group-icon">${g.icon ? `<img src="${g.icon}" alt="">` : ""}</span>
+      <span>${tx(g.label)}</span>
+    </button>`).join("");
+  sidebar.innerHTML = `
+    <div class="side-group-switcher">${groupSwitch}</div>
+    <div class="side-section-label">${eyebrow}</div>
+  ` + items.map(it => {
     const meta = state.group === "global" ? "" : (it.sub || it.meta || "");
     return `
     <button class="viz-side-item${it.id === state.vizId ? " active" : ""}${it.comingSoon ? " coming-soon" : ""}" data-id="${it.id}">
@@ -966,6 +1322,9 @@ function renderSidebar(){
       </span>
     </button>`;
   }).join("");
+  sidebar.querySelectorAll("[data-side-group]").forEach(btn => {
+    btn.addEventListener("click", () => switchGroup(btn.dataset.sideGroup));
+  });
   sidebar.querySelectorAll("[data-id]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.vizId = btn.dataset.id;
@@ -1078,7 +1437,15 @@ async function renderIndicatorViz(){
           <button class="play-btn" id="play-btn" type="button" aria-label="${t("play")}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
           ${speedMenuMarkup(state.speed, [1,2,4,8])}
           <div class="year-readout" id="year-readout">${state.year}</div>
-          <input class="year-slider" id="year-slider" type="range">
+          <div class="timeline-bound timeline-start" id="year-start"></div>
+          <div class="timeline-track-wrap">
+            <span class="timeline-selection" data-range-selection></span>
+            <button class="timeline-limit timeline-limit-start" data-range-handle="start" type="button" role="slider" aria-label="${state.lang === "en" ? "Start year" : "Año inicial"}" aria-valuemin="" aria-valuemax="" aria-valuenow=""><span class="timeline-handle-year"></span></button>
+            <input class="year-slider" id="year-slider" type="range">
+            <button class="timeline-limit timeline-limit-end" data-range-handle="end" type="button" role="slider" aria-label="${state.lang === "en" ? "End year" : "Año final"}" aria-valuemin="" aria-valuemax="" aria-valuenow=""><span class="timeline-handle-year"></span></button>
+            <span class="year-bubble" id="year-bubble" data-year-bubble></span>
+          </div>
+          <div class="timeline-bound timeline-end" id="year-end"></div>
           <div class="year-range" id="year-range"></div>
         </div>
       </div>
@@ -1099,8 +1466,11 @@ function renderIndicatorTendencia(item, data){
   const tipos = data.tipos || [];
   const tipo2s = data.tipo2s || [];
   if(tipos.length){
-    const validSelection = (state.ind_tipoMulti || []).filter(t => tipos.includes(t));
-    if(!validSelection.length) validSelection.push(tipos.find(t => t !== "Total") || tipos[0]);
+    const currentSelection = Array.isArray(state.ind_tipoMulti) ? state.ind_tipoMulti : null;
+    const validSelection = (currentSelection || []).filter(t => tipos.includes(t));
+    if((currentSelection == null || (currentSelection.length && !validSelection.length))){
+      validSelection.push(tipos.find(t => t !== "Total") || tipos[0]);
+    }
     if(state.ind_variable === "Absoluto" && validSelection.includes("Total") && validSelection.length > 1){
       state.ind_tipoMulti = ["Total"];
     }else{
@@ -1112,12 +1482,7 @@ function renderIndicatorTendencia(item, data){
       <div class="field field-view"><label>${t("view")}</label>${indicatorViewButtons(!!item.mapSlug, state.ind_display)}</div>
       ${miniSelectMarkup("f-var-select", t("variable"), state.ind_variable, data.variables)}
       ${tipo2s.length ? miniSelectMarkup("f-tipo2-select", t("types"), state.ind_tipo2, tipo2s) : ""}
-      ${tipos.length ? `<div class="field field-components inline-components">
-        <label>${t("components")}</label>
-        <div class="comp-chips" id="f-tipos">
-          ${tipos.map(t => `<button type="button" class="comp-chip${state.ind_tipoMulti.includes(t) ? " active" : ""}" data-tipo="${escAttr(t)}"><span class="sw" style="background:${typeColorFromData(data, t, item)}"></span>${tx(t)}</button>`).join("")}
-        </div>
-      </div>` : ""}
+      ${tipos.length ? componentMultiSelectMarkup("f-tipos", t("components"), tipos, state.ind_tipoMulti, tipo => typeColorFromData(data, tipo, item)) : ""}
       <div class="field"><label>${t("scale")}</label>
         <div class="mode-toggle" id="f-scale">
           <button data-scale="linear" class="${state.ind_scale === "linear" ? "active" : ""}">${t("lineal")}</button>
@@ -1129,6 +1494,7 @@ function renderIndicatorTendencia(item, data){
   bindIndicatorViewButtons(ctrls);
   bindMiniSelect(ctrls, "f-var-select", value => { state.ind_variable = value; renderIndicatorViz(); });
   if(tipo2s.length) bindMiniSelect(ctrls, "f-tipo2-select", value => { state.ind_tipo2 = value; renderIndicatorViz(); });
+  bindComponentSelect(ctrls, "f-tipos");
   ctrls.querySelectorAll("[data-tipo]").forEach(b => {
     b.addEventListener("click", () => {
       stopPlayback();
@@ -1151,6 +1517,19 @@ function renderIndicatorTendencia(item, data){
       renderIndicatorViz();
     });
   });
+  ctrls.querySelectorAll("[data-component-action]").forEach(b => b.addEventListener("click", () => {
+    stopPlayback();
+    const action = b.dataset.componentAction;
+    const nonTotal = tipos.filter(t => t !== "Total");
+    if(action === "all"){
+      state.ind_tipoMulti = state.ind_variable === "Absoluto"
+        ? (nonTotal.length ? nonTotal : tipos.slice())
+        : tipos.slice();
+    }else if(action === "clear"){
+      state.ind_tipoMulti = [];
+    }
+    renderIndicatorViz();
+  }));
   ctrls.querySelectorAll("[data-scale]").forEach(b => b.addEventListener("click", () => { stopPlayback(); state.ind_scale = b.dataset.scale; renderIndicatorViz(); }));
 
   const chart = document.getElementById("ind-chart");
@@ -1166,10 +1545,13 @@ function renderIndicatorTendencia(item, data){
   const showTimeline = true;
   timeline.style.display = showTimeline ? "" : "none";
   function drawCurrent(){
-    const plottedSeries = showTimeline ? cutoffSeries(series, data.years, state.year) : series;
-    if(state.ind_display === "tabla") drawIndicatorTable(chart, data.years, series, item, { year: state.year });
-    else if(state.ind_display === "area") drawIndicatorChart(chart, data.years, plottedSeries, item, { stacked: true, year: state.year, domainSeries: series });
-    else drawIndicatorChart(chart, data.years, plottedSeries, item, { stacked: false, year: state.year, domainSeries: series });
+    const activeRange = getTimelineRange("indicator", data.years);
+    const activeYears = activeRange.years;
+    const rangeSeries = sliceSeriesByRange(series, data.years, activeRange.start, activeRange.end);
+    const plottedSeries = showTimeline ? cutoffSeries(rangeSeries, activeYears, state.year) : rangeSeries;
+    if(state.ind_display === "tabla") drawIndicatorTable(chart, activeYears, rangeSeries, item, { year: state.year });
+    else if(state.ind_display === "area") drawIndicatorChart(chart, activeYears, plottedSeries, item, { stacked: true, year: state.year, domainSeries: rangeSeries });
+    else drawIndicatorChart(chart, activeYears, plottedSeries, item, { stacked: false, year: state.year, domainSeries: rangeSeries });
 
     legend.innerHTML = "";
   }
@@ -1367,6 +1749,7 @@ function mapCategoryLabel(item){
 }
 
 function renderIndicatorMapa(item, mapData){
+  document.getElementById("ind-canvas")?.classList.add("map-canvas");
   const ctrls = document.getElementById("ind-controls");
   const combos = mapData.combos;
   const activeCombo = combos.find(c => c.id === state.ind_mapCombo) || combos[0];
@@ -1428,7 +1811,7 @@ function renderMap(container, mapData, item){
   for(const [iso, arr] of Object.entries(combo.values)) values.set(iso, arr[idx]);
 
   const box = container.getBoundingClientRect();
-  const W = Math.max(360, box.width || 800), H = Math.max(360, box.height || 520);
+  const W = Math.max(360, box.width || 800), H = Math.max(430, box.height || 560);
   const svg = d3.select(container).append("svg").attr("class","map-svg")
     .attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio","xMidYMid meet");
 
@@ -1464,8 +1847,8 @@ function renderMap(container, mapData, item){
   let canaryPaths = null;
   if(canary.features.length){
     const cw = Math.min(168, W * 0.15), ch = Math.min(58, H * 0.12);
-    const cx = 18, cy = H - ch - 16;
-    const inset = svg.append("g").attr("transform", `translate(${cx},${cy})`);
+    const cx = 18, cy = Math.max(18, H - ch - 82);
+    const inset = svg.append("g").attr("class", "canarias-inset").attr("transform", `translate(${cx},${cy})`);
     inset.append("rect").attr("width", cw).attr("height", ch).attr("fill","rgba(251,248,241,.78)").attr("stroke","#d2c8b2");
     inset.append("text").attr("x", 6).attr("y", 11).attr("font-family","Inter,sans-serif").attr("font-size",7.5).attr("font-weight",700).attr("letter-spacing",1).attr("fill","#8a8c8f").text("CANARIAS");
     const cProj = d3.geoMercator().fitExtent([[7,17],[cw-7,ch-7]], canary);
@@ -1487,15 +1870,17 @@ function renderMap(container, mapData, item){
   };
 
   const swatches = mapPalette.map(c => `<span style="display:block;flex:1;height:12px;background:${c}"></span>`).join("");
-  document.getElementById("ind-legend").innerHTML = `
-    <div style="display:flex;flex-direction:column;width:100%;gap:4px;font-family:var(--ff-sans)">
-      <div style="font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--ink-mute);font-weight:700">${tx(combo.indicator)} · ${tx(combo.category)}${combo.unit ? ` (${combo.unit})` : ""}</div>
-      <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums">
+  const flowLegend = document.getElementById("ind-legend");
+  if(flowLegend) flowLegend.innerHTML = "";
+  container.insertAdjacentHTML("beforeend", `
+    <div class="map-legend-overlay">
+      <div class="map-legend-title">${tx(combo.indicator)} · ${tx(combo.category)}${combo.unit ? ` (${combo.unit})` : ""}</div>
+      <div class="map-legend-scale">
         <span>${fmt(extent[0])}</span>
-        <div style="flex:1;display:flex;border:1px solid var(--rule)">${swatches}</div>
+        <div class="map-legend-ramp">${swatches}</div>
         <span>${fmt(extent[1])}</span>
       </div>
-    </div>`;
+    </div>`);
 }
 
 function drawMapMiniChart(container, mapData, combo){
@@ -1561,6 +1946,8 @@ function drawMapMiniChart(container, mapData, combo){
 function openIndicatorModal(item, data){
   const dataLink = item.data ? `${V1_DOCS}/${item.data}` : null;
   const methodLink = item.method ? `${V1_DOCS}/${item.method}` : null;
+  const zenodoLink = item.zenodo || ZENODO_CAHE_URL;
+  const zenodoLabel = item.zenodo ? t("zenodo") : `${t("zenodo")} · ${t("pendingOne")}`;
   const intro = state.lang === "en"
     ? "This viewer rebuilds the series with local CAHE v3 code and keeps the core controls from the original version: variable selection, components, scale, time view, table and provincial map when spatial information exists. The series should be read as long-term historical estimates, not as isolated administrative annual statistics."
     : "Este visor reconstruye la serie con código local de CAHE v3 y conserva los controles centrales de la versión original: selección de variable, componentes, escala, vista temporal, tabla y mapa provincial cuando existe información espacial. La lectura debe hacerse como una serie histórica comparable en el largo plazo, no como una estadística administrativa anual aislada.";
@@ -1582,7 +1969,8 @@ function openIndicatorModal(item, data){
     </ul>
     <div class="cta-row">
       ${dataLink ? `<a class="cta" href="${dataLink}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>` : ""}
-      ${methodLink ? `<a class="cta" href="${methodLink}" target="_blank" rel="noopener" style="background:transparent;border:1px solid var(--ink);color:var(--ink)">${t("fullMethod")} <span>↗</span></a>` : ""}
+      ${methodLink ? `<a class="cta cta-ghost" href="${methodLink}" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a>` : ""}
+      <a class="cta cta-zenodo" href="${zenodoLink}" target="_blank" rel="noopener"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${zenodoLabel}</a>
     </div>`;
   els.modal.classList.add("open");
 }
@@ -1619,7 +2007,7 @@ async function renderGlobalViz(){
   clearIndicatorTimer();
   clearGlobalTimer();
   const globalCitation = citationForGlobal();
-  const globalTools = renderPanelTools(`${V1_DOCS}/cahe_datos_integrados.xlsx`, `${V1_DOCS}/globales_metodologia.pdf`, true, "https://zenodo.org/communities/cahe", globalCitation);
+  const globalTools = renderPanelTools(`${V1_DOCS}/cahe_datos_integrados.xlsx`, `${V1_DOCS}/globales_metodologia.pdf`, true, ZENODO_CAHE_URL, globalCitation);
   main.innerHTML = `
     <div class="viz">
       <div class="indicator-head with-tools global-head">
@@ -1646,8 +2034,40 @@ async function renderGlobalViz(){
   else if(analysis.id === "desacoplamiento") renderTapio(body);
 }
 
+function translatedGlobalInfo(id){
+  const base = MODAL_INFO[id] || {};
+  if(state.lang !== "en") return base;
+  const info = {
+    tendencias: {
+      titulo: "Information",
+      datos: "Annual historical series for energy, materials, water, nitrogen, CO₂ emissions, total emissions and cropland use. Data can be displayed as absolute values, growth rates, index values and intensity over GDP.",
+      fuentes: "Spanish data come from CAHE estimates based on historical records and modelling. Global data combine the Global Carbon Project, PRIMAP-hist, Krausmann et al., Malanima, LUH2, Maddison and FAOSTAT/Smil-based nitrogen estimates.",
+      interpretacion: "Comparing Spain with the world highlights the Great Acceleration since the mid-twentieth century. Spain shows strong industrialization and later slowdowns after 2008 in several indicators, while global trends often continue to rise."
+    },
+    correlacion: {
+      titulo: "Correlation — bivariate scatter",
+      datos: "Relationships between pairs of environmental and socioeconomic indicators for Spain and the world, with one point per year.",
+      fuentes: "Spanish series come from CAHE; global series combine Global Carbon Project, PRIMAP-hist, Maddison, Malanima and Krausmann et al.",
+      interpretacion: "Indicator relationships may be linear, nonlinear or period-dependent. Energy and CO₂, for instance, can remain tightly linked or weaken as the energy mix and technologies change."
+    },
+    descomposicion: {
+      titulo: "Information",
+      datos: "Decomposition of environmental indicators through logarithmic, multiplicative, additive and waterfall views, showing absolute and relative changes between periods.",
+      fuentes: "IPAT decomposes impact as Population × Affluence × Technology. LMDI follows Ang (2015) and attributes the total change between two periods to each factor.",
+      interpretacion: "Positive values increase total impact; negative values reduce it. Waterfall and additive views show how each factor contributes to the observed change."
+    },
+    desacoplamiento: {
+      titulo: "Decoupling — Tapio",
+      datos: "Moving-window growth rates for environmental indicators and GDP. Each point represents one comparison period.",
+      fuentes: "Tapio classification using CAHE environmental series and Maddison GDP.",
+      interpretacion: "Strong decoupling means GDP grows while impact falls. Weak decoupling means both grow, but impact grows more slowly. Coupling means impact and GDP grow together."
+    }
+  };
+  return { ...base, ...(info[id] || {}), referencias: base.referencias, actualizacion: base.actualizacion };
+}
+
 function openGlobalModal(id){
-  const m = MODAL_INFO[id] || {};
+  const m = translatedGlobalInfo(id);
   els.modalContent.innerHTML = `
     <span class="modal-eyebrow">${state.lang === "en" ? "Information" : "Información"}</span>
     <h2>${tx(m.titulo || "—")}</h2>
@@ -1656,7 +2076,10 @@ function openGlobalModal(id){
     ${m.interpretacion ? `<h3>${state.lang === "en" ? "Interpretation" : "Claves para la interpretación"}</h3><p>${m.interpretacion}</p>` : ""}
     ${m.referencias ? `<h3>${state.lang === "en" ? "References" : "Referencias"}</h3><ul>${m.referencias.map(ref => `<li>${ref}</li>`).join("")}</ul>` : ""}
     <p style="margin-top:14px;font-style:italic;color:var(--ink-mute);font-size:12px">${state.lang === "en" ? "Updated" : "Actualización"}: ${m.actualizacion || "—"}</p>
-    <div class="cta-row"><a class="cta" href="${V1_DOCS}/globales_metodologia.pdf" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a></div>`;
+    <div class="cta-row">
+      <a class="cta cta-ghost" href="${V1_DOCS}/globales_metodologia.pdf" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a>
+      <a class="cta cta-zenodo" href="${ZENODO_CAHE_URL}" target="_blank" rel="noopener"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${t("zenodo")}</a>
+    </div>`;
   els.modal.classList.add("open");
 }
 function closeModal(){ els.modal.classList.remove("open"); }
@@ -1730,31 +2153,52 @@ function bindGlobalTimeline(body, years, rerender){
   if(!tl || !years.length) return;
   const play = tl.querySelector("#global-play");
   const slider = tl.querySelector("#global-year-slider");
-  const current = ensureGlobalYear(years);
+  const initialRange = getTimelineRange("global", years);
+  const current = ensureGlobalYear(initialRange.years);
   slider.min = years[0];
   slider.max = years[years.length - 1];
   slider.step = 1;
   slider.value = current;
   tl.querySelector("#global-year-readout").textContent = current;
-  tl.querySelector("#global-year-range").textContent = `${years[0]}–${years[years.length - 1]}`;
+  const start = tl.querySelector("#global-year-start");
+  const end = tl.querySelector("#global-year-end");
+  const range = tl.querySelector("#global-year-range");
+  if(start) start.textContent = initialRange.start;
+  if(end) end.textContent = initialRange.end;
+  if(range) range.textContent = `${initialRange.start}–${initialRange.end}`;
+  updateTimelineRangeUi(tl, slider, years, "global");
+  updateTimelineBubble(tl, slider, current);
   setPlayButtonState(play, state.globalPlaying);
+  bindTimelineRangeHandles(tl, years, "global", () => {
+    const active = getTimelineRange("global", years);
+    state.globalYear = nearestTimelineYear(active.years, state.globalYear);
+    slider.value = state.globalYear;
+    tl.querySelector("#global-year-readout").textContent = state.globalYear;
+    updateTimelineRangeUi(tl, slider, years, "global");
+    setPlayButtonState(play, false);
+    clearGlobalTimer();
+    rerender();
+  });
   play.addEventListener("click", () => {
     state.globalPlaying = !state.globalPlaying;
     setPlayButtonState(play, state.globalPlaying);
-    if(state.globalPlaying) startGlobalTimer(years, rerender);
+    if(state.globalPlaying) startGlobalTimer(getTimelineRange("global", years).years, rerender);
     else {
       clearGlobalTimer();
       setPlayButtonState(play, false);
     }
   });
   slider.addEventListener("input", e => {
-    state.globalYear = nearestTimelineYear(years, e.target.value);
+    const active = getTimelineRange("global", years);
+    state.globalYear = nearestTimelineYear(active.years, e.target.value);
     state.globalPlaying = false;
     clearGlobalTimer();
+    updateTimelineRangeUi(tl, slider, years, "global");
+    updateTimelineBubble(tl, slider, state.globalYear);
     rerender();
   });
   bindSpeedMenu(tl, () => state.globalSpeed, v => { state.globalSpeed = v; }, () => {
-    if(state.globalPlaying) startGlobalTimer(years, rerender);
+    if(state.globalPlaying) startGlobalTimer(getTimelineRange("global", years).years, rerender);
   });
 }
 
@@ -1763,7 +2207,15 @@ function globalTimelineMarkup(){
     <button class="play-btn${state.globalPlaying ? " active" : ""}" id="global-play" type="button" aria-label="${t("play")}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></button>
     ${speedMenuMarkup(state.globalSpeed, [1,2,4,8])}
     <div class="year-readout" id="global-year-readout">${state.globalYear ?? ""}</div>
-    <input class="year-slider" id="global-year-slider" type="range">
+    <div class="timeline-bound timeline-start" id="global-year-start"></div>
+    <div class="timeline-track-wrap">
+      <span class="timeline-selection" data-range-selection></span>
+      <button class="timeline-limit timeline-limit-start" data-range-handle="start" type="button" role="slider" aria-label="${state.lang === "en" ? "Start year" : "Año inicial"}" aria-valuemin="" aria-valuemax="" aria-valuenow=""><span class="timeline-handle-year"></span></button>
+      <input class="year-slider" id="global-year-slider" type="range">
+      <button class="timeline-limit timeline-limit-end" data-range-handle="end" type="button" role="slider" aria-label="${state.lang === "en" ? "End year" : "Año final"}" aria-valuemin="" aria-valuemax="" aria-valuenow=""><span class="timeline-handle-year"></span></button>
+      <span class="year-bubble" id="global-year-bubble" data-year-bubble></span>
+    </div>
+    <div class="timeline-bound timeline-end" id="global-year-end"></div>
     <div class="year-range" id="global-year-range"></div>
   </div>`;
 }
@@ -1790,10 +2242,10 @@ function renderTendencias(body){
         </div>
         <div class="spacer"></div>
         <button class="options-toggle${state.globalOptionsOpen ? " active" : ""}" id="global-options-toggle" type="button" aria-expanded="${state.globalOptionsOpen}">
-          ${state.lang === "en" ? "Settings" : "Ajustes"} <span>${state.trendMA === "none" ? (state.lang === "en" ? "no average" : "sin media") : `${state.trendMA}a`}</span>
+          <strong>${state.lang === "en" ? "Settings" : "Ajustes"}</strong>
         </button>
-      </div>
-      <aside class="controls-drawer global-drawer" id="global-options-drawer" aria-label="${state.lang === "en" ? "Global perspective options" : "Opciones de perspectiva global"}">
+        <div class="controls-drawer global-drawer" id="global-options-drawer" aria-label="${state.lang === "en" ? "Global perspective options" : "Opciones de perspectiva global"}">
+        <button class="drawer-info" type="button" tabindex="-1" title="${state.lang === "en" ? "Moving average smooths the series. Trend shows R² and a fitted line. Explore marks maximum/minimum, today's level and structural changes. Growth highlights the strongest 5-, 10- and 25-year periods." : "Media móvil suaviza la serie. Tendencia muestra R² y recta ajustada. Explorar marca máximo/mínimo, relación con el valor actual y cambios estructurales. Crecimiento señala los periodos de 5, 10 y 25 años con mayor subida o caída."}" aria-label="${state.lang === "en" ? "Settings information" : "Información de ajustes"}">i</button>
         <div class="drawer-head">
           <div><span>Ajustes</span></div>
           <button class="drawer-close" id="global-drawer-close" type="button" aria-label="${t("close")}">×</button>
@@ -1805,14 +2257,14 @@ function renderTendencias(body){
           </div>
         </div>
         <div class="drawer-section">
-          <label>${state.lang === "en" ? "Trend analysis" : "Análisis de tendencia"}</label>
+          <label>${state.lang === "en" ? "Trend" : "Tendencia"}</label>
           <div class="analysis-buttons">
             <button class="analysis-btn${state.trendShowR2 ? " active" : ""}" data-trend-flag="trendShowR2" type="button" title="Mostrar R²">R²</button>
             <button class="analysis-btn${state.trendShowLine ? " active" : ""}" data-trend-flag="trendShowLine" type="button" title="Mostrar línea de tendencia">↗</button>
           </div>
         </div>
         <div class="drawer-section">
-          <label>${state.lang === "en" ? "Exploratory analysis" : "Análisis exploratorio"}</label>
+          <label>${state.lang === "en" ? "Explore" : "Explorar"}</label>
           <div class="analysis-buttons wrap">
             <button class="analysis-btn${state.trendShowMax ? " active" : ""}" data-trend-flag="trendShowMax" type="button" title="Máximo y mínimo">MAX<br>MIN</button>
             <button class="analysis-btn${state.trendShowToday ? " active" : ""}" data-trend-flag="trendShowToday" type="button" title="Relación con el valor actual">←</button>
@@ -1820,12 +2272,13 @@ function renderTendencias(body){
           </div>
         </div>
         <div class="drawer-section">
-          <label>${state.lang === "en" ? "Main growth periods" : "Principales periodos de crecimiento"}</label>
+          <label>${state.lang === "en" ? "Growth" : "Crecimiento"}</label>
           <div class="analysis-buttons wrap">
             ${[5,10,25].map(w => `<button class="analysis-btn period-btn${state.trendPeriodWindows.includes(w) ? " active" : ""}" data-period-window="${w}" type="button" title="Periodos extremos ${w} años">${w}a</button>`).join("")}
           </div>
         </div>
-      </aside>
+        </div>
+      </div>
     </div>
     <div class="canvas"><div class="chart-area" id="t-chart"></div><div class="chart-legend" id="t-legend"></div></div>
     ${globalTimelineMarkup()}`;
@@ -1865,8 +2318,9 @@ function renderTendencias(body){
   const unit = sE[0]?.variable_unidad || sW[0]?.variable_unidad || "";
   const years = timelineYearsFromSeries(show);
   function drawCurrent(){
-    const current = ensureGlobalYear(years);
-    const plotted = show.map(s => ({ ...s, data: movingAverageData(s.data, state.trendMA) }));
+    const activeRange = getTimelineRange("global", years);
+    const current = ensureGlobalYear(activeRange.years);
+    const plotted = show.map(s => ({ ...s, data: movingAverageData(s.data, state.trendMA).filter(d => d.year >= activeRange.start && d.year <= activeRange.end) }));
     const visible = plotted.map(s => ({ ...s, data: s.data.filter(d => d.year <= current) }));
     drawTimeLines(body.querySelector("#t-chart"), visible, {
       unit, year: current, domainSeries: plotted, rawSeries: show,
@@ -1879,7 +2333,10 @@ function renderTendencias(body){
     const readout = body.querySelector("#global-year-readout");
     const slider = body.querySelector("#global-year-slider");
     if(readout) readout.textContent = current;
-    if(slider) slider.value = current;
+    if(slider){
+      slider.value = current;
+      updateTimelineBubble(body.querySelector("#global-timeline"), slider, current);
+    }
   }
   drawCurrent();
   bindGlobalTimeline(body, years, drawCurrent);
@@ -2085,6 +2542,46 @@ function drawTimeLines(container, series, opts){
   });
 }
 
+function analysisVariableOptions(indicator){
+  const options = VARIABLES_G.filter(variable =>
+    DATA_ANALYSIS.some(row => row.variable === variable && row[indicator] != null && Number.isFinite(row[indicator]))
+  );
+  return options.length ? options : ["Absoluto"];
+}
+
+function preferredAnalysisVariable(options, current){
+  if(options.includes(current)) return current;
+  if(options.includes("Per cápita")) return "Per cápita";
+  if(options.includes("Absoluto")) return "Absoluto";
+  return options[0];
+}
+
+function miniSelectInlineMarkup(id, label, value, options){
+  return `<div class="axis-mini-select">
+    <span>${tx(label)}</span>
+    <div class="mini-select" id="${id}" data-mini-select>
+      <button class="mini-select-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span>${tx(value)}</span><span class="mini-chevron"></span>
+      </button>
+      <div class="mini-select-menu" role="listbox">
+        ${options.map(opt => `<button type="button" role="option" data-value="${escAttr(opt)}" class="${opt === value ? "active" : ""}">${tx(opt)}</button>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function correlationAxisMarkup(axisLabel, prefix, indicator, variable, scale, variableOptions, scaleOptions){
+  const scaleLabel = (scaleOptions.find(opt => opt.id === scale) || scaleOptions[0]).label;
+  return `<div class="field corr-axis-group">
+    <label>${tx(axisLabel)}</label>
+    <div class="corr-axis-controls">
+      ${miniSelectInlineMarkup(`c-${prefix}i-select`, t("indicator"), indicator, INDICATORS_WITH_GDP)}
+      ${miniSelectInlineMarkup(`c-${prefix}v-select`, t("variable"), variable, variableOptions)}
+      ${miniSelectInlineMarkup(`c-${prefix}scale-select`, t("scale"), scaleLabel, scaleOptions.map(opt => opt.label))}
+    </div>
+  </div>`;
+}
+
 function renderCorrelacion(body){
   const corrAreas = [
     { id: "Both", label: "España + Mundo" },
@@ -2092,32 +2589,46 @@ function renderCorrelacion(body){
     { id: "Mundo", label: "Mundo" }
   ];
   const corrScales = [
-    { id: "lin", label: "Lineal" },
-    { id: "log", label: "Logarítmica" }
+    { id: "linear", label: "Lineal" },
+    { id: "log", label: "Log" }
   ];
-  const corrScaleLabel = (corrScales.find(s => (s.id === "log") === state.corrLog) || corrScales[0]).label;
+  const xVarOptions = analysisVariableOptions(state.corrXInd);
+  const yVarOptions = analysisVariableOptions(state.corrYInd);
+  state.corrXVar = preferredAnalysisVariable(xVarOptions, state.corrXVar);
+  state.corrYVar = preferredAnalysisVariable(yVarOptions, state.corrYVar);
+  if(!corrScales.some(s => s.id === state.corrXScale)) state.corrXScale = "linear";
+  if(!corrScales.some(s => s.id === state.corrYScale)) state.corrYScale = "linear";
   body.innerHTML = `
-    <div class="filter-bar compact-controls unified-controls">
-      ${miniSelectMarkup("c-xi-select", "Eje X", state.corrXInd, INDICATORS_WITH_GDP)}
-      ${miniSelectMarkup("c-xv-select", "Variable X", state.corrXVar, VARIABLES_G)}
-      ${miniSelectMarkup("c-yi-select", "Eje Y", state.corrYInd, INDICATORS_WITH_GDP)}
-      ${miniSelectMarkup("c-yv-select", "Variable Y", state.corrYVar, VARIABLES_G)}
-      ${miniSelectMarkup("c-log-select", "Escala", corrScaleLabel, corrScales.map(s => s.label))}
+    <div class="filter-bar compact-controls unified-controls corr-controls">
+      ${correlationAxisMarkup("Eje X", "x", state.corrXInd, state.corrXVar, state.corrXScale, xVarOptions, corrScales)}
+      ${correlationAxisMarkup("Eje Y", "y", state.corrYInd, state.corrYVar, state.corrYScale, yVarOptions, corrScales)}
       <div class="field">
-        <label>Área</label>
+        <label>${t("area")}</label>
         <div class="mode-toggle" id="c-area-toggle">
-          ${corrAreas.map(a => `<button data-corr-area="${a.id}" class="${state.corrArea === a.id ? "active" : ""}" type="button">${a.id === "Both" ? "Ambos" : a.label}</button>`).join("")}
+          ${corrAreas.map(a => `<button data-corr-area="${a.id}" class="${state.corrArea === a.id ? "active" : ""}" type="button">${a.id === "Both" ? tx("Ambos") : tx(a.id)}</button>`).join("")}
         </div>
       </div>
     </div>
     <div class="canvas"><div class="chart-area" id="c-chart"></div><div class="chart-legend" id="c-legend"></div></div>
     ${globalTimelineMarkup()}`;
-  bindMiniSelect(body, "c-xi-select", value => { state.corrXInd = value; renderCorrelacion(body); });
+  bindMiniSelect(body, "c-xi-select", value => {
+    state.corrXInd = value;
+    state.corrXVar = preferredAnalysisVariable(analysisVariableOptions(value), state.corrXVar);
+    renderCorrelacion(body);
+  });
   bindMiniSelect(body, "c-xv-select", value => { state.corrXVar = value; renderCorrelacion(body); });
-  bindMiniSelect(body, "c-yi-select", value => { state.corrYInd = value; renderCorrelacion(body); });
+  bindMiniSelect(body, "c-xscale-select", value => {
+    state.corrXScale = (corrScales.find(s => s.label === value) || corrScales[0]).id;
+    renderCorrelacion(body);
+  });
+  bindMiniSelect(body, "c-yi-select", value => {
+    state.corrYInd = value;
+    state.corrYVar = preferredAnalysisVariable(analysisVariableOptions(value), state.corrYVar);
+    renderCorrelacion(body);
+  });
   bindMiniSelect(body, "c-yv-select", value => { state.corrYVar = value; renderCorrelacion(body); });
-  bindMiniSelect(body, "c-log-select", value => {
-    state.corrLog = (corrScales.find(s => s.label === value) || corrScales[0]).id === "log";
+  bindMiniSelect(body, "c-yscale-select", value => {
+    state.corrYScale = (corrScales.find(s => s.label === value) || corrScales[0]).id;
     renderCorrelacion(body);
   });
   body.querySelectorAll("[data-corr-area]").forEach(btn => btn.addEventListener("click", () => {
@@ -2127,6 +2638,8 @@ function renderCorrelacion(body){
   }));
 
   const chart = body.querySelector("#c-chart"), legend = body.querySelector("#c-legend");
+  const xLog = state.corrXScale === "log", yLog = state.corrYScale === "log";
+  function usablePoint(d){ return (!xLog || d.x > 0) && (!yLog || d.y > 0); }
   function buildXY(area){
     const xRows = DATA_ANALYSIS.filter(r => r.area === area && r.variable === state.corrXVar);
     const yRows = DATA_ANALYSIS.filter(r => r.area === area && r.variable === state.corrYVar);
@@ -2135,9 +2648,10 @@ function renderCorrelacion(body){
       .filter(d => d.x != null && d.y != null && Number.isFinite(d.x) && Number.isFinite(d.y));
   }
   function r2(pts){
-    if(pts.length < 3) return null;
-    const xs = pts.map(p => state.corrLog ? Math.log(p.x) : p.x);
-    const ys = pts.map(p => state.corrLog ? Math.log(p.y) : p.y);
+    const valid = pts.filter(usablePoint);
+    if(valid.length < 3) return null;
+    const xs = valid.map(p => xLog ? Math.log(p.x) : p.x);
+    const ys = valid.map(p => yLog ? Math.log(p.y) : p.y);
     const mx = d3.mean(xs), my = d3.mean(ys);
     let sxx = 0, syy = 0, sxy = 0;
     for(let i = 0; i < xs.length; i++){ sxx += (xs[i]-mx)**2; syy += (ys[i]-my)**2; sxy += (xs[i]-mx)*(ys[i]-my); }
@@ -2150,11 +2664,13 @@ function renderCorrelacion(body){
   const allFull = [...fullE, ...fullW];
   const years = Array.from(new Set(allFull.map(d => d.year))).sort((a, b) => a - b);
   function drawCurrent(){
-    const current = ensureGlobalYear(years);
-    const ptsE = fullE.filter(d => d.year <= current);
-    const ptsW = fullW.filter(d => d.year <= current);
-    const all = [...ptsE, ...ptsW];
-    if(!all.length){ chart.innerHTML = `<div class="empty">Sin datos.</div>`; legend.innerHTML = ""; return; }
+    const activeRange = getTimelineRange("global", years);
+    const current = ensureGlobalYear(activeRange.years);
+    const domainFull = allFull.filter(d => d.year >= activeRange.start && d.year <= activeRange.end);
+    const ptsE = fullE.filter(d => d.year >= activeRange.start && d.year <= current);
+    const ptsW = fullW.filter(d => d.year >= activeRange.start && d.year <= current);
+    const all = [...ptsE, ...ptsW].filter(usablePoint);
+    if(!all.length){ chart.innerHTML = `<div class="empty">${t("noSeries")}</div>`; legend.innerHTML = ""; return; }
 
     const box = chart.getBoundingClientRect();
     const W = Math.max(360, box.width || 800), H = Math.max(280, box.height || 480);
@@ -2163,29 +2679,33 @@ function renderCorrelacion(body){
     chart.innerHTML = "";
     const svg = d3.select(chart).append("svg").attr("class","chart-svg").attr("viewBox", `0 0 ${W} ${H}`).attr("preserveAspectRatio","none");
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-    const xScale = state.corrLog ? d3.scaleLog() : d3.scaleLinear();
-    const yScale = state.corrLog ? d3.scaleLog() : d3.scaleLinear();
-    xScale.domain(d3.extent(allFull.map(d => d.x).filter(v => v > 0))).range([0, innerW]).nice();
-    yScale.domain(d3.extent(allFull.map(d => d.y).filter(v => v > 0))).range([innerH, 0]).nice();
+    const domainUsable = domainFull.filter(usablePoint);
+    const xVals = domainUsable.map(d => d.x).filter(v => Number.isFinite(v) && (!xLog || v > 0));
+    const yVals = domainUsable.map(d => d.y).filter(v => Number.isFinite(v) && (!yLog || v > 0));
+    if(xVals.length < 2 || yVals.length < 2){ chart.innerHTML = `<div class="empty">${t("noSeries")}</div>`; legend.innerHTML = ""; return; }
+    const xScale = xLog ? d3.scaleLog() : d3.scaleLinear();
+    const yScale = yLog ? d3.scaleLog() : d3.scaleLinear();
+    xScale.domain(d3.extent(xVals)).range([0, innerW]).nice();
+    yScale.domain(d3.extent(yVals)).range([innerH, 0]).nice();
     g.append("g").attr("class","grid").call(d3.axisLeft(yScale).ticks(5).tickSize(-innerW).tickFormat("")).call(s => s.select(".domain").remove());
     g.append("g").attr("class","axis").attr("transform", `translate(0,${innerH})`).call(d3.axisBottom(xScale).ticks(6, "~s"));
     g.append("g").attr("class","axis").call(d3.axisLeft(yScale).ticks(5, "~s"));
-    g.append("text").attr("class","axis-label").attr("x", -8).attr("y", -8).attr("text-anchor","start").text(`${state.corrYInd} · ${state.corrYVar}`);
-    g.append("text").attr("class","axis-label").attr("x", innerW).attr("y", innerH + 28).attr("text-anchor","end").text(`${state.corrXInd} · ${state.corrXVar} →`);
+    g.append("text").attr("class","axis-label").attr("x", -8).attr("y", -8).attr("text-anchor","start").text(`${tx(state.corrYInd)} · ${tx(state.corrYVar)}`);
+    g.append("text").attr("class","axis-label").attr("x", innerW).attr("y", innerH + 28).attr("text-anchor","end").text(`${tx(state.corrXInd)} · ${tx(state.corrXVar)} →`);
 
     function plot(pts, color, label, idx){
       if(!pts.length) return null;
-      const sorted = pts.filter(d => !state.corrLog || (d.x > 0 && d.y > 0)).sort((a, b) => a.year - b.year);
+      const sorted = pts.filter(usablePoint).sort((a, b) => a.year - b.year);
       if(!sorted.length) return null;
       g.append("path").datum(sorted).attr("fill","none").attr("stroke", color).attr("stroke-width", 1).attr("opacity", .5)
-        .attr("d", d3.line().defined(d => d.x > 0 && d.y > 0).x(d => xScale(d.x)).y(d => yScale(d.y)));
+        .attr("d", d3.line().defined(usablePoint).x(d => xScale(d.x)).y(d => yScale(d.y)));
       g.selectAll(`circle.corr-dot-${idx}`).data(sorted).join("circle")
         .attr("class", `corr-dot-${idx}`).attr("cx", d => xScale(d.x)).attr("cy", d => yScale(d.y)).attr("r", 3.4).attr("fill", color).attr("opacity", .82)
         .style("cursor", "crosshair")
         .on("mouseenter mousemove", (event, d) => showTooltip(event, label, [
           ["Año", d.year],
-          [state.corrXInd, fmt(d.x)],
-          [state.corrYInd, fmt(d.y)]
+          [tx(state.corrXInd), fmt(d.x)],
+          [tx(state.corrYInd), fmt(d.y)]
         ]))
         .on("mouseleave", hideTooltip);
       const last = sorted[sorted.length - 1];
@@ -2198,16 +2718,19 @@ function renderCorrelacion(body){
       }
       return r2(pts);
     }
-    const r2E = plot(ptsE, COLOR_SPAIN, "España", 0), r2W = plot(ptsW, COLOR_WORLD, "Mundo", 1);
+    const r2E = plot(ptsE, COLOR_SPAIN, tx("España"), 0), r2W = plot(ptsW, COLOR_WORLD, tx("Mundo"), 1);
     const ann = [];
-    if(r2E != null) ann.push({ color: COLOR_SPAIN, text: `R² = ${r2E.toFixed(3)} · España` });
-    if(r2W != null) ann.push({ color: COLOR_WORLD, text: `R² = ${r2W.toFixed(3)} · Mundo` });
+    if(r2E != null) ann.push({ color: COLOR_SPAIN, text: `R² = ${r2E.toFixed(3)} · ${tx("España")}` });
+    if(r2W != null) ann.push({ color: COLOR_WORLD, text: `R² = ${r2W.toFixed(3)} · ${tx("Mundo")}` });
     ann.forEach((a, i) => g.append("text").attr("x", 6).attr("y", 14 + i * 16).attr("fill", a.color).attr("font-size", 12).attr("font-weight", 700).text(a.text));
     legend.innerHTML = "";
     const readout = body.querySelector("#global-year-readout");
     const slider = body.querySelector("#global-year-slider");
     if(readout) readout.textContent = current;
-    if(slider) slider.value = current;
+    if(slider){
+      slider.value = current;
+      updateTimelineBubble(body.querySelector("#global-timeline"), slider, current);
+    }
   }
   drawCurrent();
   bindGlobalTimeline(body, years, drawCurrent);
@@ -2630,24 +3153,236 @@ function openVizFromStatic(vizId){
 }
 
 const PERSPECTIVAS = [
-  { viz: "emisiones-gei", title: "Emisiones históricas de España", title_en: "Spain's historical emissions", summary: "Trayectoria de las emisiones de gases de efecto invernadero desde el siglo XIX.", summary_en: "The trajectory of greenhouse gas emissions since the nineteenth century.", cat: "Emisiones", cat_en: "Emissions" },
-  { viz: "emisiones-co2", title: "El balance histórico de emisiones", title_en: "The historical emissions balance", summary: "CO₂ fósil y usos del suelo para leer ritmos, acumulación y cambios de composición.", summary_en: "Fossil CO₂ and land use to read rhythms, accumulation and compositional change.", cat: "Emisiones", cat_en: "Emissions" },
-  { viz: "desacoplamiento", title: "Desacoplamiento: ¿mito o realidad?", title_en: "Decoupling: myth or reality?", summary: "Escenarios Tapio para comparar crecimiento económico e impactos ambientales.", summary_en: "Tapio scenarios to compare economic growth and environmental impacts.", cat: "Análisis", cat_en: "Analysis" },
-  { viz: "correlacion", title: "Crecimiento y eficiencia", title_en: "Growth and efficiency", summary: "Relaciones bivariadas entre PIB, población e indicadores ambientales.", summary_en: "Bivariate relationships between GDP, population and environmental indicators.", cat: "Análisis", cat_en: "Analysis" },
-  { viz: "materiales", title: "La huella acumulada de España", title_en: "Spain's accumulated footprint", summary: "Flujos materiales, comercio y composición del metabolismo económico.", summary_en: "Material flows, trade and the composition of the economic metabolism.", cat: "Materiales", cat_en: "Materials" },
-  { viz: "materiales", title: "España se construye", title_en: "Spain gets built", summary: "Peso de minerales, materiales de construcción y ciclos de expansión económica.", summary_en: "The role of minerals, construction materials and expansion cycles.", cat: "Materiales", cat_en: "Materials" },
-  { viz: "bosques", title: "La transición forestal", title_en: "The forest transition", summary: "Superficie forestal, densidad y stock de carbono a escala nacional y provincial.", summary_en: "Forest area, density and carbon stock at national and provincial scale.", cat: "Bosques", cat_en: "Forestry" },
+  { id: "emisiones-historicas", viz: "emisiones-gei", fig: "line", date: "2026-03-15", authors: ["Juan Infante Amate", "Eduardo Aguilera"], topic: "Emisiones", topic_en: "Emissions", title: "Emisiones históricas de España", title_en: "Spain's historical emissions", summary: "Una lectura de largo plazo de los gases de efecto invernadero y de los momentos en los que cambia su composición.", summary_en: "A long-run reading of greenhouse gases and the moments when their composition changes.", body: "La figura resume la comparación temporal entre España y el mundo y sirve como puerta de entrada al visor de tendencias, donde pueden activarse medias móviles, periodos de crecimiento y lectura interactiva por año.", body_en: "The figure summarizes the long-run comparison between Spain and the world and opens the trends viewer, where moving averages, growth periods and year-by-year interaction can be enabled." },
+  { id: "balance-emisiones", viz: "emisiones-co2", fig: "area", date: "2026-03-10", authors: ["Juan Infante Amate", "Eduardo Aguilera"], topic: "Emisiones", topic_en: "Emissions", title: "El balance histórico de emisiones", title_en: "The historical emissions balance", summary: "CO₂ fósil y usos del suelo permiten separar aceleración, acumulación y cambio de fuentes.", summary_en: "Fossil CO₂ and land use separate acceleration, accumulation and changing sources.", body: "El visor permite alternar valores absolutos, acumulados e intensidad, de modo que la misma trayectoria puede leerse como flujo anual, responsabilidad acumulada o presión relativa sobre la economía.", body_en: "The viewer switches between absolute, cumulative and intensity metrics, so the same trajectory can be read as an annual flow, cumulative responsibility or pressure relative to the economy." },
+  { id: "desacoplamiento-mito-realidad", viz: "desacoplamiento", fig: "tapio", date: "2026-02-25", authors: ["Juan Infante Amate"], topic: "Desacoplamiento", topic_en: "Decoupling", title: "Desacoplamiento: ¿mito o realidad?", title_en: "Decoupling: myth or reality?", summary: "Escenarios Tapio para comparar crecimiento económico e impactos ambientales sin reducirlo todo a una sola línea.", summary_en: "Tapio scenarios compare economic growth and environmental impacts without reducing the story to one line.", body: "Cada punto representa una ventana temporal y clasifica la relación entre PIB e impacto ambiental. La lectura interesa menos por un punto aislado que por el patrón que dibuja la secuencia completa.", body_en: "Each point represents a time window and classifies the relationship between GDP and environmental impact. The sequence matters more than any single point." },
+  { id: "crecimiento-eficiencia", viz: "correlacion", fig: "scatter", date: "2026-02-18", authors: ["Juan Infante Amate"], topic: "Crecimiento", topic_en: "Growth", title: "Crecimiento y eficiencia", title_en: "Growth and efficiency", summary: "Relaciones bivariadas entre PIB, población e indicadores ambientales para explorar cambios de intensidad.", summary_en: "Bivariate relationships between GDP, population and environmental indicators to explore changes in intensity.", body: "El scatter permite ver cuándo España converge, se distancia o cambia pendiente respecto al mundo, manteniendo el cursor interactivo por año y área.", body_en: "The scatter view shows when Spain converges, diverges or changes slope relative to the world, with year and area interaction preserved." },
+  { id: "huella-material", viz: "materiales", fig: "bars", date: "2026-02-05", authors: ["Juan Infante Amate", "Ángel Sanjuán Ruiz"], topic: "Materiales", topic_en: "Materials", title: "La huella material acumulada", title_en: "The accumulated material footprint", summary: "Flujos materiales, comercio y composición del metabolismo económico desde la industrialización.", summary_en: "Material flows, trade and the composition of the economic metabolism since industrialization.", body: "Los controles de variable y componentes permiten pasar de extracción a consumo aparente, importaciones y exportaciones, manteniendo una lectura homogénea con el resto de indicadores.", body_en: "Variable and component controls switch between extraction, apparent consumption, imports and exports while keeping the same grammar used by the other indicators." },
+  { id: "transicion-forestal", viz: "bosques", fig: "map", date: "2026-01-30", authors: ["Iñaki Iriarte Goñi", "Juan Infante Amate"], topic: "Forestal", topic_en: "Forestry", title: "La transición forestal", title_en: "The forest transition", summary: "Superficie forestal, densidad y stock de carbono combinan tendencia nacional y lectura provincial.", summary_en: "Forest area, density and carbon stock combine a national trend with a provincial reading.", body: "La perspectiva territorial complementa la serie nacional: los mapas provinciales y la línea temporal ayudan a distinguir cambios de composición, densidad y distribución espacial.", body_en: "The territorial view complements the national series: provincial maps and the timeline help separate composition, density and spatial redistribution." },
 ];
+
+function miniSeriesPath(points, x, y, key = "valor"){
+  return points
+    .filter(d => d && d[key] != null && Number.isFinite(d[key]))
+    .map((d, i) => `${i ? "L" : "M"}${x(d)} ${y(d)}`)
+    .join(" ");
+}
+
+function miniLineFigure(){
+  const spain = getTrendSeries("Emisiones de CO₂", "Per cápita", "España");
+  const world = getTrendSeries("Emisiones de CO₂", "Per cápita", "Mundo");
+  const all = [...spain, ...world].filter(d => d.valor != null && Number.isFinite(d.valor));
+  if(all.length < 4) return null;
+  const x = d3.scaleLinear().domain(d3.extent(all, d => d.year)).range([28, 236]);
+  const y = d3.scaleLinear().domain([0, d3.max(all, d => d.valor)]).nice().range([96, 18]);
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="${miniSeriesPath(spain, x, y)}" fill="none" stroke="#4f7ea8" stroke-width="3"/><path d="${miniSeriesPath(world, x, y)}" fill="none" stroke="#c94132" stroke-width="3"/><circle cx="${x(spain.at(-1))}" cy="${y(spain.at(-1).valor)}" r="3.5" fill="#4f7ea8"/><circle cx="${x(world.at(-1))}" cy="${y(world.at(-1).valor)}" r="3.5" fill="#c94132"/></svg>`;
+}
+
+function miniAreaFigure(){
+  const spain = getTrendSeries("Emisiones de CO₂", "Absoluto", "España");
+  const world = getTrendSeries("Emisiones de CO₂", "Absoluto", "Mundo");
+  const all = [...spain, ...world].filter(d => d.valor != null && Number.isFinite(d.valor));
+  if(all.length < 4) return null;
+  const x = d3.scaleLinear().domain(d3.extent(all, d => d.year)).range([28, 236]);
+  const y = d3.scaleLinear().domain([0, d3.max(all, d => d.valor)]).nice().range([96, 18]);
+  const areaPath = data => {
+    const valid = data.filter(d => d.valor != null && Number.isFinite(d.valor));
+    return `${miniSeriesPath(valid, x, y)} L${x(valid.at(-1))} 96 L${x(valid[0])} 96 Z`;
+  };
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="${areaPath(world)}" fill="#c94132" opacity=".26"/><path d="${areaPath(spain)}" fill="#4f7ea8" opacity=".44"/><path d="${miniSeriesPath(world, x, y)}" fill="none" stroke="#c94132" stroke-width="2"/><path d="${miniSeriesPath(spain, x, y)}" fill="none" stroke="#4f7ea8" stroke-width="2"/></svg>`;
+}
+
+function miniScatterFigure(){
+  const build = area => {
+    const xRows = DATA_ANALYSIS.filter(r => r.area === area && r.variable === "Per cápita");
+    const yRows = DATA_ANALYSIS.filter(r => r.area === area && r.variable === "Per cápita");
+    const yMap = new Map(yRows.map(r => [r.year, r["Emisiones de CO₂"]]));
+    return xRows.map(r => ({ year: r.year, x: r.PIB, y: yMap.get(r.year) }))
+      .filter(d => d.x > 0 && d.y > 0 && Number.isFinite(d.x) && Number.isFinite(d.y));
+  };
+  const spain = build("España"), world = build("Mundo");
+  const all = [...spain, ...world];
+  if(all.length < 4) return null;
+  const x = d3.scaleLinear().domain(d3.extent(all, d => d.x)).nice().range([30, 236]);
+  const y = d3.scaleLinear().domain(d3.extent(all, d => d.y)).nice().range([96, 18]);
+  const dots = (data, color) => data.filter((_, i) => i % 4 === 0).map(d => `<circle cx="${x(d.x)}" cy="${y(d.y)}" r="3.3" fill="${color}" opacity=".82"/>`).join("");
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 10v86h212"/><path d="M28 74h212M28 50h212M28 26h212"/></g>${dots(world, "#c94132")}${dots(spain, "#4f7ea8")}</svg>`;
+}
+
+function miniTapioFigure(){
+  const rows = DATA_ANALYSIS.filter(r => r.area === "España" && r.variable === "Absoluto").sort((a, b) => a.year - b.year);
+  const pts = [];
+  for(let i = 5; i < rows.length; i += 4){
+    const a = rows[i - 5], b = rows[i];
+    if(!a?.PIB || !b?.PIB || !a["Emisiones de CO₂"] || !b["Emisiones de CO₂"]) continue;
+    const gG = (b.PIB / a.PIB) - 1;
+    const gI = (b["Emisiones de CO₂"] / a["Emisiones de CO₂"]) - 1;
+    const elasticity = gG !== 0 ? gI / gG : null;
+    pts.push({ x: gG * 100, y: gI * 100, pat: classifyTapio(gG, gI, elasticity) });
+  }
+  if(pts.length < 3) return null;
+  const maxAbs = Math.max(1, d3.max(pts, d => Math.max(Math.abs(d.x), Math.abs(d.y))));
+  const x = d3.scaleLinear().domain([-maxAbs, maxAbs]).range([30, 236]);
+  const y = d3.scaleLinear().domain([-maxAbs, maxAbs]).range([96, 18]);
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M130 12v92M30 62h210"/><path d="M44 96 216 20"/></g>${pts.map(d => `<circle cx="${x(d.x)}" cy="${y(d.y)}" r="4" fill="${TAPIO_META[d.pat]?.color || "#6c757d"}" opacity=".88"/>`).join("")}</svg>`;
+}
+
+function miniBarsFigure(){
+  const indicators = ["Energía", "Materiales", "Emisiones de CO₂", "Tierras de cultivo", "Agua"];
+  const vals = indicators.map(ind => {
+    const s = getTrendSeries(ind, "Absoluto", "España").filter(d => d.valor != null && Number.isFinite(d.valor));
+    const first = s[0]?.valor || 1;
+    const last = s.at(-1)?.valor || first;
+    return { ind, value: first ? last / first : 1 };
+  }).filter(d => Number.isFinite(d.value));
+  if(vals.length < 3) return null;
+  const y = d3.scaleLinear().domain([0, d3.max(vals, d => d.value)]).nice().range([96, 20]);
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M30 96h210"/><path d="M30 72h210M30 48h210M30 24h210"/></g>${vals.map((d, i) => `<rect x="${46 + i * 37}" y="${y(d.value)}" width="23" height="${96 - y(d.value)}" fill="${FALLBACK_PALETTE[i]}" opacity=".9"/>`).join("")}</svg>`;
+}
+
+function perspectiveFigureMarkup(kind){
+  const live = kind === "line" ? miniLineFigure()
+    : kind === "area" ? miniAreaFigure()
+    : kind === "scatter" ? miniScatterFigure()
+    : kind === "tapio" ? miniTapioFigure()
+    : kind === "bars" ? miniBarsFigure()
+    : null;
+  if(live) return live;
+  if(kind === "scatter") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 10v86h212"/><path d="M28 74h212M28 50h212M28 26h212"/></g><g class="mini-dots blue">${[0,1,2,3,4,5,6,7].map((_,i)=>`<circle cx="${48+i*21}" cy="${82-i*6+(i%2)*8}" r="4"/>`).join("")}</g><g class="mini-dots red">${[0,1,2,3,4,5,6,7].map((_,i)=>`<circle cx="${54+i*22}" cy="${78-i*8-(i%2)*4}" r="4"/>`).join("")}</g></svg>`;
+  if(kind === "tapio") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M130 12v92M30 62h210"/><path d="M44 96 216 20"/></g><circle cx="94" cy="76" r="5" fill="#d0a53f"/><circle cx="138" cy="55" r="5" fill="#c94132"/><circle cx="172" cy="45" r="5" fill="#4f7ea8"/><circle cx="188" cy="73" r="5" fill="#5f8d63"/><circle cx="116" cy="41" r="5" fill="#1c1f24"/></svg>`;
+  if(kind === "bars") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M30 96h210"/><path d="M30 72h210M30 48h210M30 24h210"/></g><rect x="48" y="50" width="22" height="46" fill="#c79a3b"/><rect x="82" y="34" width="22" height="62" fill="#4f7ea8"/><rect x="116" y="68" width="22" height="28" fill="#6f7a3d"/><rect x="150" y="22" width="22" height="74" fill="#c94132"/><rect x="184" y="42" width="22" height="54" fill="#1c1f24"/></svg>`;
+  if(kind === "map") return `<svg viewBox="0 0 260 120" aria-hidden="true"><path d="M90 22 140 18 188 38 180 76 140 100 92 84 70 52z" fill="#e1d8b4"/><path d="M94 28 118 25 120 58 100 60z" fill="#6f7a3d"/><path d="M126 25 154 26 148 54 121 58z" fill="#cdbf86"/><path d="M154 30 180 42 172 70 148 55z" fill="#9aa05b"/><path d="M102 64 140 58 136 94 96 80z" fill="#d7cc9a"/><path d="M142 60 174 73 142 96z" fill="#5f6f32"/><circle cx="198" cy="82" r="7" fill="#9aa05b"/></svg>`;
+  if(kind === "area") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M34 92 C72 88 86 70 112 72 S152 50 178 38 214 26 236 18 L236 96 L34 96z" fill="#c79a3b" opacity=".55"/><path d="M34 92 C76 82 96 84 120 68 S168 55 194 44 218 42 236 34 L236 96 L34 96z" fill="#c94132" opacity=".55"/></svg>`;
+  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M34 88 C62 82 78 76 98 70 S136 66 154 48 194 28 236 20" fill="none" stroke="#4f7ea8" stroke-width="3"/><path d="M34 90 C72 86 98 75 118 62 S166 50 188 44 214 38 236 30" fill="none" stroke="#c94132" stroke-width="3"/></svg>`;
+}
+
+function optionMarkup(value, label, current){
+  return `<option value="${escAttr(value)}"${value === current ? " selected" : ""}>${label}</option>`;
+}
+
+function perspectiveTopicLabel(p){
+  return state.lang === "en" ? (p.topic_en || p.topic) : p.topic;
+}
+
+function perspectiveDateLabel(date){
+  const d = new Date(`${date}T00:00:00`);
+  return new Intl.DateTimeFormat(state.lang === "en" ? "en-GB" : "es-ES", {
+    day: "2-digit", month: "short", year: "numeric"
+  }).format(d).replace(/\./g, "");
+}
+
+function perspectiveAuthorButtons(authors){
+  return (authors || []).map(author => `<button class="perspective-author-link" type="button" data-perspective-author="${escAttr(author)}">${author}</button>`).join(`<span class="meta-sep">·</span>`);
+}
+
+function bindPerspectiveAuthorLinks(root){
+  root.querySelectorAll("[data-perspective-author]").forEach(btn => {
+    btn.addEventListener("click", event => {
+      event.stopPropagation();
+      state.perspectiveEntry = null;
+      state.perspectiveAuthor = btn.dataset.perspectiveAuthor;
+      renderPerspectivas();
+    });
+  });
+}
+
+function renderPerspectiveDetail(entry){
+  els.workspace.innerHTML = `<div class="page perspective-detail-page">
+    <button class="card-action perspective-back" type="button" id="perspective-back">${state.lang === "en" ? "← All entries" : "← Todas las entradas"}</button>
+    <article class="perspective-detail">
+      <div class="perspective-detail-head">
+        <div class="perspective-meta"><time datetime="${entry.date}">${perspectiveDateLabel(entry.date)}</time><span>${perspectiveAuthorButtons(entry.authors)}</span></div>
+        <span class="card-eyebrow">${perspectiveTopicLabel(entry)}</span>
+        <h1>${state.lang === "en" ? entry.title_en : entry.title}</h1>
+        <p>${state.lang === "en" ? entry.summary_en : entry.summary}</p>
+      </div>
+      <figure class="perspective-detail-figure">${perspectiveFigureMarkup(entry.fig)}</figure>
+      <div class="prose perspective-detail-body">
+        <p>${state.lang === "en" ? entry.body_en : entry.body}</p>
+      </div>
+      <button class="card-action" type="button" data-perspective-viz="${entry.viz}">${t("openViewer")} →</button>
+    </article>
+  </div>`;
+  els.workspace.querySelector("#perspective-back").addEventListener("click", () => {
+    state.perspectiveEntry = null;
+    renderPerspectivas();
+  });
+  bindPerspectiveAuthorLinks(els.workspace);
+  els.workspace.querySelector("[data-perspective-viz]").addEventListener("click", () => openVizFromStatic(entry.viz));
+}
+
 function renderPerspectivas(){
+  if(!DATA_LONG || !DATA_ANALYSIS){
+    els.workspace.innerHTML = `<div class="loading"><span class="spinner"></span><strong>${t("loadingData")}</strong></div>`;
+    loadGlobalData().then(() => {
+      if(state.section === "perspectivas") renderPerspectivas();
+    });
+    return;
+  }
+  const activeEntry = state.perspectiveEntry ? PERSPECTIVAS.find(p => p.id === state.perspectiveEntry) : null;
+  if(activeEntry){
+    renderPerspectiveDetail(activeEntry);
+    return;
+  }
+  const topics = Array.from(new Set(PERSPECTIVAS.map(p => p.topic)));
+  const authors = Array.from(new Set(PERSPECTIVAS.flatMap(p => p.authors || []))).sort((a, b) => a.localeCompare(b, "es"));
+  const sortOptions = [
+    { id: "newest", label: t("newest") },
+    { id: "oldest", label: t("oldest") },
+    { id: "title", label: t("titleOrder") },
+  ];
+  if(state.perspectiveTopic !== "all" && !topics.includes(state.perspectiveTopic)) state.perspectiveTopic = "all";
+  if(state.perspectiveAuthor !== "all" && !authors.includes(state.perspectiveAuthor)) state.perspectiveAuthor = "all";
+  if(!sortOptions.some(o => o.id === state.perspectiveSort)) state.perspectiveSort = "newest";
+  let entries = PERSPECTIVAS.filter(p =>
+    (state.perspectiveTopic === "all" || p.topic === state.perspectiveTopic) &&
+    (state.perspectiveAuthor === "all" || (p.authors || []).includes(state.perspectiveAuthor))
+  );
+  entries = entries.slice().sort((a, b) => {
+    if(state.perspectiveSort === "oldest") return a.date.localeCompare(b.date);
+    if(state.perspectiveSort === "title") return (state.lang === "en" ? a.title_en : a.title).localeCompare(state.lang === "en" ? b.title_en : b.title, state.lang === "en" ? "en" : "es");
+    return b.date.localeCompare(a.date);
+  });
   els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("perspectivas")}</div><h1>${t("perspectivesTitle")}</h1><p>${t("perspectivesIntro")}</p></div>
-    <div class="card-grid perspective-grid">${PERSPECTIVAS.map(p => `<article class="card perspective-card"><span class="card-eyebrow">${state.lang === "en" ? p.cat_en : p.cat}</span><h3>${state.lang === "en" ? p.title_en : p.title}</h3><p>${state.lang === "en" ? p.summary_en : p.summary}</p><button class="card-action" type="button" data-perspective-viz="${p.viz}">${t("openViewer")} →</button></article>`).join("")}</div></div>`;
-  els.workspace.querySelectorAll("[data-perspective-viz]").forEach(btn => {
-    btn.addEventListener("click", () => openVizFromStatic(btn.dataset.perspectiveViz));
+    <div class="filter-bar perspective-toolbar">
+      ${miniSelectMarkup("perspective-topic-filter", t("topic"), state.perspectiveTopic === "all" ? t("allTopics") : (state.lang === "en" ? (PERSPECTIVAS.find(p => p.topic === state.perspectiveTopic)?.topic_en || state.perspectiveTopic) : state.perspectiveTopic), [t("allTopics"), ...topics.map(topic => state.lang === "en" ? (PERSPECTIVAS.find(p => p.topic === topic)?.topic_en || topic) : topic)])}
+      ${miniSelectMarkup("perspective-author-filter", t("author"), state.perspectiveAuthor === "all" ? t("allAuthors") : state.perspectiveAuthor, [t("allAuthors"), ...authors])}
+      ${miniSelectMarkup("perspective-sort-filter", t("orderBy"), (sortOptions.find(opt => opt.id === state.perspectiveSort) || sortOptions[0]).label, sortOptions.map(opt => opt.label))}
+    </div>
+    <div class="perspective-list">${entries.length ? entries.map(p => `<article class="perspective-article perspective-entry" data-perspective-entry="${p.id}">
+      <div class="perspective-copy">
+        <div class="perspective-meta"><time datetime="${p.date}">${perspectiveDateLabel(p.date)}</time><span>${perspectiveAuthorButtons(p.authors)}</span></div>
+        <span class="card-eyebrow">${perspectiveTopicLabel(p)}</span>
+        <h3>${state.lang === "en" ? p.title_en : p.title}</h3>
+        <p>${state.lang === "en" ? p.summary_en : p.summary}</p>
+        <p>${state.lang === "en" ? p.body_en : p.body}</p>
+      </div>
+    </article>`).join("") : `<div class="empty-state">${t("noEntries")}</div>`}</div></div>`;
+  bindMiniSelect(els.workspace, "perspective-topic-filter", value => {
+    const all = t("allTopics");
+    const found = topics.find(topic => (state.lang === "en" ? (PERSPECTIVAS.find(p => p.topic === topic)?.topic_en || topic) : topic) === value);
+    state.perspectiveTopic = value === all ? "all" : (found || "all");
+    renderPerspectivas();
+  });
+  bindMiniSelect(els.workspace, "perspective-author-filter", value => {
+    state.perspectiveAuthor = value === t("allAuthors") ? "all" : value;
+    renderPerspectivas();
+  });
+  bindMiniSelect(els.workspace, "perspective-sort-filter", value => {
+    state.perspectiveSort = (sortOptions.find(opt => opt.label === value) || sortOptions[0]).id;
+    renderPerspectivas();
+  });
+  bindPerspectiveAuthorLinks(els.workspace);
+  els.workspace.querySelectorAll("[data-perspective-entry]").forEach(article => {
+    article.addEventListener("click", () => {
+      state.perspectiveEntry = article.dataset.perspectiveEntry;
+      renderPerspectivas();
+    });
   });
 }
 
 const DATASETS = [
-  { label: "Dataset integrado", file: "cahe_datos_integrados.xlsx", desc: "Base longitudinal completa con las principales series de energía, materiales, emisiones, usos del suelo, bosques y cultivos, preparada para reproducir las visualizaciones.", scope: "Integrado", zenodo: "https://zenodo.org/communities/cahe" },
+  { label: "Dataset integrado", file: "cahe_datos_integrados.xlsx", desc: "Base longitudinal completa con las principales series de energía, materiales, emisiones, usos del suelo, bosques y cultivos, preparada para reproducir las visualizaciones.", scope: "Integrado", zenodo: ZENODO_CAHE_URL },
   { label: "Consumo de energía", file: "cahe_datos_energía.xlsx", desc: "Consumo de energía primaria: fuentes modernas (petróleo, gas, electricidad) y tradicionales (leña, alimentos y forraje).", scope: "Nacional", method: "energia_metodologia.pdf" },
   { label: "Emisiones GEI", file: "cahe_datos_emisiones_gei.xlsx", desc: "Gases de efecto invernadero (CO₂, CH₄, N₂O y F-gases) expresados en CO₂ equivalente.", scope: "Nacional", method: "emisiones_metodologia.pdf" },
   { label: "Emisiones de CO₂", file: "cahe_datos_emisiones_co2.xlsx", desc: "Emisiones de CO₂ por combustibles fósiles (carbón, petróleo y gas) y por usos del suelo.", scope: "Nacional", method: "emisiones_metodologia.pdf" },
@@ -2658,8 +3393,8 @@ const DATASETS = [
 ];
 function renderDatos(){
   els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("datos")}</div><h1>${t("dataPageTitle")}</h1><p>${t("dataPageIntro")}</p></div>
-    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><span class="zenodo-mark">Z</span>${t("zenodo")}</a>` : `<span></span>`}</div>`).join("")}</div></section>
-    <section class="section-block"><h2>${t("zenodoDeposits")}</h2><div class="sub">${state.lang === "en" ? "Item-level Zenodo links appear in the series table when a deposit is ready." : "Los enlaces Zenodo por serie aparecen en la tabla cuando el depósito está preparado."}</div><div class="card-grid" style="margin-top:8px"><a class="card" href="https://zenodo.org/communities/cahe" target="_blank" rel="noopener"><span class="card-eyebrow">${t("community")}</span><h3>CAHE Zenodo</h3><p>zenodo.org/communities/cahe</p><div class="card-foot"><span class="zenodo-mark">Z</span><span class="arrow">→</span></div></a></div></section></div>`;
+    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${t("zenodo")}</a>` : `<span></span>`}</div>`).join("")}</div></section>
+    <section class="section-block"><h2>${t("zenodoDeposits")}</h2><div class="sub">${state.lang === "en" ? "Item-level Zenodo links appear in the series table when a deposit is ready." : "Los enlaces Zenodo por serie aparecen en la tabla cuando el depósito está preparado."}</div><div class="card-grid" style="margin-top:8px"><a class="card" href="${ZENODO_CAHE_URL}" target="_blank" rel="noopener"><span class="card-eyebrow">${t("zenodo")}</span><h3>CAHE Zenodo</h3><p>zenodo.org/search</p><div class="card-foot"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt=""><span class="arrow">→</span></div></a></div></section></div>`;
 }
 
 function renderNovedades(){
@@ -2669,15 +3404,25 @@ function renderNovedades(){
 }
 
 const TEAM = [
-  { name: "Juan Infante Amate", aff: "Universidad de Granada", photo: "infante_foto.jpg",
+  { name: "Juan Infante Amate", aff: "Universidad de Granada", role: "Coordinador", role_en: "Coordinator", photo: "infante_foto.jpg",
     links: [{ href: `${V1_IMG}/infante_CV.pdf`, title: "CV", icon: "cv-1.png" }, { href: "https://scholar.google.com/citations?user=s89YchgAAAAJ&hl=es", title: "Google Scholar", icon: "google-scholar-1.png" }, { href: "https://www.researchgate.net/profile/Juan-Infante-Amate", title: "ResearchGate", icon: "ResearchGate_icon_SVG.svg.png" }, { href: "https://www.ugr.es/personal/juan-infante-amate", title: "Web", icon: "web.png" }]},
   { name: "Iñaki Iriarte Goñi", aff: "Universidad de Zaragoza", photo: "iriarte_foto-1.jpg",
     links: [{ href: "https://scholar.google.es/citations?user=C0tX2hQAAAAJ&hl=es", title: "Google Scholar", icon: "google-scholar-1.png" }, { href: "https://www.researchgate.net/profile/Inaki-Iriarte-Goni", title: "ResearchGate", icon: "ResearchGate_icon_SVG.svg.png" }, { href: "https://economia_aplicada.unizar.es/personal/jose-ignacio-iriarte-goni", title: "Web", icon: "web.png" }]},
   { name: "Eduardo Aguilera", aff: "CSIC", photo: "aguilera_foto-1.jpg",
     links: [{ href: "https://scholar.google.com/citations?hl=es&user=3c01eqQAAAAJ", title: "Google Scholar", icon: "google-scholar-1.png" }, { href: "https://www.researchgate.net/profile/Eduardo-Aguilera", title: "ResearchGate", icon: "ResearchGate_icon_SVG.svg.png" }, { href: "https://www.cchs.csic.es/es/personal/eduardo-manuel-aguilera-fernandez", title: "Web", icon: "web.png" }]},
+  { name: "Ángel Sanjuán Ruiz", aff: "Universidad de Sevilla", photoSrc: "img/angel_sanjuan_gs.jpg", initials: "AS",
+    links: [{ href: "https://scholar.google.com/citations?user=KdSHBF4AAAAJ", title: "Google Scholar", icon: "google-scholar-1.png" }, { href: "https://orcid.org/0000-0003-1031-1219", title: "ORCID", text: "iD" }, { href: "https://dialnet.unirioja.es/servlet/autor?codigo=5633763", title: "Dialnet", text: "D" }, { href: "https://www.us.es/trabaja-en-la-us/directorio/angel-sanjuan-ruiz", title: "Web", icon: "web.png" }]},
 ];
-function teamCardsMarkup(){
-  return TEAM.map(t => `<div class="team-card team-card-round"><img class="photo" src="${V1_IMG}/${t.photo}" alt="${t.name}" onerror="this.style.display='none'"><div class="body"><div class="name">${t.name}</div><div class="aff">${t.aff}</div><div class="links">${t.links.map(l => `<a href="${l.href}" target="_blank" rel="noopener" title="${l.title}"><img src="${V1_IMG}/${l.icon}" alt="${l.title}"></a>`).join("")}</div></div></div>`).join("");
+function teamCardsMarkup(items = TEAM){
+  return items.map(member => {
+    const photoSrc = member.photoSrc || (member.photo ? `${V1_IMG}/${member.photo}` : "");
+    const photo = photoSrc
+      ? `<img class="photo" src="${photoSrc}" alt="${member.name}" onerror="this.style.display='none'">`
+      : `<div class="photo team-avatar" aria-hidden="true">${member.initials || member.name.split(/\s+/).map(p => p[0]).slice(0,2).join("")}</div>`;
+    const role = member.role ? `<div class="role">${state.lang === "en" ? (member.role_en || member.role) : member.role}</div>` : "";
+    const links = member.links.map(link => `<a href="${link.href}" target="_blank" rel="noopener" title="${link.title}" aria-label="${link.title}">${link.icon ? `<img src="${V1_IMG}/${link.icon}" alt="">` : `<span>${link.text || link.title}</span>`}</a>`).join("");
+    return `<div class="team-card team-card-round">${photo}<div class="body">${role}<div class="name">${member.name}</div><div class="aff">${member.aff}</div><div class="links">${links}</div></div></div>`;
+  }).join("");
 }
 function renderEquipo(){
   els.workspace.innerHTML = `<div class="page equipo-page"><div class="page-head"><div class="eyebrow">${t("equipo")}</div><h1>${t("teamTitle")}</h1><p>${t("teamIntro")}</p></div>
@@ -2771,26 +3516,57 @@ function updateChrome(){
   }
 }
 function setNavActive(section){ els.nav.querySelectorAll("[data-section]").forEach(b => b.classList.toggle("active", b.dataset.section === section)); }
-function bindNav(){ els.nav.querySelectorAll("[data-section]").forEach(btn => { btn.addEventListener("click", () => { const s = btn.dataset.section; setNavActive(s); state.section = s; if(s === "visualizacion") state.subsection = "landing"; window.location.hash = s; renderMain(); }); }); }
+function bindNav(){
+  els.nav.querySelectorAll("[data-section]").forEach(btn => {
+    btn.addEventListener("click", event => {
+      event.preventDefault();
+      stopPlayback();
+      const s = btn.dataset.section;
+      setNavActive(s);
+      state.section = s;
+      state.subsection = "landing";
+      window.location.hash = s;
+      renderMain();
+    });
+  });
+}
 function bindLanguage(){ if(!els.lang) return; els.lang.addEventListener("click", () => { state.lang = state.lang === "es" ? "en" : "es"; localStorage.setItem("cahe_lang", state.lang); updateChrome(); renderMain(); }); }
 function bindHome(){ els.home.addEventListener("click", () => { if(window.parent !== window) window.parent.postMessage({ type: "cahe-back" }, "*"); else window.location.href = "index.html"; }); }
 function bindModal(){ document.querySelectorAll("[data-modal-close]").forEach(el => el.addEventListener("click", closeModal)); window.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); }); }
 
-function init(){
-  bindNav(); bindLanguage(); bindHome(); bindModal(); updateChrome();
+function applyHashRoute(){
   const hash = window.location.hash.replace("#","");
-  if(["perspectivas","datos","novedades","equipo","acerca"].includes(hash)) state.section = hash;
+  if(!hash){
+    state.section = "visualizacion";
+    state.subsection = "landing";
+    return true;
+  }
+  if(["perspectivas","datos","novedades","equipo","acerca"].includes(hash)){
+    state.section = hash;
+    state.subsection = "landing";
+    return true;
+  }
   if(["global","macro","sectorial","commodities"].includes(hash)){
     state.section = "visualizacion";
     state.subsection = "viz";
     state.group = hash;
     state.vizId = defaultVizId(hash);
+    return true;
   }
   for(const g of ["global","macro","sectorial","commodities"]){
     const items = g === "global" ? GLOBAL_ANALYSES : (CATALOG_OTHER[g] || []);
     const item = items.find(i => i.id === hash);
-    if(item){ state.section = "visualizacion"; state.subsection = "viz"; state.group = g; state.vizId = item.id; break; }
+    if(item){ state.section = "visualizacion"; state.subsection = "viz"; state.group = g; state.vizId = item.id; return true; }
   }
+  return false;
+}
+
+function init(){
+  bindNav(); bindLanguage(); bindHome(); bindModal(); updateChrome();
+  applyHashRoute();
+  window.addEventListener("hashchange", () => {
+    if(applyHashRoute()){ setNavActive(state.section); renderMain(); }
+  });
   setNavActive(state.section);
   renderMain();
 }
