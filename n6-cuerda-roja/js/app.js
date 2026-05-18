@@ -1,21 +1,22 @@
-﻿// Main controller. Orchestrates landing → app handoff and wires components.
+// Main controller. Orchestrates landing → app handoff and wires components.
 
 import { State } from './state.js';
-import { DataLoader } from './data-loader.js?v=20260517-ui33';
-import { getCategory } from './indicators.js?v=20260517-ui33';
+import { DataLoader } from './data-loader.js?v=20260518-ui48';
+import { getCategory } from './indicators.js?v=20260518-ui48';
 import { initLanding } from './landing.js';
-import { initSidebar } from './sidebar.js?v=20260517-ui33';
-import { initQueryBar } from './query-bar.js?v=20260517-ui33';
-import { initTimeline } from './timeline.js?v=20260517-ui33';
-import { initRightPanel } from './right-panel.js?v=20260517-ui33';
-import { initMapView } from './views/map.js?v=20260517-ui33';
-import { initTrendView } from './views/trend.js?v=20260517-ui33';
-import { initRankingView } from './views/ranking.js?v=20260517-ui33';
-import { initTreemapView } from './views/treemap.js?v=20260517-ui33';
-import { initTableView } from './views/table.js?v=20260517-ui33';
-import { initAboutView } from './views/about.js?v=20260517-ui33';
+import { initSidebar } from './sidebar.js?v=20260518-ui48';
+import { initQueryBar } from './query-bar.js?v=20260518-ui48';
+import { initTimeline } from './timeline.js?v=20260518-ui48';
+import { initRightPanel } from './right-panel.js?v=20260518-ui48';
+import { initMapView } from './views/map.js?v=20260518-ui48';
+import { initTrendView } from './views/trend.js?v=20260518-ui48';
+import { initRankingView } from './views/ranking.js?v=20260518-ui48';
+import { initTreemapView } from './views/treemap.js?v=20260518-ui48';
+import { initTableView } from './views/table.js?v=20260518-ui48';
+import { initCountryPanelView } from './views/country-panel.js?v=20260518-ui48';
+import { initAboutView } from './views/about.js?v=20260518-ui48';
 
-const VIEWS = ['map', 'trend', 'ranking', 'treemap', 'table', 'about'];
+const VIEWS = ['map', 'trend', 'ranking', 'treemap', 'table', 'country', 'about'];
 let _lastDataView = 'map';
 
 function switchView(view) {
@@ -26,12 +27,12 @@ function switchView(view) {
   document.querySelectorAll('.vw-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.view === view);
   });
-  if (view !== 'about') _lastDataView = view;
+  if (view !== 'about' && view !== 'country') _lastDataView = view;
   State.set('activeView', view);
 }
 
 function returnToDataView() {
-  if (State.get('activeView') === 'about') switchView(_lastDataView || 'map');
+  if (State.get('activeView') === 'about' || State.get('activeView') === 'country') switchView(_lastDataView || 'map');
 }
 
 function categoryDefaults(catId, firstIndicatorId) {
@@ -50,8 +51,39 @@ function categoryDefaults(catId, firstIndicatorId) {
       productivityLaborInput: 'hours',
       functionalUnit: 'tonne',
     });
+  } else if (catId === 'trade') {
+    Object.assign(next, {
+      trendGeoScope: 'country',
+      tradeFlow: 'both',
+      tradeProduct: '__total__',
+      tradeTopN: 10,
+    });
+  } else if (catId === 'country_profile') {
+    Object.assign(next, {
+      trendGeoScope: 'country',
+      cropCategoryFilter: null,
+    });
   }
   return next;
+}
+
+function activateCategory(catId) {
+  const cat = getCategory(catId);
+  if (cat && cat.indicators.length) {
+    State.setMany(categoryDefaults(catId, cat.indicators[0].id));
+  } else {
+    State.set('activeCategory', catId);
+  }
+  if (catId === 'country_profile') switchView('country');
+  else returnToDataView();
+  syncProfileChrome();
+}
+
+function syncProfileChrome() {
+  const profileMode = State.get('activeCategory') === 'country_profile';
+  document.getElementById('right-panel')?.classList.toggle('profile-hidden', profileMode);
+  document.getElementById('btn-toggle-panel')?.classList.toggle('hidden', profileMode);
+  document.querySelector('.main')?.classList.toggle('profile-mode', profileMode);
 }
 
 async function bootApp() {
@@ -59,30 +91,17 @@ async function bootApp() {
   try { await DataLoader.loadManifest(); } catch (_) {}
 
   initSidebar({
-    onCategoryChange(catId) {
-      // When switching category, fall back to its first indicator.
-      const cat = getCategory(catId);
-      if (cat && cat.indicators.length) {
-        State.setMany(categoryDefaults(catId, cat.indicators[0].id));
-      } else {
-        State.set('activeCategory', catId);
-      }
-      returnToDataView();
-    },
+    onCategoryChange(catId) { activateCategory(catId); },
     onAbout() { switchView('about'); },
   });
 
   initQueryBar({
-    onIndicatorChange(indId) { State.set('activeIndicator', indId); returnToDataView(); },
-    onCategoryChange(catId) {
-      const cat = getCategory(catId);
-      if (cat && cat.indicators.length) {
-        State.setMany(categoryDefaults(catId, cat.indicators[0].id));
-      } else {
-        State.set('activeCategory', catId);
-      }
-      returnToDataView();
+    onIndicatorChange(indId) {
+      State.set('activeIndicator', indId);
+      if (State.get('activeCategory') === 'country_profile') switchView('country');
+      else returnToDataView();
     },
+    onCategoryChange(catId) { activateCategory(catId); },
   });
 
   initTimeline();
@@ -94,6 +113,7 @@ async function bootApp() {
   initRankingView();
   initTreemapView();
   initTableView();
+  initCountryPanelView();
   initAboutView();
 
   // View switcher buttons.
@@ -128,6 +148,8 @@ async function bootApp() {
   // Apply initial language (already set by landing's language switcher).
   applyAppI18n(State.get('language'));
   State.subscribe('language', applyAppI18n);
+  syncProfileChrome();
+  State.subscribe('activeCategory', syncProfileChrome);
 }
 
 function applyAppI18n(lang) {
@@ -141,3 +163,4 @@ function applyAppI18n(lang) {
 
 // ---------- bootstrap ----------
 initLanding({ onEnter: bootApp });
+

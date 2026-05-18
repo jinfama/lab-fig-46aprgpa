@@ -1,9 +1,9 @@
-﻿// Right panel: controls, crop categories and countries.
+// Right panel: controls, crop categories and countries.
 
 import { State } from './state.js';
-import { DataLoader } from './data-loader.js?v=20260517-ui33';
-import { getCategory, getIndicator } from './indicators.js?v=20260517-ui33';
-import { indicatorInfo } from './indicator-info.js?v=20260517-ui33';
+import { DataLoader } from './data-loader.js?v=20260518-ui48';
+import { getCategory, getIndicator } from './indicators.js?v=20260518-ui48';
+import { indicatorInfo } from './indicator-info.js?v=20260518-ui48';
 import { escapeHtml, formatCategoryLabel, normalizeSearchText } from './labels.js';
 import {
   FUNCTIONAL_UNITS,
@@ -15,7 +15,7 @@ import {
   resolveMetric,
   selectedFootprintFlows,
   supportsCropCategory,
-} from './metric.js?v=20260517-ui33';
+} from './metric.js?v=20260518-ui48';
 
 export async function initRightPanel() {
   initPanelSections();
@@ -24,7 +24,7 @@ export async function initRightPanel() {
   await renderCropCategories();
 
   State.subscribe('language', () => { renderOptions(); renderCropCategories(); });
-  State.subscribe('activeCategory', () => { renderOptions(); renderCropCategories(); });
+  State.subscribe('activeCategory', () => { renderOptions(); renderCropCategories(); renderTerritories(); });
   State.subscribe('activeIndicator', () => { renderOptions(); renderCropCategories(); });
   State.subscribe('functionalUnit', renderOptions);
   State.subscribe('productivityLaborInput', renderOptions);
@@ -39,7 +39,10 @@ export async function initRightPanel() {
   State.subscribe('treemapMode', renderOptions);
   State.subscribe('cropCategoryFilter', renderOptions);
   State.subscribe('selectedRegions', renderTerritoriesHighlight);
-  State.subscribe('selectedCountries', renderTerritoriesHighlight);
+  State.subscribe('selectedCountries', () => { renderTerritoriesHighlight(); renderOptions(); });
+  State.subscribe('currentYear', renderOptions);
+  State.subscribe('tradeFlow', renderOptions);
+  State.subscribe('tradeProduct', renderOptions);
 }
 
 function initPanelSections() {
@@ -59,7 +62,7 @@ function initPanelSections() {
   });
 }
 
-function renderOptions() {
+async function renderOptions() {
   const body = document.getElementById('rp-options-body');
   if (!body) return;
   const lang = State.get('language');
@@ -81,6 +84,11 @@ function renderOptions() {
   const labels = lang === 'en'
     ? { indicator: 'Indicator', conditionUnit: 'Unit', laborInput: 'Labour input', unitChoice: 'Functional unit', readingChoice: 'Reading', footprintFlow: 'Footprint flow', all: 'All', clear: 'Clear', noIndicators: 'No indicators available', layout: 'View', overlay: 'One panel', facetTerritory: 'One panel per country/region', facetFlow: 'One panel per flow', composition: 'Composition', products: 'Products', countries: 'Countries', productsByCountry: 'Products by country' }
     : { indicator: 'Indicador', conditionUnit: 'Unidad', laborInput: 'Trabajo', unitChoice: 'Unidad funcional', readingChoice: 'Lectura', footprintFlow: 'Flujo de huella', all: 'Todos', clear: 'Limpiar', noIndicators: 'Sin indicadores disponibles', layout: 'Vista', overlay: 'Un panel', facetTerritory: 'Un panel por país/región', facetFlow: 'Un panel por flujo', composition: 'Composición', products: 'Productos', countries: 'Países', productsByCountry: 'Productos por país' };
+
+  if (cat?.id === 'trade') {
+    await renderTradeOptions(body, lang);
+    return;
+  }
 
   const indicatorControl = isConditions
     ? `
@@ -155,7 +163,7 @@ function renderOptions() {
       <label class="rp-select-row" title="${lang === 'en' ? 'Switch between hours per unit and its inverse.' : 'Alterna entre horas por unidad y su inversa.'}">
         <span>${labels.readingChoice}</span>
         <select data-option-direction>
-          ${PRODUCTIVITY_DIRECTIONS.map(d => `<option value="${d.id}" ${d.id === State.get('productivityDirection') ? 'selected' : ''}>${escapeHtml(d.label[lang])}</option>`).join('')}
+          ${PRODUCTIVITY_DIRECTIONS.map(d => `<option value="${d.id}" ${d.id === State.get('productivityDirection') ? 'selected' : ''}>${escapeHtml(productivityReadingLabel(d, lang))}</option>`).join('')}
         </select>
       </label>
     ` : ''}
@@ -379,6 +387,103 @@ function conditionMeasureForIndicator(option, indicatorId) {
   return option.measures.find(m => m.indicator === indicatorId) || option.measures[0];
 }
 
+function productivityReadingLabel(direction, lang) {
+  const unit = FUNCTIONAL_UNITS.find(u => u.id === State.get('functionalUnit')) || FUNCTIONAL_UNITS[0];
+  const laborInput = State.get('productivityLaborInput') || 'hours';
+  const inverse = direction.id === 'unit_per_hour';
+  if (laborInput === 'workers') {
+    const text = inverse
+      ? (lang === 'en' ? 'Productivity per worker' : 'Productividad por trabajador')
+      : (lang === 'en' ? 'Workers / functional unit' : 'Trabajadores / unidad funcional');
+    return `${text} (${inverse ? unit.workerInverseUnit : unit.workerUnit})`;
+  }
+  const text = inverse
+    ? (lang === 'en' ? 'Physical productivity' : 'Productividad física')
+    : (lang === 'en' ? 'Labour intensity' : 'Intensidad laboral');
+  return `${text} (${inverse ? unit.inverseUnit : unit.unit})`;
+}
+
+async function renderTradeOptions(body, lang) {
+  const labels = lang === 'en'
+    ? {
+      flow: 'Flow',
+      product: 'Product',
+      both: 'Imports + exports',
+      imports: 'Imports',
+      exports: 'Exports',
+      total: 'Total',
+      rest: 'Other',
+      selectCountry: 'Select a country on the map or in the territory list to see its main products.',
+      measureNote: 'Map flows use tonnes and embedded hours when available.',
+    }
+    : {
+      flow: 'Flujo',
+      product: 'Producto',
+      both: 'Importaciones + exportaciones',
+      imports: 'Importaciones',
+      exports: 'Exportaciones',
+      total: 'Total',
+      rest: 'Resto',
+      selectCountry: 'Selecciona un país en el mapa o en territorio para ver sus productos principales.',
+      measureNote: 'El mapa usa toneladas y horas embebidas cuando están disponibles.',
+    };
+  const selectedIso = (State.get('selectedCountries') || [])[0] || State.get('focusedCountry');
+  const currentYear = State.get('currentYear');
+  const flow = State.get('tradeFlow') || 'both';
+  let options = [{ id: '__total__', label: labels.total }];
+
+  try {
+    if (selectedIso) {
+      const yearData = await DataLoader.loadBilateralYear(currentYear);
+      options = tradeProductsForCountry(yearData, selectedIso, flow, labels);
+    } else {
+      const index = await DataLoader.loadBilateralIndex();
+      options = [
+        { id: '__total__', label: labels.total },
+        ...(index.global_top_products || []).slice(0, 14).map(([name]) => ({ id: name, label: name })),
+        { id: '__other__', label: labels.rest },
+      ];
+    }
+  } catch (e) {
+    console.warn('[right-panel] bilateral options unavailable', e);
+  }
+
+  const currentProduct = State.get('tradeProduct') || '__total__';
+  if (!options.some(opt => opt.id === currentProduct)) {
+    window.setTimeout(() => State.set('tradeProduct', '__total__'), 0);
+  }
+
+  body.innerHTML = `
+    <label class="rp-select-row" title="${escapeHtml(selectedIso ? labels.measureNote : labels.selectCountry)}">
+      <span>${labels.product}</span>
+      <select data-trade-product>
+        ${options.map(opt => `<option value="${escapeHtml(opt.id)}" ${opt.id === currentProduct ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+      </select>
+    </label>
+    <div class="rp-note">${escapeHtml(selectedIso ? labels.measureNote : labels.selectCountry)}</div>
+  `;
+  body.querySelector('[data-trade-product]')?.addEventListener('change', e => State.set('tradeProduct', e.target.value));
+}
+
+function tradeProductsForCountry(yearData, iso, flow, labels) {
+  const country = yearData?.countries?.[iso];
+  const totals = new Map();
+  const add = row => {
+    if (!row || row[0] === '__total__') return;
+    const key = row[0];
+    totals.set(key, (totals.get(key) || 0) + (+row[1] || 0));
+  };
+  if (country) {
+    if (flow !== 'exports') (country.imports?.products || []).forEach(add);
+    if (flow !== 'imports') (country.exports?.products || []).forEach(add);
+  }
+  const rows = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+  return [
+    { id: '__total__', label: labels.total },
+    ...rows.map(([name]) => ({ id: name, label: name === '__other__' ? labels.rest : name })),
+  ];
+}
+
 async function renderTerritoriesLegacy() {
   const list = document.getElementById('rp-territory-list');
   const search = document.getElementById('rp-territory-search');
@@ -458,8 +563,11 @@ async function renderTerritories() {
   if (!body) return;
   const lang = State.get('language');
   const view = State.get('activeView');
+  const activeCategory = State.get('activeCategory');
   const rawScope = State.get('trendGeoScope');
-  const scope = view === 'map' && rawScope === 'world' ? 'country' : rawScope;
+  const scope = activeCategory === 'trade' || view === 'country'
+    ? 'country'
+    : (view === 'map' && rawScope === 'world' ? 'country' : rawScope);
   const section = body.closest('.rp-section');
   const header = section?.querySelector('.rp-section-header');
   if (header) header.firstChild.textContent = lang === 'en' ? 'TERRITORY' : 'TERRITORIO';
@@ -491,7 +599,11 @@ async function renderTerritories() {
 
   body.innerHTML = `
     <div class="rp-territory-mode" role="group" aria-label="Territorio">
-      ${(view === 'map'
+      ${(activeCategory === 'trade' || view === 'country'
+        ? [
+          ['country', labels.countries],
+        ]
+        : view === 'map'
         ? [
           ['country', labels.countries],
           ['region', labels.regions],
@@ -576,7 +688,8 @@ async function renderTerritories() {
       <button type="button" class="rp-territory-action rp-territory-action-clear" data-territory-clear>${labels.clear}</button>
     `;
     actions.querySelector('[data-territory-all]')?.addEventListener('click', () => {
-      if (State.get('activeView') === 'map') State.clearCountries();
+      if (State.get('activeCategory') === 'trade') State.clearCountries();
+      else if (State.get('activeView') === 'map') State.clearCountries();
       else State.set('selectedCountries', countries.map(c => c.iso3));
     });
     actions.querySelector('[data-territory-clear]')?.addEventListener('click', () => State.clearCountries());
@@ -592,7 +705,10 @@ async function renderTerritories() {
         <span>${escapeHtml(c.country)}</span><span style="color:var(--c-text-3); font-size:10px;">${escapeHtml(c.iso3)}</span>
       </div>`).join('');
     list.querySelectorAll('.rp-territory').forEach(el => {
-      el.addEventListener('click', () => State.toggleCountry(el.dataset.iso));
+      el.addEventListener('click', () => {
+        if (State.get('activeCategory') === 'trade' || State.get('activeView') === 'country') State.focusCountry(el.dataset.iso);
+        else State.toggleCountry(el.dataset.iso);
+      });
     });
   }
 
@@ -661,3 +777,4 @@ async function renderCropCategories() {
   paint('');
   if (search) search.oninput = e => paint(e.target.value);
 }
+

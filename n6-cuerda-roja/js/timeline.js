@@ -1,8 +1,8 @@
-﻿// Bottom timeline: dual-handle slider + play/pause + speed.
+// Bottom timeline: dual-handle slider + play/pause + speed.
 
 import { State } from './state.js';
-import { getIndicator } from './indicators.js?v=20260517-ui33';
-import { metricYearRange, resolveMetric } from './metric.js?v=20260517-ui33';
+import { getIndicator } from './indicators.js?v=20260518-ui48';
+import { metricYearRange, resolveMetric } from './metric.js?v=20260518-ui48';
 
 let _domainMin = 1961, _domainMax = 2021;
 let _yearFrom = 1961, _yearTo = 2021;
@@ -240,3 +240,4 @@ export function initTimeline() {
   State.subscribe('productivityDirection', applyMetricRange);
   State.subscribe('language', applyMetricRange);
 }
+

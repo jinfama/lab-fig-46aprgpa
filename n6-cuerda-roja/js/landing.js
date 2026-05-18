@@ -236,3 +236,4 @@ function applyLandingI18n(lang) {
     else el.textContent = txt;
   });
 }
+

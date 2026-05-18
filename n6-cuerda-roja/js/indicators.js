@@ -21,7 +21,8 @@ export const CATEGORIES = [
     label: { es: 'Productividad', en: 'Productivity' },
     icon: 'efficiency',
     indicators: [
-      { id: 'h_per_functional_unit', field: 'h_per_tonne', label: { es: 'Relación trabajo / producto', en: 'Labour / product ratio' }, unit: 'h/UF', source: 'regions', functionalUnit: true },
+      { id: 'h_per_functional_unit', field: 'h_per_tonne', label: { es: 'Productividad física', en: 'Physical productivity' }, unit: 'UF/h', source: 'regions', functionalUnit: true },
+      { id: 'va_per_worker', field: 'va_per_worker', label: { es: 'Valor añadido / trabajador', en: 'Value added / worker' }, unit: 'USD/trab.', source: 'regions', cropFilter: false },
     ],
   },
   {
@@ -55,9 +56,17 @@ export const CATEGORIES = [
     id: 'trade',
     label: { es: 'Comercio bilateral', en: 'Bilateral trade' },
     icon: 'flow',
-    indicators: [],
-    blocked: true,
-    blockedMsg: { es: 'Próximamente: datos de comercio bilateral del pipeline M03 en preparación.', en: 'Coming soon: bilateral trade data from the M03 pipeline.' },
+    indicators: [
+      { id: 'bilateral_trade', field: 'tonnes', label: { es: 'Flujos comerciales', en: 'Trade flows' }, unit: 't', source: 'bilateral_trade', cropFilter: false },
+    ],
+  },
+  {
+    id: 'country_profile',
+    label: { es: 'País', en: 'Country' },
+    icon: 'country',
+    indicators: [
+      { id: 'country_profile', field: 'profile', label: { es: 'Panel país', en: 'Country panel' }, unit: '', source: 'profile', cropFilter: false },
+    ],
   },
 ];
 
@@ -75,4 +84,6 @@ export const ICON_PATHS = {
   scale:      'M12 3v15M5 7h14M6 7l-3 5h6l-3-5Zm12 0l-3 5h6l-3-5ZM7 19h10',
   footprint:  'M9 16c0 1 1 2 2 2s2-1 2-2-1-3-2-3-2 2-2 3Zm-4-7c0 1 .5 2 1.5 2S8 10 8 9 7.5 7 6.5 7 5 8 5 9Zm5-4c0 1 1 2 2 2s2-1 2-2-1-2-2-2-2 1-2 2Zm6 2c0 1 .5 2 1.5 2S19 8 19 7s-.5-2-1.5-2S16 6 16 7Z',
   flow:       'M3 6h12l-3-3M3 6l3 3M21 14h-12l3 3M21 14l-3-3M3 18h7M21 6h-5',
+  country:    'M12 21s7-5.2 7-12A7 7 0 1 0 5 9c0 6.8 7 12 7 12Zm0-9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z',
 };
+

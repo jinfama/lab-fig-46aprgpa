@@ -8,7 +8,7 @@
 <meta name="description" content="Base de datos global sobre el trabajo agrario en perspectiva histórica.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23214B52'/%3E%3Cpath d='M12 4v16M7 12l5 -3 5 3M7 16l5 -3 5 3M7 20l5 -3 5 3' stroke='%238DBBC8' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,650&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css?v=20260517-ui33">
+<link rel="stylesheet" href="css/styles.css?v=20260518-ui48">
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script type="importmap">
@@ -99,10 +99,13 @@
         <button class="vw-btn"        data-view="treemap" title="Composición"><svg viewBox="0 0 24 24"><path d="M3 3h10v8H3zM13 3h8v14h-8zM3 11h10v10H3zM13 17h8v4h-8z" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></button>
         <button class="vw-btn"        data-view="table"   title="Tabla">      <svg viewBox="0 0 24 24"><path d="M3 5h18M3 10h18M3 15h18M3 20h18M8 5v15M14 5v15" stroke="currentColor" stroke-width="1.4" fill="none"/></svg></button>
       </div>
-
-      <button class="query-icon-btn" id="btn-toggle-panel" title="Mostrar/ocultar panel">
-        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
+      <button class="panel-toggle-btn" id="btn-toggle-panel" type="button" title="Mostrar/ocultar opciones" aria-label="Mostrar/ocultar opciones">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path class="panel-toggle-frame" d="M4 5h16v14H4zM14 5v14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          <path class="panel-toggle-mark" d="M8 9h3M8 12h3M8 15h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
       </button>
+
     </div>
 
     <!-- VIZ CONTAINER -->
@@ -132,6 +135,9 @@
       </div>
       <div class="viz-panel" id="panel-table">
         <div class="table-container" id="table-container"></div>
+      </div>
+      <div class="viz-panel" id="panel-country">
+        <div class="country-panel-container" id="country-panel-container"></div>
       </div>
       <div class="viz-panel" id="panel-about">
         <div class="about-container" id="about-container"></div>
@@ -191,6 +197,7 @@
   </aside>
 </div>
 
-<script type="module" src="js/app.js?v=20260517-ui33"></script>
+<script type="module" src="js/app.js?v=20260518-ui48"></script>
 </body>
 </html>
+

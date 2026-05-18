@@ -1,10 +1,11 @@
-﻿// Trend view — line chart of selected countries' indicator over time.
+// Trend view — line chart of selected countries' indicator over time.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui33';
-import { getIndicator } from '../indicators.js?v=20260517-ui33';
+import { DataLoader } from '../data-loader.js?v=20260518-ui48';
+import { getIndicator } from '../indicators.js?v=20260518-ui48';
 import { formatCategoryLabel } from '../labels.js';
-import { metricValue, resolveMetric, selectedFootprintFlows, supportsCropCategory } from '../metric.js?v=20260517-ui33';
+import { metricValue, resolveMetric, selectedFootprintFlows, supportsCropCategory } from '../metric.js?v=20260518-ui48';
+import { enrichRegionalData } from '../regional-estimates.js?v=20260518-ui48';
 
 const COLORS = ['#214B52', '#A5534E', '#2F4D63', '#B78B55', '#62735A', '#6F4B8B', '#2D7B7C', '#111827'];
 const INK = '#162123';
@@ -70,7 +71,7 @@ async function regionDataset(metric) {
   const ind = getIndicator(State.get('activeCategory'), State.get('activeIndicator'));
   const category = supportsCropCategory(ind) ? State.get('cropCategoryFilter') : null;
   const source = category ? await DataLoader.loadRegionsCategories() : await DataLoader.loadRegions();
-  const data = {};
+  let data = {};
   for (const row of (source.rows || [])) {
     if (category && row.category_labor !== category) continue;
     const region = row.region_un;
@@ -78,6 +79,7 @@ async function regionDataset(metric) {
     if (!data[region]) data[region] = {};
     data[region][row.year] = row;
   }
+  if (!category) data = await enrichRegionalData(data, metric);
   return { data, world: data.World || {}, category };
 }
 
@@ -727,3 +729,4 @@ function formatTick(v) {
   if (abs >= 1e3) return (v / 1e3).toFixed(abs < 10e3 ? 1 : 0) + 'k';
   return d3.format(',.2~f')(v);
 }
+

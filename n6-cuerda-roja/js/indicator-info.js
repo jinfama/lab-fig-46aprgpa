@@ -73,3 +73,4 @@ export function indicatorInfo(indicator, lang = 'es', metric = null) {
   }
   return text;
 }
+

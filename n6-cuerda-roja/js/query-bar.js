@@ -1,9 +1,9 @@
-﻿// Top query bar that reads like a sentence: "Category / Indicator".
+// Top query bar that reads like a sentence: "Category / Indicator".
 
 import { State } from './state.js';
-import { CATEGORIES, getCategory, getIndicator } from './indicators.js?v=20260517-ui33';
-import { indicatorInfo } from './indicator-info.js?v=20260517-ui33';
-import { resolveMetric } from './metric.js?v=20260517-ui33';
+import { CATEGORIES, getCategory, getIndicator } from './indicators.js?v=20260518-ui48';
+import { indicatorInfo } from './indicator-info.js?v=20260518-ui48';
+import { resolveMetric } from './metric.js?v=20260518-ui48';
 
 export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
   const catBtn      = document.getElementById('query-cat');
@@ -201,3 +201,4 @@ export function initQueryBar({ onCategoryChange, onIndicatorChange }) {
   State.subscribe('activeView', renderSelection);
   State.subscribe('selectedCountries', renderSelection);
 }
+

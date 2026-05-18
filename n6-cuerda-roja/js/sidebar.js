@@ -1,7 +1,7 @@
-﻿// Left dark sidebar — categories of indicators.
+// Left dark sidebar — categories of indicators.
 
 import { State } from './state.js';
-import { CATEGORIES, ICON_PATHS } from './indicators.js?v=20260517-ui33';
+import { CATEGORIES, ICON_PATHS } from './indicators.js?v=20260518-ui48';
 
 function icon(name) {
   const d = ICON_PATHS[name] || '';
@@ -39,3 +39,4 @@ export function initSidebar({ onCategoryChange }) {
   State.subscribe('activeCategory', render);
   State.subscribe('language', render);
 }
+

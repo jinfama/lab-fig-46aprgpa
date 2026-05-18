@@ -189,3 +189,4 @@ function iconMail() {
 function iconX() {
   return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2h3.2l-7 8 8.2 12h-6.4l-5-7.1L6.1 22H2.9l7.5-8.6L2.5 2h6.6l4.5 6.4L18.9 2Zm-1.1 17.9h1.8L8.1 4H6.2l11.6 15.9Z"/></svg>';
 }
+

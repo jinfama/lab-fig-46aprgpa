@@ -125,6 +125,7 @@ const YEAR_RANGES = {
   fp_hours_total: [1961, 2021],
   fp_hours_child: [1961, 2021],
   fp_hours_forced: [1961, 2021],
+  bilateral_trade: [1962, 2024],
 };
 
 export function functionalUnitConfig(id) {
@@ -197,11 +198,11 @@ export function resolveMetric(ind, lang = State.get('language')) {
   const inverse = direction === 'unit_per_hour';
   const label = laborInput === 'workers'
     ? (inverse
-      ? { es: 'Unidad funcional / trabajador', en: 'Functional unit / worker' }
+      ? { es: 'Productividad por trabajador', en: 'Productivity per worker' }
       : { es: 'Trabajadores / unidad funcional', en: 'Workers / functional unit' })
     : (inverse
-      ? { es: 'Unidad funcional / hora', en: 'Functional unit / hour' }
-      : { es: 'Horas / unidad funcional', en: 'Hours / functional unit' });
+      ? { es: 'Productividad física', en: 'Physical productivity' }
+      : { es: 'Intensidad laboral', en: 'Labour intensity' });
 
   return {
     ...ind,
@@ -267,3 +268,4 @@ function makeConditionHoursComputer(rateField) {
     return hours * rate / 100;
   };
 }
+

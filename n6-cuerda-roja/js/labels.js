@@ -92,3 +92,4 @@ function cleanupRawLabel(value) {
   if (!cleaned) return '';
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
+

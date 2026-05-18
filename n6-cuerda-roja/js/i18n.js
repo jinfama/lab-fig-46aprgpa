@@ -109,3 +109,4 @@ export const I18n = {
   t(key)        { return (DICT[_lang] && DICT[_lang][key]) || key; },
   subscribe(fn) { _subs.push(fn); return () => { const i = _subs.indexOf(fn); if (i >= 0) _subs.splice(i, 1); }; },
 };
+

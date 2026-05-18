@@ -1,18 +1,23 @@
-﻿// Choropleth map view — D3 + TopoJSON world-110m.
+// Choropleth map view — D3 + TopoJSON world-110m.
 // Reads the active indicator from State and paints countries from the
 // precomputed country_year_indicators.json bundle.
 
 import { State } from '../state.js';
-import { DataLoader } from '../data-loader.js?v=20260517-ui33';
-import { getIndicator } from '../indicators.js?v=20260517-ui33';
+import { DataLoader } from '../data-loader.js?v=20260518-ui48';
+import { getIndicator } from '../indicators.js?v=20260518-ui48';
 import { escapeHtml, formatCategoryLabel } from '../labels.js';
-import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260517-ui33';
+import { metricValue, resolveMetric, supportsCropCategory } from '../metric.js?v=20260518-ui48';
+import { enrichRegionalData } from '../regional-estimates.js?v=20260518-ui48';
 
 const PALETTES = {
   workers_hours: ['#edf5f5', '#d7e8ea', '#b8d3d8', '#92b8c0', '#6798a2', '#3f717b', '#21454d'],
   wages:         ['#eef3ef', '#d8e5df', '#b4cdbf', '#88ad9c', '#628b7b', '#3e685f', '#20443f'],
   child_forced:  ['#f8efed', '#e8c7bd', '#d99a86', '#c56b52', '#a44c3c', '#733025', '#3e1712'],
   default:       ['#eef5f5', '#d7e5e6', '#b8ced2', '#8fadb5', '#668991', '#42636b', '#263f46'],
+};
+const TRADE_COLORS = {
+  imports: '#72B9C7',
+  exports: '#D49B8D',
 };
 function paletteFor(ind) {
   if (!ind) return PALETTES.default;
@@ -136,7 +141,8 @@ async function activeRegionDataset(metric) {
     const regions = await DataLoader.loadRegions();
     _regionData = indexRegionRows(regions.rows || []);
   }
-  return { data: _regionData, world: _regionData.World || {}, regionByIso: await loadRegionByIso(), category: null };
+  const data = await enrichRegionalData(_regionData, metric);
+  return { data, world: data.World || {}, regionByIso: await loadRegionByIso(), category: null };
 }
 
 function isAntarcticFeature(feature) {
@@ -151,6 +157,14 @@ function isAntarcticGeometry(geom) {
 
 export async function initMapView() {
   _svg = d3.select('#map-svg');
+  _svg.append('defs').html(`
+    <marker id="trade-arrow-import" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="${TRADE_COLORS.imports}"></path>
+    </marker>
+    <marker id="trade-arrow-export" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="${TRADE_COLORS.exports}"></path>
+    </marker>
+  `);
   _g   = _svg.append('g');
   _tooltip = d3.select('#map-tooltip');
 
@@ -185,6 +199,9 @@ export async function initMapView() {
   State.subscribe('productivityLaborInput', paint);
   State.subscribe('productivityDirection', paint);
   State.subscribe('footprintFlow',     paint);
+  State.subscribe('tradeFlow',         paint);
+  State.subscribe('tradeProduct',      paint);
+  State.subscribe('tradeTopN',         paint);
   State.subscribe('currentYear',       paint);
   State.subscribe('yearRange',         paint);
   State.subscribe('cropCategoryFilter',paint);
@@ -221,6 +238,10 @@ function drawCountries() {
       .on('mouseleave', () => hideTooltip())
       .on('click', (event, d) => {
         const iso = getISO3(d);
+        if (State.get('activeCategory') === 'trade') {
+          if (iso) State.focusCountry(iso);
+          return;
+        }
         const scope = State.get('trendGeoScope') === 'world' ? 'country' : State.get('trendGeoScope');
         if (!iso || scope === 'world') return;
         if (scope === 'region') {
@@ -261,6 +282,11 @@ async function paint() {
   const ind = getIndicator(State.get('activeCategory'), State.get('activeIndicator'));
   const metric = resolveMetric(ind, State.get('language'));
   if (!metric) return;
+  if (metric.source === 'bilateral_trade') {
+    await paintTradeMap(metric);
+    return;
+  }
+  clearTradeLayer();
   // Indicators sourced from footprints/conditions live in other files for now.
   if (metric.source && !['regions', 'trade_footprint'].includes(metric.source)) {
     _g.selectAll('path.country-path').style('fill', 'var(--c-bg-h)');
@@ -459,6 +485,243 @@ function paintLegend(values, palette, metric, scale, category) {
   `);
 }
 
+function clearTradeLayer() {
+  _g.selectAll('.trade-arc').remove();
+  _g.selectAll('.trade-node').remove();
+  _g.selectAll('.trade-label').remove();
+  _g.selectAll('.trade-focus-ring').remove();
+  d3.select('#map-container').selectAll('.trade-map-controls').remove();
+}
+
+function tradeMeasureIndex() {
+  return 0;
+}
+
+function tradeUnit() {
+  return State.get('language') === 'en' ? 't' : 't';
+}
+
+function tradeCountryValue(country, flow, product) {
+  if (!country) return 0;
+  const flows = flow === 'both' ? ['imports', 'exports'] : [flow];
+  let total = 0;
+  for (const f of flows) {
+    const block = country[f];
+    if (!block) continue;
+    if (product === '__total__') {
+      total += +block.total?.[tradeMeasureIndex()] || 0;
+    } else {
+      const row = (block.products || []).find(d => d[0] === product);
+      total += +row?.[tradeMeasureIndex()] || 0;
+    }
+  }
+  return total;
+}
+
+function tradePartnerRows(country, flow, product) {
+  if (!country) return [];
+  const flows = flow === 'both' ? ['imports', 'exports'] : [flow];
+  const rows = [];
+  for (const f of flows) {
+    const block = country[f];
+    if (!block) continue;
+    const partners = product === '__total__'
+      ? (block.partners || [])
+      : (block.product_partners?.[product] || []);
+    for (const p of partners) {
+      rows.push({ flow: f, partner: p[0], tonnes: +p[1] || 0, hours: +p[2] || 0 });
+    }
+  }
+  return rows.filter(d => d.partner && d.partner !== '__other__' && d.tonnes > 0);
+}
+
+function centroidByIso() {
+  const out = new Map();
+  (_countries || []).forEach(feature => {
+    const iso = getISO3(feature);
+    if (!iso) return;
+    const c = _path.centroid(feature);
+    if (isFinite(c[0]) && isFinite(c[1])) out.set(iso, c);
+  });
+  return out;
+}
+
+function tradeArcPath(a, b, i) {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.max(1, Math.hypot(dx, dy));
+  const bend = Math.min(90, Math.max(28, dist * 0.18)) * (i % 2 ? -1 : 1);
+  const mx = (x1 + x2) / 2 - (dy / dist) * bend;
+  const my = (y1 + y2) / 2 + (dx / dist) * bend;
+  return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
+}
+
+function tradeProductLabel(product, index) {
+  const lang = State.get('language');
+  if (product === '__total__') return index.product_labels?.__total__?.[lang] || 'Total';
+  if (product === '__other__') return index.product_labels?.__other__?.[lang] || (lang === 'en' ? 'Other' : 'Resto');
+  return product;
+}
+
+function renderTradeMapControls() {
+  const lang = State.get('language');
+  const flow = State.get('tradeFlow') || 'both';
+  const topN = State.get('tradeTopN') || 10;
+  const labels = lang === 'en'
+    ? { both: 'Both', imports: 'Imports', exports: 'Exports', top5: 'Top 5', top10: 'Top 10' }
+    : { both: 'Ambas', imports: 'Importaciones', exports: 'Exportaciones', top5: 'Top 5', top10: 'Top 10' };
+  const box = d3.select('#map-container')
+    .selectAll('.trade-map-controls')
+    .data([null])
+    .join('div')
+    .attr('class', 'trade-map-controls');
+  box.html(`
+    <div class="trade-map-control-group" role="group" aria-label="${lang === 'en' ? 'Trade flow' : 'Flujo comercial'}">
+      ${[
+        ['both', labels.both],
+        ['imports', labels.imports],
+        ['exports', labels.exports],
+      ].map(([id, label]) => `<button type="button" class="${flow === id ? 'active' : ''}" data-trade-map-flow="${id}">${escapeHtml(label)}</button>`).join('')}
+    </div>
+    <div class="trade-map-control-group" role="group" aria-label="${lang === 'en' ? 'Number of partners' : 'Número de socios'}">
+      ${[
+        [5, labels.top5],
+        [10, labels.top10],
+      ].map(([id, label]) => `<button type="button" class="${topN === id ? 'active' : ''}" data-trade-map-top="${id}">${escapeHtml(label)}</button>`).join('')}
+    </div>
+  `);
+  box.selectAll('[data-trade-map-flow]').on('click', function () {
+    State.set('tradeFlow', this.dataset.tradeMapFlow);
+  });
+  box.selectAll('[data-trade-map-top]').on('click', function () {
+    State.set('tradeTopN', +this.dataset.tradeMapTop);
+  });
+}
+
+async function paintTradeMap(metric) {
+  const year = State.get('currentYear');
+  const flow = State.get('tradeFlow') || 'both';
+  const product = State.get('tradeProduct') || '__total__';
+  const topN = State.get('tradeTopN') || 10;
+  const [index, yearData] = await Promise.all([
+    DataLoader.loadBilateralIndex(),
+    DataLoader.loadBilateralYear(year),
+  ]);
+  clearRegionLayer();
+  clearTradeLayer();
+  renderTradeMapControls();
+  _currentScope = 'country';
+  _currentData = {};
+  _currentCountryNames = index.countries || _countryNames || {};
+  _g.selectAll('path.country-path').style('display', null);
+
+  const countries = yearData.countries || {};
+  const values = Object.values(countries)
+    .map(country => tradeCountryValue(country, flow, product))
+    .filter(v => v > 0 && isFinite(v));
+  const palette = PALETTES.default;
+  const scale = values.length ? scaleFor(values, palette) : null;
+  _g.selectAll('path.country-path').style('fill', d => {
+    const iso = getISO3(d);
+    const v = iso ? tradeCountryValue(countries[iso], flow, product) : 0;
+    return scale && v > 0 ? scale(v) : '#DCE8E9';
+  });
+
+  const selected = (State.get('selectedCountries') || [])[0] || State.get('focusedCountry');
+  paintSelection();
+  const lang = State.get('language');
+  const flowTitle = flow === 'imports'
+    ? (lang === 'en' ? 'imports' : 'importaciones')
+    : flow === 'exports'
+      ? (lang === 'en' ? 'exports' : 'exportaciones')
+      : (lang === 'en' ? 'imports + exports' : 'importaciones + exportaciones');
+  const productTitle = tradeProductLabel(product, index);
+
+  if (!selected || !countries[selected]) {
+    d3.select('#map-legend').html(`
+      <div class="map-legend-title">${lang === 'en' ? 'Bilateral trade' : 'Comercio bilateral'}</div>
+      <div class="map-legend-note">${lang === 'en' ? 'Select a country to draw its main flows.' : 'Selecciona un país para dibujar sus flujos principales.'}</div>
+      <div class="map-legend-filter">${escapeHtml(productTitle)} · ${escapeHtml(flowTitle)}</div>
+    `);
+    return;
+  }
+
+  const centroids = centroidByIso();
+  const focus = centroids.get(selected);
+  const partnerRows = tradePartnerRows(countries[selected], flow, product)
+    .filter(row => centroids.has(row.partner))
+    .sort((a, b) => b.tonnes - a.tonnes)
+    .slice(0, topN);
+  if (!focus || !partnerRows.length) {
+    d3.select('#map-legend').html(`
+      <div class="map-legend-title">${escapeHtml(index.countries?.[selected] || selected)}</div>
+      <div class="map-legend-note">${lang === 'en' ? 'No partner flows in this selection.' : 'No hay flujos de socios para esta selección.'}</div>
+    `);
+    return;
+  }
+
+  const width = d3.scaleSqrt()
+    .domain(d3.extent(partnerRows, d => d.tonnes))
+    .range([1.3, 8.5]);
+
+  _g.append('circle')
+    .attr('class', 'trade-focus-ring')
+    .attr('cx', focus[0])
+    .attr('cy', focus[1])
+    .attr('r', 9)
+    .attr('fill', 'none');
+
+  _g.selectAll('path.trade-arc')
+    .data(partnerRows)
+    .enter()
+    .append('path')
+    .attr('class', d => `trade-arc trade-arc-${d.flow}`)
+    .attr('d', (d, i) => {
+      const partner = centroids.get(d.partner);
+      return d.flow === 'imports'
+        ? tradeArcPath(partner, focus, i)
+        : tradeArcPath(focus, partner, i);
+    })
+    .attr('marker-end', d => d.flow === 'imports' ? 'url(#trade-arrow-import)' : 'url(#trade-arrow-export)')
+    .style('stroke-width', d => width(d.tonnes))
+    .on('mouseenter', (event, d) => {
+      const partner = index.countries?.[d.partner] || d.partner;
+      const country = index.countries?.[selected] || selected;
+      const verb = d.flow === 'imports'
+        ? (lang === 'en' ? 'imports from' : 'importa de')
+        : (lang === 'en' ? 'exports to' : 'exporta a');
+      _tooltip.html(`<strong>${escapeHtml(country)}</strong>${escapeHtml(verb)} ${escapeHtml(partner)}<br>${formatVal(d.tonnes)} ${tradeUnit()}${d.hours ? `<br>${formatVal(d.hours)} h` : ''}`);
+      _tooltip.classed('visible', true);
+      moveTooltip(event);
+    })
+    .on('mousemove', moveTooltip)
+    .on('mouseleave', hideTooltip);
+
+  _g.selectAll('circle.trade-node')
+    .data(partnerRows)
+    .enter()
+    .append('circle')
+    .attr('class', d => `trade-node trade-node-${d.flow}`)
+    .attr('cx', d => centroids.get(d.partner)[0])
+    .attr('cy', d => centroids.get(d.partner)[1])
+    .attr('r', 3.2);
+
+  const top = partnerRows.slice(0, 6);
+  const list = top.map(d => {
+    const label = index.countries?.[d.partner] || d.partner;
+    const flowLabel = d.flow === 'imports' ? (lang === 'en' ? 'Imp.' : 'Imp.') : (lang === 'en' ? 'Exp.' : 'Exp.');
+    return `<div class="map-flow-row"><span>${escapeHtml(flowLabel)} ${escapeHtml(label)}</span><strong>${formatVal(d.tonnes)} t</strong></div>`;
+  }).join('');
+  d3.select('#map-legend').html(`
+    <div class="map-legend-title">${escapeHtml(index.countries?.[selected] || selected)}</div>
+    <div class="map-legend-filter">${escapeHtml(productTitle)} · ${escapeHtml(flowTitle)} · ${escapeHtml(`Top ${topN}`)}</div>
+    <div class="map-flow-keys"><span class="flow-key imports"></span>${lang === 'en' ? 'Imports' : 'Importaciones'} <span class="flow-key exports"></span>${lang === 'en' ? 'Exports' : 'Exportaciones'}</div>
+    <div class="map-flow-list">${list}</div>
+  `);
+}
+
 function showTooltip(event, d) {
   const iso = getISO3(d);
   const key = featureDataKey(d);
@@ -489,3 +752,4 @@ function moveTooltip(event) {
   _tooltip.style('left', `${x}px`).style('top', `${y}px`);
 }
 function hideTooltip() { _tooltip.classed('visible', false); }
+

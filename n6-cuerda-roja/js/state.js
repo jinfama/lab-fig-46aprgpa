@@ -2,7 +2,7 @@
 
 const _state = {
   language:           'es',
-  activeView:         'map',          // map | trend | ranking | treemap | table | about
+  activeView:         'map',          // map | trend | ranking | treemap | table | country | about
   activeCategory:     'labour',
   activeIndicator:    'workers',
   selectedCountries: [],              // array of ISO3 codes
@@ -27,6 +27,10 @@ const _state = {
   trendLayout:        'facet',        // overlay | facet
   trendFacetBy:       'territory',    // territory | flow
   treemapMode:        'products',     // products | countries | products_by_country
+  tradeFlow:          'both',         // both | imports | exports
+  tradeProduct:       '__total__',    // __total__ | __other__ | item_cbs
+  tradeTopN:          10,             // 5 | 10
+  focusedCountry:     null,
 };
 
 const _subs = {};
@@ -61,6 +65,13 @@ export const State = {
   },
 
   clearCountries() { this.set('selectedCountries', []); },
+  focusCountry(iso3) {
+    this.setMany({
+      focusedCountry: iso3 || null,
+      selectedCountries: iso3 ? [iso3] : [],
+      trendGeoScope: 'country',
+    });
+  },
   toggleRegion(region) {
     const cur = _state.selectedRegions;
     const next = cur.includes(region) ? cur.filter(r => r !== region) : [...cur, region];
@@ -85,3 +96,4 @@ export const State = {
     });
   },
 };
+
