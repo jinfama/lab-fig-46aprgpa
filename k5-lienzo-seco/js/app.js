@@ -66,8 +66,8 @@ const UI = {
     area: "Área", window: "Ventana", category: "Categoría", crop: "Cultivo", component: "Componente", map: "Mapa", trend: "Tend.", table: "Tabla",
     lineal: "Lineal", log: "Log", play: "Reproducir timelapse", pause: "Pausar timelapse", speed: "Velocidad", year: "Año",
     nationalSeries: "Serie nacional", variables: "Variables", types: "Tipos", coverage: "Cobertura", fullMethod: "Metodología completa",
-    dataPageTitle: "Descargas, métodos y Zenodo", dataPageIntro: "Descarga de series, documentos metodológicos y depósitos asociados. Cada serie resume brevemente qué mide y su escala de uso.",
-    dataSeriesTitle: "Series — datos y método", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.", pendingOne: "pendiente",
+    dataPageTitle: "Datos, metodología, Zenodo", dataPageIntro: "Series, documentos metodológicos y enlaces Zenodo asociados.",
+    dataSeriesTitle: "Series — datos, metodología, Zenodo", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.", pendingOne: "pendiente",
     perspectivesTitle: "Perspectivas", perspectivesIntro: "Entradas breves con fecha, autor y lectura de los principales debates de CAHE.",
     topic: "Tema", author: "Autor", orderBy: "Orden", allTopics: "Todos los temas", allAuthors: "Todos los autores",
     newest: "Más recientes", oldest: "Más antiguas", titleOrder: "Título A-Z", noEntries: "Sin entradas para este filtro.",
@@ -86,8 +86,8 @@ const UI = {
     area: "Area", window: "Window", category: "Category", crop: "Crop", component: "Component", map: "Map", trend: "Trend", table: "Table",
     lineal: "Linear", log: "Log", play: "Play timelapse", pause: "Pause timelapse", speed: "Speed", year: "Year",
     nationalSeries: "National series", variables: "Variables", types: "Types", coverage: "Coverage", fullMethod: "Full methodology",
-    dataPageTitle: "Downloads, methods and Zenodo", dataPageIntro: "Series downloads, methodology documents and associated deposits. Each series briefly states what it measures and its scale.",
-    dataSeriesTitle: "Series — data and method", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.", pendingOne: "pending",
+    dataPageTitle: "Data, methods, Zenodo", dataPageIntro: "Series files, methodology documents and associated Zenodo links.",
+    dataSeriesTitle: "Series — data, methods, Zenodo", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.", pendingOne: "pending",
     perspectivesTitle: "Perspectives", perspectivesIntro: "Short dated entries with authorship and readings of CAHE's main debates.",
     topic: "Topic", author: "Author", orderBy: "Order", allTopics: "All topics", allAuthors: "All authors",
     newest: "Newest", oldest: "Oldest", titleOrder: "Title A-Z", noEntries: "No entries for this filter.",
@@ -1970,7 +1970,7 @@ function openIndicatorModal(item, data){
     <div class="cta-row">
       ${dataLink ? `<a class="cta" href="${dataLink}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>` : ""}
       ${methodLink ? `<a class="cta cta-ghost" href="${methodLink}" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a>` : ""}
-      <a class="cta cta-zenodo" href="${zenodoLink}" target="_blank" rel="noopener"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${zenodoLabel}</a>
+      <a class="cta cta-zenodo" href="${zenodoLink}" target="_blank" rel="noopener"><span class="zenodo-mark">Z</span>${zenodoLabel}</a>
     </div>`;
   els.modal.classList.add("open");
 }
@@ -2078,7 +2078,7 @@ function openGlobalModal(id){
     <p style="margin-top:14px;font-style:italic;color:var(--ink-mute);font-size:12px">${state.lang === "en" ? "Updated" : "Actualización"}: ${m.actualizacion || "—"}</p>
     <div class="cta-row">
       <a class="cta cta-ghost" href="${V1_DOCS}/globales_metodologia.pdf" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a>
-      <a class="cta cta-zenodo" href="${ZENODO_CAHE_URL}" target="_blank" rel="noopener"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${t("zenodo")}</a>
+      <a class="cta cta-zenodo" href="${ZENODO_CAHE_URL}" target="_blank" rel="noopener"><span class="zenodo-mark">Z</span>${t("zenodo")}</a>
     </div>`;
   els.modal.classList.add("open");
 }
@@ -3161,11 +3161,101 @@ const PERSPECTIVAS = [
   { id: "transicion-forestal", viz: "bosques", fig: "map", date: "2026-01-30", authors: ["Iñaki Iriarte Goñi", "Juan Infante Amate"], topic: "Forestal", topic_en: "Forestry", title: "La transición forestal", title_en: "The forest transition", summary: "Superficie forestal, densidad y stock de carbono combinan tendencia nacional y lectura provincial.", summary_en: "Forest area, density and carbon stock combine a national trend with a provincial reading.", body: "La perspectiva territorial complementa la serie nacional: los mapas provinciales y la línea temporal ayudan a distinguir cambios de composición, densidad y distribución espacial.", body_en: "The territorial view complements the national series: provincial maps and the timeline help separate composition, density and spatial redistribution." },
 ];
 
+const PERSPECTIVE_DETAIL_TEXT = {
+  "emisiones-historicas": {
+    es: [
+      "La trayectoria histórica de las emisiones españolas no es una sola curva. Hasta mediados del siglo XX domina una economía de baja energía fósil, con una huella climática relativamente reducida y muy vinculada a los usos del suelo. Desde la industrialización tardía, la urbanización y la expansión del transporte, la serie se acelera y cambia su composición.",
+      "La comparación con el mundo ayuda a distinguir escala y calendario: España llega tarde a la gran aceleración, pero durante varias décadas converge con rapidez. La lectura interactiva permite localizar los periodos donde cambia la pendiente, separar España y mundo, y comprobar si el descenso posterior a 2008 es coyuntural o estructural."
+    ],
+    en: [
+      "Spain's emissions history is not a single curve. Until the mid-twentieth century, a low-fossil-energy economy kept climate pressure comparatively limited and strongly tied to land use. With late industrialization, urbanization and transport expansion, the series accelerates and its composition changes.",
+      "The comparison with the world separates scale from timing: Spain joins the Great Acceleration late, but converges rapidly for several decades. The interactive view helps locate slope changes, separate Spain and the world, and assess whether the post-2008 decline is cyclical or structural."
+    ]
+  },
+  "balance-emisiones": {
+    es: [
+      "Separar CO₂ fósil y usos del suelo permite leer la responsabilidad histórica como flujo anual y como acumulación. No mide solo cuánto se emite en un año, sino qué parte de la trayectoria queda incorporada al balance de largo plazo.",
+      "El visor permite alternar absoluto, acumulado e intensidad para evitar una lectura única: la misma economía puede reducir intensidad relativa mientras mantiene niveles altos de emisión acumulada."
+    ],
+    en: [
+      "Separating fossil CO₂ and land use makes it possible to read historical responsibility both as annual flow and as accumulation. It is not only about emissions in a given year, but also about what remains in the long-run balance.",
+      "The viewer switches between absolute, cumulative and intensity metrics to avoid a single reading: the same economy may reduce relative intensity while retaining high accumulated emissions."
+    ]
+  },
+  "desacoplamiento-mito-realidad": {
+    es: [
+      "El desacoplamiento depende del periodo elegido, del indicador ambiental y de si se observa cambio absoluto o relativo. Por eso la clasificación Tapio se representa como una secuencia de ventanas temporales, no como una etiqueta fija.",
+      "Los colores muestran regímenes distintos de elasticidad entre PIB e impacto. La pregunta central no es si existe un punto aislado de desacoplamiento, sino si aparece una pauta persistente y suficientemente intensa."
+    ],
+    en: [
+      "Decoupling depends on the chosen period, the environmental indicator and whether change is absolute or relative. Tapio classes are therefore shown as a sequence of time windows rather than a fixed label.",
+      "Colours identify different elasticity regimes between GDP and impact. The key question is not whether one isolated decoupling point exists, but whether a persistent and strong enough pattern emerges."
+    ]
+  },
+  "crecimiento-eficiencia": {
+    es: [
+      "Los diagramas bivariados permiten observar si el crecimiento económico se acompaña de mayor presión ambiental o si cambia la pendiente de la relación. La comparación España-mundo añade una lectura de convergencia y divergencia histórica.",
+      "La escala lineal o logarítmica y la selección independiente de ejes ayudan a explorar relaciones no lineales, cambios de régimen y periodos donde la eficiencia mejora sin reducir necesariamente el impacto total."
+    ],
+    en: [
+      "Bivariate diagrams show whether economic growth is accompanied by higher environmental pressure or whether the slope of the relationship changes. The Spain-world comparison adds a historical convergence and divergence reading.",
+      "Independent axis choices and linear or logarithmic scales help explore nonlinear relationships, regime shifts and periods where efficiency improves without necessarily reducing total impact."
+    ]
+  },
+  "huella-material": {
+    es: [
+      "La huella material muestra la base física de la economía: biomasa, minerales, combustibles fósiles y comercio. Su lectura es especialmente sensible a la diferencia entre extracción doméstica, consumo aparente e intercambios con el exterior.",
+      "El visor permite seguir la composición y ver cuándo el metabolismo español deja de explicarse solo por recursos internos y pasa a depender con más fuerza de importaciones y cadenas materiales externas."
+    ],
+    en: [
+      "The material footprint shows the physical basis of the economy: biomass, minerals, fossil fuels and trade. Its interpretation depends strongly on the difference between domestic extraction, apparent consumption and exchanges with the rest of the world.",
+      "The viewer tracks composition and shows when Spain's metabolism can no longer be explained only by domestic resources and becomes increasingly tied to imports and external material chains."
+    ]
+  },
+  "transicion-forestal": {
+    es: [
+      "La transición forestal combina un cambio de superficie con un cambio de densidad y de stock de carbono. La serie nacional resume la dirección general, pero el mapa provincial muestra que el proceso no avanza igual en todos los territorios.",
+      "La figura territorial permite localizar dónde la recuperación forestal es más intensa y dónde la composición del monte cambia de forma distinta. Esa lectura espacial es clave para no reducir la transición a una media nacional."
+    ],
+    en: [
+      "The forest transition combines changes in area, density and carbon stock. The national series summarizes the overall direction, but the provincial map shows that the process is uneven across territories.",
+      "The territorial figure locates where forest recovery is strongest and where forest composition changes differently. This spatial reading is essential to avoid reducing the transition to a national average."
+    ]
+  }
+};
+
+function perspectiveDetailParagraphs(entry){
+  const lang = state.lang === "en" ? "en" : "es";
+  const extra = PERSPECTIVE_DETAIL_TEXT[entry.id]?.[lang] || [];
+  return [state.lang === "en" ? entry.body_en : entry.body, ...extra]
+    .filter(Boolean)
+    .map(text => `<p>${text}</p>`)
+    .join("");
+}
+
 function miniSeriesPath(points, x, y, key = "valor"){
+  const coords = points
+    .filter(d => d && d[key] != null && Number.isFinite(d[key]))
+    .map(d => ({ x: x(d), y: y(d) }))
+    .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
+  return coords.map((d, i) => `${i ? "L" : "M"}${d.x} ${d.y}`).join(" ");
+}
+
+function miniPolylinePoints(points, x, y, key = "valor"){
   return points
     .filter(d => d && d[key] != null && Number.isFinite(d[key]))
-    .map((d, i) => `${i ? "L" : "M"}${x(d)} ${y(d)}`)
+    .map(d => ({ x: x(d), y: y(d) }))
+    .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y))
+    .map(d => `${d.x.toFixed(1)},${d.y.toFixed(1)}`)
     .join(" ");
+}
+
+function miniLastPoint(points, x, y, key = "valor"){
+  const valid = points
+    .filter(d => d && d[key] != null && Number.isFinite(d[key]))
+    .map(d => ({ x: x(d), y: y(d), value: d[key] }))
+    .filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
+  return valid.at(-1) || null;
 }
 
 function miniLineFigure(){
@@ -3175,7 +3265,12 @@ function miniLineFigure(){
   if(all.length < 4) return null;
   const x = d3.scaleLinear().domain(d3.extent(all, d => d.year)).range([28, 236]);
   const y = d3.scaleLinear().domain([0, d3.max(all, d => d.valor)]).nice().range([96, 18]);
-  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="${miniSeriesPath(spain, x, y)}" fill="none" stroke="#4f7ea8" stroke-width="3"/><path d="${miniSeriesPath(world, x, y)}" fill="none" stroke="#c94132" stroke-width="3"/><circle cx="${x(spain.at(-1))}" cy="${y(spain.at(-1).valor)}" r="3.5" fill="#4f7ea8"/><circle cx="${x(world.at(-1))}" cy="${y(world.at(-1).valor)}" r="3.5" fill="#c94132"/></svg>`;
+  const spainPts = miniPolylinePoints(spain, x, y);
+  const worldPts = miniPolylinePoints(world, x, y);
+  const lastSpain = miniLastPoint(spain, x, y);
+  const lastWorld = miniLastPoint(world, x, y);
+  if(!spainPts || !worldPts || !lastSpain || !lastWorld) return null;
+  return `<svg class="perspective-snapshot" viewBox="0 0 260 120" aria-hidden="true"><rect x="0" y="0" width="260" height="120" fill="#f5f7f9"/><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M28 16v80h214" fill="none" stroke="#cbd2d8" stroke-width="1"/><polyline points="${worldPts}" fill="none" stroke="#c94132" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><polyline points="${spainPts}" fill="none" stroke="#4f7ea8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lastSpain.x}" cy="${lastSpain.y}" r="3.8" fill="#4f7ea8"/><circle cx="${lastWorld.x}" cy="${lastWorld.y}" r="3.8" fill="#c94132"/><text x="32" y="112" font-size="8" fill="#6f7b86">1860</text><text x="216" y="112" font-size="8" fill="#6f7b86">2022</text><text x="${Math.min(224, lastSpain.x + 6)}" y="${Math.max(16, lastSpain.y - 4)}" font-size="8" font-weight="700" fill="#4f7ea8">España</text><text x="${Math.min(224, lastWorld.x + 6)}" y="${Math.max(24, lastWorld.y + 10)}" font-size="8" font-weight="700" fill="#c94132">Mundo</text></svg>`;
 }
 
 function miniAreaFigure(){
@@ -3241,11 +3336,13 @@ function miniBarsFigure(){
 }
 
 function perspectiveFigureMarkup(kind){
-  const live = kind === "line" ? miniLineFigure()
-    : kind === "area" ? miniAreaFigure()
-    : kind === "scatter" ? miniScatterFigure()
-    : kind === "tapio" ? miniTapioFigure()
-    : kind === "bars" ? miniBarsFigure()
+  const hasLong = Array.isArray(DATA_LONG) && DATA_LONG.length;
+  const hasAnalysis = Array.isArray(DATA_ANALYSIS) && DATA_ANALYSIS.length;
+  const live = kind === "line" && hasLong ? miniLineFigure()
+    : kind === "area" && hasLong ? miniAreaFigure()
+    : kind === "scatter" && hasAnalysis ? miniScatterFigure()
+    : kind === "tapio" && hasAnalysis ? miniTapioFigure()
+    : kind === "bars" && hasLong ? miniBarsFigure()
     : null;
   if(live) return live;
   if(kind === "scatter") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 10v86h212"/><path d="M28 74h212M28 50h212M28 26h212"/></g><g class="mini-dots blue">${[0,1,2,3,4,5,6,7].map((_,i)=>`<circle cx="${48+i*21}" cy="${82-i*6+(i%2)*8}" r="4"/>`).join("")}</g><g class="mini-dots red">${[0,1,2,3,4,5,6,7].map((_,i)=>`<circle cx="${54+i*22}" cy="${78-i*8-(i%2)*4}" r="4"/>`).join("")}</g></svg>`;
@@ -3253,7 +3350,7 @@ function perspectiveFigureMarkup(kind){
   if(kind === "bars") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M30 96h210"/><path d="M30 72h210M30 48h210M30 24h210"/></g><rect x="48" y="50" width="22" height="46" fill="#c79a3b"/><rect x="82" y="34" width="22" height="62" fill="#4f7ea8"/><rect x="116" y="68" width="22" height="28" fill="#6f7a3d"/><rect x="150" y="22" width="22" height="74" fill="#c94132"/><rect x="184" y="42" width="22" height="54" fill="#1c1f24"/></svg>`;
   if(kind === "map") return `<svg viewBox="0 0 260 120" aria-hidden="true"><path d="M90 22 140 18 188 38 180 76 140 100 92 84 70 52z" fill="#e1d8b4"/><path d="M94 28 118 25 120 58 100 60z" fill="#6f7a3d"/><path d="M126 25 154 26 148 54 121 58z" fill="#cdbf86"/><path d="M154 30 180 42 172 70 148 55z" fill="#9aa05b"/><path d="M102 64 140 58 136 94 96 80z" fill="#d7cc9a"/><path d="M142 60 174 73 142 96z" fill="#5f6f32"/><circle cx="198" cy="82" r="7" fill="#9aa05b"/></svg>`;
   if(kind === "area") return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M34 92 C72 88 86 70 112 72 S152 50 178 38 214 26 236 18 L236 96 L34 96z" fill="#c79a3b" opacity=".55"/><path d="M34 92 C76 82 96 84 120 68 S168 55 194 44 218 42 236 34 L236 96 L34 96z" fill="#c94132" opacity=".55"/></svg>`;
-  return `<svg viewBox="0 0 260 120" aria-hidden="true"><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M34 88 C62 82 78 76 98 70 S136 66 154 48 194 28 236 20" fill="none" stroke="#4f7ea8" stroke-width="3"/><path d="M34 90 C72 86 98 75 118 62 S166 50 188 44 214 38 236 30" fill="none" stroke="#c94132" stroke-width="3"/></svg>`;
+  return `<svg class="perspective-snapshot" viewBox="0 0 260 120" aria-hidden="true"><rect x="0" y="0" width="260" height="120" fill="#f5f7f9"/><g class="mini-grid"><path d="M28 96h214"/><path d="M28 72h214M28 48h214M28 24h214"/></g><path d="M28 16v80h214" fill="none" stroke="#cbd2d8" stroke-width="1"/><polyline points="34,88 62,82 78,76 98,70 126,66 154,48 194,28 236,20" fill="none" stroke="#4f7ea8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><polyline points="34,90 72,86 98,75 118,62 166,50 188,44 214,38 236,30" fill="none" stroke="#c94132" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="236" cy="20" r="3.8" fill="#4f7ea8"/><circle cx="236" cy="30" r="3.8" fill="#c94132"/><text x="32" y="112" font-size="8" fill="#6f7b86">1860</text><text x="216" y="112" font-size="8" fill="#6f7b86">2022</text><text x="198" y="18" font-size="8" font-weight="700" fill="#4f7ea8">España</text><text x="198" y="42" font-size="8" font-weight="700" fill="#c94132">Mundo</text></svg>`;
 }
 
 function optionMarkup(value, label, current){
@@ -3296,9 +3393,14 @@ function renderPerspectiveDetail(entry){
         <h1>${state.lang === "en" ? entry.title_en : entry.title}</h1>
         <p>${state.lang === "en" ? entry.summary_en : entry.summary}</p>
       </div>
-      <figure class="perspective-detail-figure">${perspectiveFigureMarkup(entry.fig)}</figure>
+      <figure class="perspective-detail-figure">
+        <button class="perspective-figure-link" type="button" data-perspective-viz="${entry.viz}" aria-label="${t("openViewer")}">
+          ${perspectiveFigureMarkup(entry.fig)}
+          <span class="figure-link-label">${t("openViewer")} →</span>
+        </button>
+      </figure>
       <div class="prose perspective-detail-body">
-        <p>${state.lang === "en" ? entry.body_en : entry.body}</p>
+        ${perspectiveDetailParagraphs(entry)}
       </div>
       <button class="card-action" type="button" data-perspective-viz="${entry.viz}">${t("openViewer")} →</button>
     </article>
@@ -3308,16 +3410,19 @@ function renderPerspectiveDetail(entry){
     renderPerspectivas();
   });
   bindPerspectiveAuthorLinks(els.workspace);
-  els.workspace.querySelector("[data-perspective-viz]").addEventListener("click", () => openVizFromStatic(entry.viz));
+  els.workspace.querySelectorAll("[data-perspective-viz]").forEach(el => {
+    el.addEventListener("click", event => {
+      event.stopPropagation();
+      openVizFromStatic(entry.viz);
+    });
+  });
 }
 
 function renderPerspectivas(){
   if(!DATA_LONG || !DATA_ANALYSIS){
-    els.workspace.innerHTML = `<div class="loading"><span class="spinner"></span><strong>${t("loadingData")}</strong></div>`;
     loadGlobalData().then(() => {
       if(state.section === "perspectivas") renderPerspectivas();
     });
-    return;
   }
   const activeEntry = state.perspectiveEntry ? PERSPECTIVAS.find(p => p.id === state.perspectiveEntry) : null;
   if(activeEntry){
@@ -3393,8 +3498,7 @@ const DATASETS = [
 ];
 function renderDatos(){
   els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("datos")}</div><h1>${t("dataPageTitle")}</h1><p>${t("dataPageIntro")}</p></div>
-    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt="">${t("zenodo")}</a>` : `<span></span>`}</div>`).join("")}</div></section>
-    <section class="section-block"><h2>${t("zenodoDeposits")}</h2><div class="sub">${state.lang === "en" ? "Item-level Zenodo links appear in the series table when a deposit is ready." : "Los enlaces Zenodo por serie aparecen en la tabla cuando el depósito está preparado."}</div><div class="card-grid" style="margin-top:8px"><a class="card" href="${ZENODO_CAHE_URL}" target="_blank" rel="noopener"><span class="card-eyebrow">${t("zenodo")}</span><h3>CAHE Zenodo</h3><p>zenodo.org/search</p><div class="card-foot"><img class="zenodo-logo" src="${V1_IMG}/zenodo-logo-black.svg" alt=""><span class="arrow">→</span></div></a></div></section></div>`;
+    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div class="data-main"><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><span class="zenodo-mark">Z</span><span>${t("zenodo")}</span></a>` : `<span></span>`}</div>`).join("")}</div></section></div>`;
 }
 
 function renderNovedades(){
@@ -3516,6 +3620,11 @@ function updateChrome(){
   }
 }
 function setNavActive(section){ els.nav.querySelectorAll("[data-section]").forEach(b => b.classList.toggle("active", b.dataset.section === section)); }
+function setHashWithoutRender(hash){
+  const next = `${window.location.pathname}${window.location.search}#${hash}`;
+  if(window.location.hash === `#${hash}`) return;
+  window.history.pushState({ caheSection: hash }, "", next);
+}
 function bindNav(){
   els.nav.querySelectorAll("[data-section]").forEach(btn => {
     btn.addEventListener("click", event => {
@@ -3525,7 +3634,7 @@ function bindNav(){
       setNavActive(s);
       state.section = s;
       state.subsection = "landing";
-      window.location.hash = s;
+      setHashWithoutRender(s);
       renderMain();
     });
   });
@@ -3565,6 +3674,9 @@ function init(){
   bindNav(); bindLanguage(); bindHome(); bindModal(); updateChrome();
   applyHashRoute();
   window.addEventListener("hashchange", () => {
+    if(applyHashRoute()){ setNavActive(state.section); renderMain(); }
+  });
+  window.addEventListener("popstate", () => {
     if(applyHashRoute()){ setNavActive(state.section); renderMain(); }
   });
   setNavActive(state.section);
