@@ -3517,8 +3517,14 @@ const DATASETS = [
   { label: "Cultivos", file: "cahe_datos_cultivos.xlsx", desc: "Superficie cultivada y principales grupos de cultivos, incluyendo cereales, frutales, leguminosas, industriales y olivar.", scope: "Nacional · provincial", method: "cultivos_metodos_esp.docx" },
 ];
 function renderDatos(){
+  const action = (label, href, cls = "") => href
+    ? `<a class="link ${cls}" href="${href}" target="_blank" rel="noopener">${label}</a>`
+    : `<span class="link ${cls} disabled" role="button" aria-disabled="true">${label}</span>`;
+  const zenodoAction = href => href
+    ? `<a class="link zenodo-link" href="${href}" target="_blank" rel="noopener" title="${t("zenodo")}"><span class="zenodo-mark">Z</span><span>${t("zenodo")}</span></a>`
+    : `<span class="link zenodo-link disabled" role="button" aria-disabled="true" title="${t("zenodo")}"><span class="zenodo-mark">Z</span><span>${t("zenodo")}</span></span>`;
   els.workspace.innerHTML = `<div class="page"><div class="page-head"><div class="eyebrow">${t("datos")}</div><h1>${t("dataPageTitle")}</h1><p>${t("dataPageIntro")}</p></div>
-    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div class="data-main"><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div><a class="link" href="${V1_DOCS}/${d.file}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>${d.method ? `<a class="link ghost" href="${V1_DOCS}/${d.method}" target="_blank" rel="noopener">${t("method")}</a>` : `<span></span>`}${d.zenodo ? `<a class="link zenodo-link" href="${d.zenodo}" target="_blank" rel="noopener" title="${t("zenodo")}"><span class="zenodo-mark">Z</span><span>${t("zenodo")}</span></a>` : `<span></span>`}</div>`).join("")}</div></section></div>`;
+    <section class="section-block"><h2>${t("dataSeriesTitle")}</h2><div class="data-list">${DATASETS.map(d => `<div class="data-row"><div class="data-main"><div class="label">${tx(d.label)}</div><div class="desc">${tx(d.desc)}</div></div><div class="meta">${tx(d.scope || "XLSX")}</div>${action(`${t("dataXlsx")} <span>↓</span>`, d.file ? `${V1_DOCS}/${d.file}` : null)}${action(t("method"), d.method ? `${V1_DOCS}/${d.method}` : null, "ghost")}${zenodoAction(d.zenodo || null)}</div>`).join("")}</div></section></div>`;
 }
 
 function renderNovedades(){
