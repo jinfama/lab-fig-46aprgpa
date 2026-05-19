@@ -564,9 +564,10 @@ body.viewer-open .portada-top{opacity:0;pointer-events:none;transition:opacity .
 .perspective-toolbar .mini-select{min-width:185px}
 .perspective-article{display:grid;grid-template-columns:minmax(210px,.34fr) minmax(0,1fr);gap:20px;align-items:stretch;background:var(--white);border:1px solid var(--rule);padding:16px 18px;transition:border-color .18s,box-shadow .18s}
 .perspective-article:hover{border-color:var(--ink-soft);box-shadow:var(--shadow-sm)}
-.perspective-entry{grid-template-columns:1fr;cursor:pointer;padding:18px 20px}
-.perspective-entry .perspective-copy{max-width:820px}
+.perspective-entry{grid-template-columns:minmax(260px,.34fr) minmax(0,1fr);cursor:pointer;padding:18px 20px}
+.perspective-entry .perspective-copy{max-width:none;justify-content:flex-start}
 .perspective-entry:hover h3{color:var(--warm)}
+.perspective-entry-figure{min-height:210px}
 .perspective-figure{margin:0;background:color-mix(in srgb,var(--paper-2) 72%,var(--white));border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;min-height:142px;padding:10px}
 .perspective-figure svg{width:100%;height:100%;display:block}
 .perspective-figure .mini-grid path{fill:none;stroke:var(--rule);stroke-width:1}
@@ -581,6 +582,9 @@ body.viewer-open .portada-top{opacity:0;pointer-events:none;transition:opacity .
 .perspective-copy .card-eyebrow{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--warm);font-weight:800}
 .perspective-copy h3{font-family:var(--ff-serif);font-size:23px;font-weight:600;line-height:1.08;margin:0}
 .perspective-copy p{font-size:13.5px;color:var(--ink-soft);line-height:1.45;margin:0;max-width:76ch}
+.perspective-preview{display:flex;flex-direction:column;gap:8px;margin-top:2px}
+.perspective-preview p{font-size:13px;line-height:1.5;color:var(--ink-soft);max-width:82ch}
+.perspective-summary{color:var(--ink)!important;font-weight:500}
 .card-action{align-self:flex-start;margin-top:8px;border:0;border-bottom:1px solid var(--ink);background:transparent;color:var(--ink);font-size:10px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;padding:0 0 3px}
 .card-action:hover{color:var(--warm);border-bottom-color:var(--warm)}
 .empty-state{padding:28px;background:var(--white);border:1px solid var(--rule);color:var(--ink-mute);font-family:var(--ff-serif);font-size:18px;font-style:italic;text-align:center}
@@ -830,6 +834,8 @@ body.viewer-open .portada-top{opacity:0;pointer-events:none;transition:opacity .
   .data-row .link{width:100%;min-height:36px}
   .perspective-toolbar{overflow-x:auto}
   .perspective-article,.perspective-entry{padding:14px;gap:12px}
+  .perspective-entry{grid-template-columns:1fr}
+  .perspective-entry-figure{min-height:180px}
   .perspective-detail{padding:16px;gap:14px}
   .perspective-detail-head h1{font-size:34px}
   .perspective-detail-head p,.perspective-detail-body p{font-size:13.5px;line-height:1.5}
