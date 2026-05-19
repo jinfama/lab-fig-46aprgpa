@@ -103,9 +103,9 @@ const UI = {
 
 const LABEL_EN = {
   "Perspectiva global": "Global perspective", "Indicadores macro": "Macro indicators", "Indicadores sectoriales": "Sectoral indicators",
-  "España vs Mundo": "Spain vs World", "Forestal · Cultivos · Industria": "Forestry · Crops · Industry", "Olivo · Leña · Potasa": "Olive · Fuelwood · Potash",
+  "España vs Mundo": "Spain vs World", "Forestal · Cultivos · Industria · Sector eléctrico": "Forestry · Crops · Industry · Power sector", "Olivo · Leña · Potasa": "Olive · Fuelwood · Potash",
   "Energía": "Energy", "Emisiones GEI": "GHG emissions", "Emisiones CO₂": "CO₂ emissions", "Materiales": "Materials", "Tierra": "Land",
-  "Forestal": "Forestry", "Bosques": "Forests", "Cultivos": "Crops", "Industria": "Industry", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood", "Ahorro Genuino": "Genuine savings",
+  "Forestal": "Forestry", "Bosques": "Forests", "Cultivos": "Crops", "Industria": "Industry", "Sector eléctrico": "Power sector", "Olivo": "Olive", "Potasa": "Potash", "Leña": "Fuelwood", "Ahorro Genuino": "Genuine savings",
   "Dataset integrado": "Integrated dataset", "Consumo de energía": "Energy consumption", "Emisiones de CO₂": "CO₂ emissions", "Flujos materiales": "Material flows", "Usos del suelo": "Land use",
   "PIB": "GDP", "Población": "Population", "IDH": "HDI", "IDH-A": "AHDI", "Agua": "Water", "Nitrógeno": "Nitrogen", "Tierras de cultivo": "Cropland",
   "Tendencias": "Trends", "Correlación": "Correlation", "Descomposición · LMDI": "Decomposition · LMDI", "Desacoplamiento · Tapio": "Decoupling · Tapio",
@@ -209,6 +209,7 @@ Object.assign(LABEL_EN, {
   "Flujos materiales: biomasa, fósiles, minerales metálicos y no metálicos. Incluye comercio (extracción, consumo aparente, importaciones, exportaciones).": "Material flows: biomass, fossil materials, metal ores and non-metallic minerals. Includes trade: extraction, apparent consumption, imports and exports.",
   "Energía primaria y final, y emisiones de CO₂ por subsectores industriales.": "Primary and final energy, and CO₂ emissions by industrial subsector.",
   "Ahorro Genuino — indicador macro de sostenibilidad débil (próximamente).": "Genuine savings — weak sustainability macro indicator (coming soon).",
+  "Sector eléctrico: generación, mix eléctrico, potencia instalada y electrificación (próximamente).": "Power sector: generation, electricity mix, installed capacity and electrification (coming soon).",
   "Olivo: superficie, producción, comercio (próximamente).": "Olive: area, production and trade (coming soon).",
   "Leña: aprovechamiento forestal, energía tradicional y comercio (próximamente).": "Fuelwood: forest use, traditional energy and trade (coming soon).",
   "Potasa: extracción y flujos (próximamente).": "Potash: extraction and flows (coming soon).",
@@ -257,9 +258,9 @@ const LANDING_GROUPS = [
     group: "sectorial",
     id: "bosques",
     label: "Indicadores sectoriales",
-    meta: "Forestal · Cultivos · Industria",
-    desc: "Lectura sectorial forestal, agraria e industrial, con mapas provinciales en los sectores territoriales y tendencias nacionales en todos ellos.",
-    descEn: "Sectoral forestry, crop and industry views, with provincial maps for territorial sectors and national trends for all of them.",
+    meta: "Forestal · Cultivos · Industria · Sector eléctrico",
+    desc: "Lectura sectorial forestal, agraria, industrial y eléctrica, con mapas provinciales en los sectores territoriales y tendencias nacionales cuando existen datos.",
+    descEn: "Sectoral forestry, crop, industry and power-sector views, with provincial maps for territorial sectors and national trends when data are available.",
     icon: `${V1_ICONS}/ic-bosques.png`,
     cls: "sectorial"
   },
@@ -331,6 +332,10 @@ const CATALOG_OTHER = {
       desc: "Energía primaria y final, y emisiones de CO₂ por subsectores industriales.",
       descEn: "Primary and final energy, and CO₂ emissions by industrial subsector.",
       method: "agricultura_territorio_metodologia.pdf", data: "cahe_datos_integrados.xlsx" },
+    { id: "sector-electrico", label: "Sector eléctrico", meta: "En construcción",
+      icon: `${V1_ICONS}/ic-energia.png`,
+      desc: "Sector eléctrico: generación, mix eléctrico, potencia instalada y electrificación (próximamente).",
+      descEn: "Power sector: generation, electricity mix, installed capacity and electrification (coming soon).", comingSoon: true },
   ],
   commodities: [
     { id: "olivo",  label: "Olivo",   meta: "En construcción",
@@ -1237,7 +1242,7 @@ function groupLandingItems(){
   };
   const map = {
     macro: [t("macroEyebrow"), t("macroEyebrow"), state.lang === "en" ? "Energy, emissions, materials and land in national series and provincial maps when available." : "Energía, emisiones, materiales y tierra en serie nacional y, cuando existe, mapa provincial."],
-    sectorial: [t("sectorEyebrow"), t("sectorEyebrow"), state.lang === "en" ? "Forestry, crops and industry with unified navigation." : "Forestal, cultivos e industria con navegación unificada."],
+    sectorial: [t("sectorEyebrow"), t("sectorEyebrow"), state.lang === "en" ? "Forestry, crops, industry and power sector with unified navigation." : "Forestal, cultivos, industria y sector eléctrico con navegación unificada."],
     commodities: [t("commodities"), t("commodities"), state.lang === "en" ? "Specific products and resources with their own entry point." : "Productos y recursos singulares con entrada propia."]
   };
   const [eyebrow, title, intro] = map[state.group] || map.macro;
