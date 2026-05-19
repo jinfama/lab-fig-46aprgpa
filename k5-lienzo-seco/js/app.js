@@ -45,6 +45,9 @@ const state = {
   mapMiniOpen: true,
   lang: localStorage.getItem("cahe_lang") || "es",
 };
+if(window.matchMedia && window.matchMedia("(max-width: 640px)").matches){
+  state.globalOptionsOpen = false;
+}
 
 const IS_BETA_HUB = (location.hostname === "jinfama.github.io" && location.pathname.includes("/lab-fig-46aprgpa/")) || location.pathname.includes("/k5-lienzo-seco/");
 const V1_SITE_BASE = IS_BETA_HUB ? "../x9-bruma-cobre" : "../web_cahe/site";
