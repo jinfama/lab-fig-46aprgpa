@@ -1820,8 +1820,10 @@ function renderMap(container, mapData, item){
   const combo = mapData.combos.find(c => c.id === state.ind_mapCombo) || mapData.combos[0];
   const allVals = []; for(const arr of Object.values(combo.values)) for(const v of arr) if(v != null && Number.isFinite(v)) allVals.push(v);
   const extent = d3.extent(allVals);
+  const minVal = Number.isFinite(extent[0]) ? extent[0] : 0;
+  const maxVal = Number.isFinite(extent[1]) && extent[1] > minVal ? extent[1] : minVal + 1;
   const mapPalette = ["#f4efe1","#e4d6aa","#cab96e","#9b9848","#6f7a3d","#344f24"];
-  const color = d3.scaleQuantile().domain(allVals.length ? allVals : [0]).range(mapPalette);
+  const color = d3.scaleQuantize().domain([minVal, maxVal]).range(mapPalette);
   const idx = mapData.years.indexOf(state.year);
   const values = new Map();
   for(const [iso, arr] of Object.entries(combo.values)) values.set(iso, arr[idx]);
@@ -1845,16 +1847,28 @@ function renderMap(container, mapData, item){
     const v = values.get(f.properties.iso_3166_2);
     return v == null ? "#ece6d6" : color(v);
   }
+  let hoverTarget = null;
+  function tooltipRowsFor(iso){
+    return [
+      [combo.indicator, fmt(values.get(iso), combo.unit)],
+      [t("year"), state.year]
+    ];
+  }
   function bindHover(sel){
     sel.on("mouseenter", (event, f) => {
       const iso = f.properties.iso_3166_2;
       const name = mapData.provinces[iso]?.name || f.properties.name;
-      const v = values.get(iso);
-      showTooltip(event, name, [
-        [combo.indicator, fmt(v, combo.unit)],
-        [t("year"), state.year]
-      ]);
-    }).on("mousemove", moveTooltip).on("mouseleave", hideTooltip);
+      hoverTarget = { event, iso, name };
+      showTooltip(event, name, tooltipRowsFor(iso));
+    }).on("mousemove", (event, f) => {
+      const iso = f.properties.iso_3166_2;
+      const name = mapData.provinces[iso]?.name || f.properties.name;
+      hoverTarget = { event, iso, name };
+      moveTooltip(event);
+    }).on("mouseleave", () => {
+      hoverTarget = null;
+      hideTooltip();
+    });
   }
 
   const mainPaths = svg.append("g").selectAll("path").data(main.features).join("path")
@@ -1883,6 +1897,9 @@ function renderMap(container, mapData, item){
     values.clear();
     for(const [k, v] of newV) values.set(k, v);
     mini.update(year);
+    if(hoverTarget){
+      showTooltip(hoverTarget.event, hoverTarget.name, tooltipRowsFor(hoverTarget.iso));
+    }
   };
 
   const swatches = mapPalette.map(c => `<span style="display:block;flex:1;height:12px;background:${c}"></span>`).join("");
@@ -1892,9 +1909,9 @@ function renderMap(container, mapData, item){
     <div class="map-legend-overlay">
       <div class="map-legend-title">${tx(combo.indicator)} · ${tx(combo.category)}${combo.unit ? ` (${combo.unit})` : ""}</div>
       <div class="map-legend-scale">
-        <span>${fmt(extent[0])}</span>
+        <span>${fmt(minVal)}</span>
         <div class="map-legend-ramp">${swatches}</div>
-        <span>${fmt(extent[1])}</span>
+        <span>${fmt(maxVal)}</span>
       </div>
     </div>`);
 }

@@ -386,12 +386,12 @@ body.viewer-open .portada-top{opacity:0;pointer-events:none;transition:opacity .
 .timeline-end{text-align:right}
 .timeline-track-wrap{position:relative;flex:1 1 auto;height:36px;display:flex;align-items:center;min-width:120px}
 .timeline-selection{position:absolute;top:50%;height:8px;transform:translateY(-50%);background:color-mix(in srgb,var(--accent) 36%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 42%,transparent);z-index:1;pointer-events:none}
-.timeline-limit{position:absolute;top:50%;width:24px;height:34px;margin-left:-12px;padding:0;border:0;background:transparent;color:var(--ink);opacity:1;z-index:5;cursor:ew-resize;transform:translateY(-50%);touch-action:none}
-.timeline-limit::before{content:"";position:absolute;left:50%;top:5px;bottom:5px;width:3px;background:var(--ink);transform:translateX(-50%);box-shadow:0 0 0 2px rgba(255,255,255,.85),0 1px 5px rgba(28,31,36,.22)}
-.timeline-limit::after{content:"";position:absolute;left:50%;top:50%;width:11px;height:11px;background:var(--white);border:2px solid var(--ink);transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(28,31,36,.18)}
+.timeline-limit{position:absolute;top:0;width:24px;height:24px;margin-left:-12px;padding:0;border:0;background:transparent;color:var(--ink);opacity:1;z-index:5;cursor:ew-resize;transform:none;touch-action:none}
+.timeline-limit::before{content:"";position:absolute;left:50%;top:3px;height:15px;width:3px;background:var(--ink);transform:translateX(-50%);box-shadow:0 0 0 2px rgba(255,255,255,.85),0 1px 5px rgba(28,31,36,.22)}
+.timeline-limit::after{content:"";position:absolute;left:50%;top:3px;width:13px;height:3px;background:var(--ink);transform:translateX(-50%);box-shadow:0 0 0 2px rgba(255,255,255,.85),0 1px 4px rgba(28,31,36,.18)}
 .timeline-limit:hover,.timeline-limit.dragging{color:var(--warm)}
 .timeline-limit:hover::before,.timeline-limit.dragging::before{background:var(--warm)}
-.timeline-limit:hover::after,.timeline-limit.dragging::after{border-color:var(--warm);background:color-mix(in srgb,var(--warm) 12%,var(--white))}
+.timeline-limit:hover::after,.timeline-limit.dragging::after{background:var(--warm)}
 .timeline-limit.edge-start{margin-left:0}
 .timeline-limit.edge-end{margin-left:-24px}
 .timeline-handle-year{display:none}
