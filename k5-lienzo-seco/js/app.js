@@ -68,7 +68,7 @@ const UI = {
     view: "Vista", variable: "Variable", components: "Componentes", scale: "Escala", indicator: "Indicador", metric: "Métrica", geographicArea: "Área",
     area: "Área", window: "Ventana", category: "Categoría", crop: "Cultivo", component: "Componente", map: "Mapa", trend: "Tend.", table: "Tabla",
     lineal: "Lineal", log: "Log", play: "Reproducir timelapse", pause: "Pausar timelapse", speed: "Velocidad", year: "Año",
-    nationalSeries: "Serie nacional", variables: "Variables", types: "Tipos", coverage: "Cobertura", fullMethod: "Metodología completa",
+    nationalSeries: "Serie nacional", variables: "Variables", types: "Tipos", coverage: "Cobertura", fullMethod: "Metodología",
     dataPageTitle: "Datos, metodología, Zenodo", dataPageIntro: "Series, documentos metodológicos y enlaces Zenodo asociados.",
     dataSeriesTitle: "Series — datos, metodología, Zenodo", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.", pendingOne: "pendiente",
     perspectivesTitle: "Perspectivas", perspectivesIntro: "Entradas breves con fecha, autor y lectura de los principales debates de CAHE.",
@@ -77,7 +77,7 @@ const UI = {
     coordination: "Coordinación", teamMembers: "Equipo",
     teamTitle: "Equipo CAHE", teamIntro: "Investigadores responsables de la Contabilidad Ambiental Histórica de España.", aboutTitle: "Sobre esta web",
     noData: "Sin datos.", noSeries: "Sin series para la selección.", mapProvince: "Mapa provincial", mapInfo: "Color escala fija sobre todo el rango temporal. Pasa el ratón sobre una provincia para ver su valor.",
-    native: "v3 · nativo", close: "Cerrar", copied: "Copiado",
+    native: "Visor interactivo", close: "Cerrar", copied: "Copiado",
   },
   en: {
     visualizacion: "Visualization", datos: "Data and methods", perspectivas: "Perspectives", equipo: "Team", acerca: "About", portada: "Home",
@@ -88,7 +88,7 @@ const UI = {
     view: "View", variable: "Variable", components: "Components", scale: "Scale", indicator: "Indicator", metric: "Metric", geographicArea: "Area",
     area: "Area", window: "Window", category: "Category", crop: "Crop", component: "Component", map: "Map", trend: "Trend", table: "Table",
     lineal: "Linear", log: "Log", play: "Play timelapse", pause: "Pause timelapse", speed: "Speed", year: "Year",
-    nationalSeries: "National series", variables: "Variables", types: "Types", coverage: "Coverage", fullMethod: "Full methodology",
+    nationalSeries: "National series", variables: "Variables", types: "Types", coverage: "Coverage", fullMethod: "Methodology",
     dataPageTitle: "Data, methods, Zenodo", dataPageIntro: "Series files, methodology documents and associated Zenodo links.",
     dataSeriesTitle: "Series — data, methods, Zenodo", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.", pendingOne: "pending",
     perspectivesTitle: "Perspectives", perspectivesIntro: "Short dated entries with authorship and readings of CAHE's main debates.",
@@ -97,7 +97,7 @@ const UI = {
     coordination: "Coordination", teamMembers: "Team",
     teamTitle: "CAHE team", teamIntro: "Researchers responsible for the Historical Environmental Accounts of Spain.", aboutTitle: "About this website",
     noData: "No data.", noSeries: "No series for the current selection.", mapProvince: "Provincial map", mapInfo: "Fixed color scale over the whole time range. Hover over a province to see its value.",
-    native: "v3 · native", close: "Close", copied: "Copied",
+    native: "Interactive viewer", close: "Close", copied: "Copied",
   }
 };
 
@@ -1962,31 +1962,18 @@ function drawMapMiniChart(container, mapData, combo){
 function openIndicatorModal(item, data){
   const dataLink = item.data ? `${V1_DOCS}/${item.data}` : null;
   const methodLink = item.method ? `${V1_DOCS}/${item.method}` : null;
-  const zenodoLink = item.zenodo || ZENODO_CAHE_URL;
-  const zenodoLabel = item.zenodo ? t("zenodo") : `${t("zenodo")} · ${t("pendingOne")}`;
   const intro = state.lang === "en"
-    ? "This viewer rebuilds the series with local CAHE v3 code and keeps the core controls from the original version: variable selection, components, scale, time view, table and provincial map when spatial information exists. The series should be read as long-term historical estimates, not as isolated administrative annual statistics."
-    : "Este visor reconstruye la serie con código local de CAHE v3 y conserva los controles centrales de la versión original: selección de variable, componentes, escala, vista temporal, tabla y mapa provincial cuando existe información espacial. La lectura debe hacerse como una serie histórica comparable en el largo plazo, no como una estadística administrativa anual aislada.";
-  const selectionNote = state.lang === "en"
-    ? "Component selection allows several series to be activated simultaneously when the indicator has internal breakdowns. Variables, types and territorial combinations are kept as single selections when mixing them would combine non-comparable units or categories."
-    : "La selección de componentes permite activar varias series simultáneamente cuando el indicador tiene desagregación interna. Las variables, tipos o combinaciones territoriales son selecciones únicas para evitar mezclar unidades o categorías no comparables dentro de la misma figura.";
+    ? "Interactive viewer for long-run historical series. It allows variables, components, scale, timeline, table and provincial map to be explored when spatial data are available."
+    : "Visor interactivo de series históricas de largo plazo. Permite explorar variables, componentes, escala, línea temporal, tabla y mapa provincial cuando existe información espacial.";
   els.modalContent.innerHTML = `
     <span class="modal-eyebrow">${t("infoMethod")} — ${tx(item.meta)}</span>
     <h2>${itemTitle(item)}</h2>
     <p>${itemDescription(item)}</p>
     <p>${intro}</p>
-    <p>${selectionNote}</p>
-    <h3>${t("coverage")}</h3>
-    <ul>
-      <li>${t("nationalSeries")}: <strong>${data.years[0]}–${data.years.at(-1)}</strong> (${data.series.length} series).</li>
-      <li>${t("variables")}: ${data.variables.map(tx).join(", ")}</li>
-      ${data.tipos.length ? `<li>${t("components")}: ${data.tipos.map(tx).join(", ")}</li>` : ""}
-      ${data.tipo2s.length ? `<li>${t("types")}: ${data.tipo2s.map(tx).join(", ")}</li>` : ""}
-    </ul>
     <div class="cta-row">
       ${dataLink ? `<a class="cta" href="${dataLink}" target="_blank" rel="noopener">${t("dataXlsx")} <span>↓</span></a>` : ""}
-      ${methodLink ? `<a class="cta cta-ghost" href="${methodLink}" target="_blank" rel="noopener">${t("fullMethod")} <span>↗</span></a>` : ""}
-      <a class="cta cta-zenodo" href="${zenodoLink}" target="_blank" rel="noopener"><span class="zenodo-mark">Z</span>${zenodoLabel}</a>
+      ${methodLink ? `<a class="cta cta-ghost" href="${methodLink}" target="_blank" rel="noopener">${state.lang === "en" ? "Methodology" : "Metodología"}</a>` : ""}
+      ${item.zenodo ? `<a class="cta cta-zenodo" href="${item.zenodo}" target="_blank" rel="noopener"><span class="zenodo-mark">Z</span><span>${t("zenodo")}</span></a>` : ""}
     </div>`;
   els.modal.classList.add("open");
 }
