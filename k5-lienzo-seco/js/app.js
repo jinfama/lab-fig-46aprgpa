@@ -1822,8 +1822,9 @@ function renderMap(container, mapData, item){
   const extent = d3.extent(allVals);
   const minVal = Number.isFinite(extent[0]) ? extent[0] : 0;
   const maxVal = Number.isFinite(extent[1]) && extent[1] > minVal ? extent[1] : minVal + 1;
-  const mapPalette = ["#f4efe1","#e4d6aa","#cab96e","#9b9848","#6f7a3d","#344f24"];
-  const color = d3.scaleQuantize().domain([minVal, maxVal]).range(mapPalette);
+  const mapPalette = ["#fff7d6","#ead77f","#c7b640","#8d9b35","#5f842f","#2d6030","#123624"];
+  const colorIndex = d3.scalePow().exponent(0.72).domain([minVal, maxVal]).range([0, mapPalette.length - 1]).clamp(true);
+  const color = v => mapPalette[Math.max(0, Math.min(mapPalette.length - 1, Math.floor(colorIndex(v))))];
   const idx = mapData.years.indexOf(state.year);
   const values = new Map();
   for(const [iso, arr] of Object.entries(combo.values)) values.set(iso, arr[idx]);
