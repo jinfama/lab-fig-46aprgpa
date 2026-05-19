@@ -488,6 +488,9 @@ function fmt(v, u = ""){
   return u ? `${out} ${u}` : out;
 }
 function escAttr(v){ return String(v ?? "").replace(/"/g, "&quot;"); }
+function escHtml(v){
+  return String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[c]));
+}
 function compact(t, max = 30){ const v = String(t || ""); return v.length > max ? v.slice(0, max - 1) + "…" : v; }
 function tooltipHtml(title, rows){
   return `<div class="t-title">${title}</div>` + rows.map(([label, value]) =>
@@ -1718,15 +1721,20 @@ function drawIndicatorChart(container, years, series, item, opts){
 function drawIndicatorTable(container, years, series, item, opts = {}){
   container.innerHTML = "";
   const wrap = document.createElement("div");
-  wrap.className = "table-wrap";
+  wrap.className = "table-wrap indicator-table-wrap";
   if(!series.length){ wrap.innerHTML = `<div class="empty">Sin series.</div>`; container.appendChild(wrap); return; }
   const current = opts.year == null ? years.at(-1) : nearestTimelineYear(years, opts.year);
   const visibleYears = years.filter(y => y <= current);
   const unit = series[0]?.variableUnit || series[0]?.unit || "";
-  wrap.innerHTML = `<table class="data-table year-rows">
+  const seriesHead = s => {
+    const label = [tx(s.tipo), tx(s.tipo2)].filter(Boolean).join(" · ");
+    const title = [label, unit].filter(Boolean).join(" · ");
+    return `<th class="series-head" title="${escAttr(title)}"><span class="series-label">${escHtml(label)}</span>${unit ? `<span class="series-unit">${escHtml(unit)}</span>` : ""}</th>`;
+  };
+  wrap.innerHTML = `<table class="data-table year-rows indicator-table">
     <thead><tr>
       <th>${t("year")}</th>
-      ${series.map(s => `<th title="${escAttr([tx(s.tipo), tx(s.tipo2), unit].filter(Boolean).join(" · "))}">${compact([tx(s.tipo), tx(s.tipo2)].filter(Boolean).join(" · "), 26)}</th>`).join("")}
+      ${series.map(seriesHead).join("")}
     </tr></thead>
     <tbody>${visibleYears.map(y => {
       const idx = years.indexOf(y);
