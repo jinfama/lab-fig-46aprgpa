@@ -266,7 +266,7 @@ setTimeout(function(){
 (function(){
   var frame = document.getElementById('viewer-frame');
   function openSection(section){
-    if(!frame.src) frame.src = 'explorer.html?v=20260519i#' + section;
+    if(!frame.src) frame.src = 'explorer.html?v=20260519j#' + section;
     else { try { frame.contentWindow.location.hash = section; } catch(_){} }
     document.body.classList.add('viewer-open');
     setTimeout(function(){ try { frame.contentWindow && frame.contentWindow.focus(); } catch(_){} }, 60);

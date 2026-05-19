@@ -1,4 +1,4 @@
-/* CAHE v3 — app.js
+/* CAHE — app.js
    - Perspectiva global: 4 análisis nativos con todos los controles de v1
    - Indicadores y Sectores: visor nativo unificado (línea/área/tabla + tendencia/mapa)
    - Mapas integrados como sub-vista de los indicadores que los tienen
@@ -70,7 +70,7 @@ const UI = {
     lineal: "Lineal", log: "Log", play: "Reproducir timelapse", pause: "Pausar timelapse", speed: "Velocidad", year: "Año",
     nationalSeries: "Serie nacional", variables: "Variables", types: "Tipos", coverage: "Cobertura", fullMethod: "Metodología",
     dataPageTitle: "Datos, metodología, Zenodo", dataPageIntro: "Series, documentos metodológicos y enlaces Zenodo asociados.",
-    dataSeriesTitle: "Series — datos, metodología, Zenodo", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad", pending: "Pendientes.", pendingOne: "pendiente",
+    dataSeriesTitle: "Series — datos, metodología, Zenodo", zenodoDeposits: "Depósitos Zenodo", community: "Comunidad",
     perspectivesTitle: "Perspectivas", perspectivesIntro: "Entradas breves con fecha, autor y lectura de los principales debates de CAHE.",
     topic: "Tema", author: "Autor", orderBy: "Orden", allTopics: "Todos los temas", allAuthors: "Todos los autores",
     newest: "Más recientes", oldest: "Más antiguas", titleOrder: "Título A-Z", noEntries: "Sin entradas para este filtro.",
@@ -90,7 +90,7 @@ const UI = {
     lineal: "Linear", log: "Log", play: "Play timelapse", pause: "Pause timelapse", speed: "Speed", year: "Year",
     nationalSeries: "National series", variables: "Variables", types: "Types", coverage: "Coverage", fullMethod: "Methodology",
     dataPageTitle: "Data, methods, Zenodo", dataPageIntro: "Series files, methodology documents and associated Zenodo links.",
-    dataSeriesTitle: "Series — data, methods, Zenodo", zenodoDeposits: "Zenodo deposits", community: "Community", pending: "Pending.", pendingOne: "pending",
+    dataSeriesTitle: "Series — data, methods, Zenodo", zenodoDeposits: "Zenodo deposits", community: "Community",
     perspectivesTitle: "Perspectives", perspectivesIntro: "Short dated entries with authorship and readings of CAHE's main debates.",
     topic: "Topic", author: "Author", orderBy: "Order", allTopics: "All topics", allAuthors: "All authors",
     newest: "Newest", oldest: "Oldest", titleOrder: "Title A-Z", noEntries: "No entries for this filter.",
